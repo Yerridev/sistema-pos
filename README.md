@@ -1,7 +1,7 @@
 # Sistema de Punto de Venta (POS)
 
 ## Descripción
-Sistema para gestionar ventas en mostrador, control de inventario, apertura y cierre de caja, y reportes de ventas diarios y por producto. Orientado a negocios retail, permite una gestión eficiente de productos, proveedores, compras y ventas.  
+Sistema para gestionar ventas en mostrador, control de inventario, apertura y cierre de caja, y reportes de ventas diarios y por producto. Orientado a negocios retail, permite una gestión eficiente de productos, proveedores, compras y ventas.
 
 El sistema cuenta con roles diferenciados:
 - **Admin**: acceso completo a todas las funcionalidades y reportes.
@@ -10,10 +10,10 @@ El sistema cuenta con roles diferenciados:
 ---
 
 ## Integrantes del Grupo 6
-- Chilcon Ramirez Abondanyerri	
-- Chinchay Campos Jhon Jairo 	
-- Puluche Espejo Pietro Ralf	
-- Bardales Vasquez Keysi Jeanpierre	
+- Chilcon Ramirez Abondanyerri
+- Chinchay Campos Jhon Jairo
+- Puluche Espejo Pietro Ralf
+- Bardales Vasquez Keysi Jeanpierre
 - Hidrogo Mateo Jeslyn Nicole
 
 ---
@@ -73,31 +73,68 @@ El sistema cuenta con roles diferenciados:
 
 ---
 
-## Flujo de Trabajo Colaborativo
-1. **Ramas principales**
-   - `main`: versión estable
-   - `develop`: integración de funcionalidades
+## Flujo de Trabajo
 
-2. **Ramas de desarrollo**
-   - Cada integrante crea su branch:
-     ```
-     git checkout -b feature/nombre-funcionalidad
-     ```
-   - Commit claros y atómicos:
-     ```
-     feat: agregar búsqueda de productos
-     fix: corregir cálculo de total en ventas
-     docs: actualizar README con endpoints
-     ```
+1. **Crear rama desde `develop`**
+   ```bash
+   git checkout develop
+   git pull origin develop
+   git checkout -b feature/nombre-tarea
+   ```
 
-3. **Pull Requests**
-   - Abrir PR hacia `develop`
-   - Revisar y aprobar antes de merge
-   - Merge a `main` solo cuando esté estable
+2. **Hacer commits con Convencional Commits**
+   ```bash
+   git add .
+   git commit -m "feat: implementar validación de stock en ventas"
+   ```
 
-4. **Roles en GitHub**
-   - Todos los integrantes tienen permisos de **Write**
-   - `main` protegida con branch protection rules
+3. **Abrir Pull Request hacia `develop`**
+   - El PR debe referenciar su issue (`Closes #numero`).
+   - El PR debe incluir pasos de prueba y checklist completo.
+   - No se permite push directo a `main` o `develop`.
+
+4. **Merge del Pull Request**
+   - Requiere al menos 1 aprobación del reviewer/líder.
+   - Debe estar actualizado con `develop` y sin conflictos.
+   - Solo cambios validados en `develop` pueden promocionarse a `main`.
+
+---
+
+## Organización del Equipo
+
+### Roles
+- **Líder / Reviewer**
+  - Prioriza backlog junto al equipo.
+  - Revisa PRs, valida estándares y autoriza merges.
+  - Monitorea riesgos de integración y calidad.
+
+- **Responsables por módulo**
+  - **Auth y Seguridad:** autenticación, permisos y roles.
+  - **Ventas y Caja:** flujo de cobro, transacciones y cuadre.
+  - **Inventario y Compras:** stock, reposición y proveedores.
+  - **Reportes y Dashboard:** métricas, reportes operativos y vista admin.
+
+### Responsabilidades básicas
+- Cada desarrollador mantiene su módulo estable y documentado.
+- Todo cambio se trabaja en `feature/*` y se integra por PR.
+- El responsable de módulo da contexto funcional durante la revisión.
+- El reviewer valida impacto transversal antes del merge.
+
+---
+
+## Riesgos y Prevención
+
+1. **Conflictos de merge**
+   - **Riesgo:** cambios simultáneos sobre los mismos archivos.
+   - **Prevención:** ramas pequeñas, PRs frecuentes y sincronización diaria con `develop`.
+
+2. **Problemas con migraciones**
+   - **Riesgo:** migraciones en conflicto o fuera de orden.
+   - **Prevención:** generar migraciones por tarea, revisar dependencias y probar `migrate` antes del PR.
+
+3. **Errores de integración entre módulos**
+   - **Riesgo:** romper flujos por cambios acoplados entre apps.
+   - **Prevención:** contratos de API claros, pruebas de integración y validación cruzada en `develop`.
 
 ---
 
@@ -123,3 +160,4 @@ python manage.py createsuperuser
 
 # Ejecutar servidor
 python manage.py runserver
+```
