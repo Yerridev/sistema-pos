@@ -25,7 +25,7 @@ Implementar configuración de JWT con login y refresh token para la API.
 **Relacionado con #3**
 
 **Descripción**
-Definir roles (`admin`, `cajero`, `supervisor`) y restringir acceso a endpoints críticos.
+Definir roles (`admin`, `cajero (cashier)`, `supervisor`) y restringir acceso a endpoints críticos.
 
 **Checklist**
 - [ ] Crear modelo/flags de rol de usuario
@@ -45,7 +45,7 @@ Crear/ajustar modelo Producto con constraints de stock y reglas de precio.
 **Checklist**
 - [ ] Definir campos del modelo Producto
 - [ ] Agregar constraint `stock_actual >= 0`
-- [ ] Validar `precio_venta >= costo`
+- [ ] Validar `precio_venta >= costo` y definir alerta/aprobación para ventas al costo o por debajo del costo
 - [ ] Crear índice para `codigo_barra`
 - [ ] Crear migración y validar en PostgreSQL
 
