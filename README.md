@@ -80,6 +80,8 @@ El sistema cuenta con roles diferenciados:
 
 ---
 
+---
+
 ## Instalación con Docker Compose (Recomendado)
 
 ### Requisitos
@@ -141,6 +143,71 @@ docker compose restart
 # Solo base de datos
 docker compose up -d db
 ```
+
+---
+
+## Flujo de Trabajo
+
+1. **Crear rama desde `develop`**
+   ```bash
+   git checkout develop
+   git pull origin develop
+   git checkout -b feature/nombre-tarea
+   ```
+
+2. **Hacer commits con Convencional Commits**
+   ```bash
+   git add .
+   git commit -m "feat: implementar validación de stock en ventas"
+   ```
+
+3. **Abrir Pull Request hacia `develop`**
+   - El PR debe referenciar su issue (`Closes #numero`).
+   - El PR debe incluir pasos de prueba y checklist completo.
+   - No se permite push directo a `main` o `develop`.
+
+4. **Merge del Pull Request**
+   - Requiere al menos 1 aprobación del reviewer/líder.
+   - Debe estar actualizado con `develop` y sin conflictos.
+   - Solo cambios validados en `develop` pueden promocionarse a `main`.
+
+---
+
+## Organización del Equipo
+
+### Roles
+- **Líder / Reviewer**
+  - Prioriza backlog junto al equipo.
+  - Revisa PRs, valida estándares y autoriza merges.
+  - Monitorea riesgos de integración y calidad.
+
+- **Responsables por módulo**
+  - **Auth y Seguridad:** autenticación, permisos y roles.
+  - **Ventas y Caja:** flujo de cobro, transacciones y cuadre.
+  - **Inventario y Compras:** stock, reposición y proveedores.
+  - **Reportes y Dashboard:** métricas, reportes operativos y vista admin.
+
+### Responsabilidades básicas
+- Cada desarrollador mantiene su módulo estable y documentado.
+- Todo cambio se trabaja en `feature/*` y se integra por PR.
+- El responsable de módulo da contexto funcional durante la revisión.
+- El reviewer valida impacto transversal antes del merge.
+
+---
+
+## Riesgos y Prevención
+
+1. **Conflictos de merge**
+   - **Riesgo:** cambios simultáneos sobre los mismos archivos.
+   - **Prevención:** ramas pequeñas, PRs frecuentes y sincronización diaria con `develop`.
+
+2. **Problemas con migraciones**
+   - **Riesgo:** migraciones en conflicto o fuera de orden.
+   - **Prevención:** generar migraciones por tarea, revisar dependencias y probar `migrate` antes del PR.
+
+3. **Errores de integración entre módulos**
+   - **Riesgo:** romper flujos por cambios acoplados entre apps.
+   - **Prevención:** contratos de API claros, pruebas de integración y validación cruzada en `develop`.
 
 ---
 
@@ -249,36 +316,3 @@ refactor: refactorizar código
 - Crear PR hacia `develop`
 - Revisar y aprobar antes de merge
 - Merge a `main` solo cuando esté estable
-
----
-
-## Estructura del Proyecto
-
-```
-sistema-pos/
-├── config/              # Configuración Django (settings, urls, wsgi)
-├── templates/           # Plantillas HTML (login.html)
-├── usuarios/            # Modelo Usuario + Auth API
-│   ├── auth_views.py    # Vistas JWT (login, refresh)
-│   ├── serializers.py  # Serializers JWT
-│   └── models.py       # Modelo Usuario con roles
-├── productos/           # CRUD de productos [PENDIENTE]
-├── ventas/              # Lógica de ventas [PENDIENTE]
-├── caja/                # Apertura/cierre de caja [PENDIENTE]
-├── compras/             # Compras a proveedores [PENDIENTE]
-├── reportes/            # Reportes y estadísticas [PENDIENTE]
-├── docker-compose.yml   # Servicios Docker
-├── Dockerfile           # Imagen Python/Django
-├── .env.example         # Variables de entorno de ejemplo
-└── requirements.txt     # Dependencias Python
-```
-
----
-
-## Notas de Desarrollo
-
-- **Localización:** `es-pe`, zona horaria `America/Lima`, moneda PEN (S/.)
-- **AUTH_USER_MODEL:** `usuarios.Usuario` — nunca usar el modelo User por defecto
-- **JWT Only:** Session auth desactivado, solo tokens Bearer
-- **`.env` obligatorio:** Sin él, Django no inicia
-- **Facturación SUNAT:** Próximamente (XML UBL 2.1, integración PSE/OSE)
