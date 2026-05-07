@@ -18,3 +18,10 @@ media/
 # OS
 .DS_Store
 Thumbs.db
+
+# Node
+node_modules/
+package-lock.json
+
+# AI tooling
+.atl/

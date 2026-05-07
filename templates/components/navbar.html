@@ -1,0 +1,52 @@
+<!-- Top Navigation Bar -->
+<header class="flex justify-between items-center px-6 h-16 w-full bg-white/70 backdrop-blur-[12px] sticky top-0 z-50 border-b border-white/20 shadow-sm">
+    <div class="flex items-center gap-md">
+        <div class="flex items-center gap-0.5">
+            <span class="text-xl font-black drop-shadow-[0_0_5px_rgba(0, 0, 0,0.5)] font-inter tracking-tight">Cobrate</span><span class="text-xl font-black text-success drop-shadow-[0_0_5px_rgba(37,211,102,0.5)] font-inter tracking-tight">POS</span>
+        </div>
+        <h2 class="font-title-lg text-title-lg text-text-primary">{% block page_title %}Inventario{% endblock %}</h2>
+    </div>
+    
+    <div class="flex items-center gap-lg">
+        <!-- Search Bar (Desktop) -->
+        <div class="relative hidden sm:block">
+            <span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-text-secondary text-[20px]" data-icon="search">search</span>
+            <input class="pl-xl pr-md py-xs bg-white border-none rounded-lg text-metadata-sm focus:ring-2 focus:ring-primary/20 w-64 shadow-sm" placeholder="Buscar..." type="text" />
+        </div>
+        
+        <!-- User Info -->
+        <div class="flex items-center gap-md">
+            <span class="text-sm text-text-secondary hidden md:block">
+                {{ user.username }}
+                <span class="ml-1 text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full">
+                    {{ user.rol }}
+                </span>
+            </span>
+            
+            <!-- Notifications -->
+            <button class="p-sm rounded-full hover:bg-success/10 transition-colors active:scale-95 relative">
+                <span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+                <span class="absolute top-1 right-1 w-2 h-2 bg-error rounded-full"></span>
+            </button>
+            
+            <!-- Account Menu -->
+            <div class="relative group">
+                <button class="flex items-center gap-sm p-sm rounded-full hover:bg-success/10 transition-colors active:scale-95">
+                    <span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+                </button>
+                <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-border-subtle opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                    <div class="p-md border-b border-border-subtle">
+                        <p class="font-medium text-text-primary">{{ user.username }}</p>
+                        <p class="text-caption-xs text-text-secondary">{{ user.email|default:user.username }}</p>
+                    </div>
+                    <div class="p-sm">
+                        <a href="{% url 'logout' %}" class="flex items-center gap-sm px-md py-sm text-error hover:bg-critical-red-light rounded-lg transition-colors">
+                            <span class="material-symbols-outlined text-[18px]">logout</span>
+                            <span class="text-sm">Cerrar sesión</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>

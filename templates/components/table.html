@@ -1,0 +1,38 @@
+<!-- Reusable Table Component -->
+<!-- Usage: {% include "components/table.html" with headers=headers rows=rows %} -->
+<div class="bg-white rounded-xl shadow-sm border border-border-subtle overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-slate-50 border-b border-border-subtle">
+                    {% for header in headers %}
+                    <th class="px-lg py-md text-caption-xs font-label-md text-text-secondary uppercase tracking-wider {% if header.align == 'right' %}text-right{% endif %}">
+                        {{ header.label }}
+                    </th>
+                    {% endfor %}
+                    <th class="px-lg py-md text-caption-xs font-label-md text-text-secondary uppercase tracking-wider"></th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-border-subtle">
+                {% for row in rows %}
+                <tr class="{% if row.status == 'low' %}bg-critical-red-light/50{% endif %} hover:bg-slate-50 transition-colors {% if row.disabled %}opacity-70{% endif %}">
+                    {% for cell in row.cells %}
+                    <td class="px-lg py-md">{{ cell }}</td>
+                    {% endfor %}
+                    <td class="px-lg py-md text-right">
+                        <button class="p-sm rounded hover:bg-slate-100 text-text-secondary">
+                            <span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="{{ headers|length|add:1 }}" class="px-lg py-md text-center text-text-secondary">
+                        No data available
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
