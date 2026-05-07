@@ -19,12 +19,13 @@ El sistema cuenta con roles diferenciados:
 ---
 
 ## Tecnologías
-- **Backend:** Django + Django REST Framework
-- **Frontend:** Django Templates + Bootstrap 5 *(alternativa: React/Vue + API REST)*
-- **Base de datos:** PostgreSQL / SQLite para desarrollo
-- **Autenticación:** JWT con roles (Admin, Cajero)
-- **Testing:** Pytest / Django Test Framework
-- **Documentación API:** Swagger/OpenAPI
+- **Backend:** Django 5.2 + Django REST Framework 3.17
+- **Frontend:** Django Templates + Tailwind CSS *(alternativa: Next.js + API REST)*
+- **Base de datos:** PostgreSQL 15
+- **Autenticación:** SimpleJWT con roles (Admin, Cajero, Supervisor)
+- **Documentación API:** Swagger/OpenAPI (drf-spectacular)
+- **Containerización:** Docker Compose
+- **Testing:** Django Test Framework
 
 ---
 
@@ -41,6 +42,12 @@ El sistema cuenta con roles diferenciados:
 ---
 
 ## Funcionalidades Principales
+
+### Autenticación ✅
+- Login con username + password vía `/api/token/`
+- Renovación de tokens vía `/api/token/refresh/`
+- Roles en response: `admin`, `cajero`, `supervisor`
+- Página de login en `/login/`
 
 ### Ventas
 - Registrar venta con actualización de stock y caja.
@@ -66,10 +73,76 @@ El sistema cuenta con roles diferenciados:
 - Stock crítico: productos bajo mínimo con sugerencias de reposición.
 - Utilidad: ingresos vs costos por período.
 
-### Autenticación y Roles
-- JWT con roles diferenciados (Admin, Cajero).
+### Roles y Permisos
+- JWT con roles diferenciados (Admin, Cajero, Supervisor).
 - Cajero restringido a ventas y caja.
 - Admin con acceso completo a reportes y compras.
+
+---
+
+---
+
+## Instalación con Docker Compose (Recomendado)
+
+### Requisitos
+- Docker Desktop instalado
+- Git
+
+### 1. Clonar repositorio
+```bash
+git clone https://github.com/Yerridev/sistema-pos.git
+cd sistema-pos
+```
+
+### 2. Configurar variables de entorno
+```bash
+# Copiar ejemplo y editar con tus valores
+copy .env.example .env
+
+# Editar .env con tus datos:
+# SECRET_KEY=tu-clave-secreta-generada
+# DEBUG=True
+# DB_NAME=pos_db
+# DB_USER=postgres
+# DB_PASSWORD=tu_password_seguro
+# DB_HOST=db
+# DB_PORT=5432
+```
+
+### 3. Generar SECRET_KEY
+```bash
+python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+```
+
+### 4. Levantar servicios
+```bash
+docker compose up -d
+```
+
+### 5. Crear superusuario
+```bash
+docker compose exec web python manage.py createsuperuser
+```
+
+### 6. Verificar que funcione
+- **API:** http://localhost:8000/api/docs/ (Swagger)
+- **Login:** http://localhost:8000/login/
+- **Admin:** http://localhost:8000/admin/
+
+### Comandos Docker útiles
+```bash
+# Ver logs
+docker compose logs -f web
+
+# Detener servicios
+docker compose down
+
+# Reiniciar servicios
+docker compose restart
+
+# Solo base de datos
+docker compose up -d db
+```
 
 ---
 
@@ -138,26 +211,108 @@ El sistema cuenta con roles diferenciados:
 
 ---
 
-## Instalación Rápida (Desarrollo)
+## Instalación Local (Sin Docker)
+
+### Requisitos
+- Python 3.11+
+- PostgreSQL 15 corriendo en puerto 5432
+
+### 1. Clonar repositorio
 ```bash
-# Clonar repositorio
 git clone https://github.com/Yerridev/sistema-pos.git
 cd sistema-pos
+```
 
-# Crear entorno virtual
+### 2. Crear entorno virtual
+```bash
 python -m venv venv
-source venv/bin/activate   # Linux/Mac
 venv\Scripts\activate      # Windows
+source venv/bin/activate   # Linux/Mac
+```
 
-# Instalar dependencias
+### 3. Instalar dependencias
+```bash
 pip install -r requirements.txt
+```
 
-# Migrar base de datos
+### 4. Configurar variables de entorno
+```bash
+copy .env.example .env
+
+# Editar .env:
+# DB_HOST=localhost (NO usar 'db' en desarrollo local)
+```
+
+### 5. Crear base de datos PostgreSQL
+```sql
+CREATE DATABASE pos_db;
+CREATE USER postgres WITH PASSWORD 'tu_password';
+GRANT ALL PRIVILEGES ON DATABASE pos_db TO postgres;
+```
+
+### 6. Migrar base de datos
+```bash
 python manage.py migrate
+```
 
-# Crear superusuario
+### 7. Crear superusuario
+```bash
 python manage.py createsuperuser
+```
 
-# Ejecutar servidor
+### 8. Ejecutar servidor
+```bash
 python manage.py runserver
 ```
+
+---
+
+## Endpoints de API
+
+### Autenticación
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| POST | `/api/token/` | Login — retorna access + refresh tokens + rol |
+| POST | `/api/token/refresh/` | Renovar access token |
+| GET | `/login/` | Página de login (frontend) |
+
+### Documentación
+| Endpoint | Descripción |
+|----------|-------------|
+| `/api/docs/` | Swagger UI |
+| `/api/schema/` | OpenAPI Schema (JSON) |
+
+### Uso de tokens
+```bash
+# Login
+curl -X POST http://localhost:8000/api/token/ \
+  -H "Content-Type: application/json" \
+  -d '{"username": "admin", "password": "password123"}'
+
+# Usar token en requests
+curl -X GET http://localhost:8000/api/productos/ \
+  -H "Authorization: Bearer <tu_access_token>"
+```
+
+---
+
+## Flujo de Trabajo Colaborativo
+
+### Ramas
+- `main`: versión estable
+- `develop`: integración de funcionalidades
+- `feature/nombre-funcionalidad`: desarrollo individual
+
+### Commits convencionales
+```
+feat: agregar nueva funcionalidad
+fix: corregir bug
+docs: actualizar documentación
+test: agregar tests
+refactor: refactorizar código
+```
+
+### Pull Requests
+- Crear PR hacia `develop`
+- Revisar y aprobar antes de merge
+- Merge a `main` solo cuando esté estable
