@@ -18,9 +18,13 @@ from django.contrib import admin
 from django.urls import path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from usuarios.auth_views import CustomTokenObtainPairView, CustomTokenRefreshView
+from usuarios.views import login_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    
+    # Frontend pages
+    path('login/', login_view, name='login'),
     
     # Auth endpoints
     path('api/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
