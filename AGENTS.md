@@ -12,7 +12,7 @@ Sistema POS (Punto de Venta) para comercios retail peruanos. Etapa: **Auth + Log
 | App | Estado | Detalle |
 |-----|--------|---------|
 | `usuarios/` | ✅ Listo | Modelo Usuario con roles, auth JWT endpoint, login template |
-| `productos/` | 🔲 Pendiente | CRUD completo |
+| `productos/` | ✅ Listo | CRUD completo con modales, filtros, paginación, permisos por rol |
 | `ventas/` | 🔲 Pendiente | POS logic |
 | `caja/` | 🔲 Pendiente | Apertura/cierre |
 | `compras/` | 🔲 Pendiente | Proveedores |
@@ -82,11 +82,10 @@ reportes/         ← [PENDIENTE]
 ## Sistema de Roles
 
 El modelo `Usuario` tiene campo `rol` con choices:
-- `admin` — acceso total
-- `cajero` — ventas y caja
-- `supervisor` — acceso mixto
+- `admin` — acceso total (CRUD productos, reportes, compras, configuración)
+- `cajero` — solo lectura en inventario; acceso a ventas y caja
 
-**Estado actual:** El `rol` viene en el response del login pero **no hay restrictions de permisos implementadas** en las vistas. Esto es pendiente para el feature de productos.
+**Estado actual:** El `rol` viene en el response del login. Permisos implementados en `productos/permissions.py` (`IsAdminOrReadOnly`) y en las vistas de dashboard vía `get_role_permissions()`.
 
 ## Flujo de Trabajo Git
 

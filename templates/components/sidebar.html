@@ -1,0 +1,75 @@
+<!-- Sidebar Navigation -->
+<aside class="hidden md:flex flex-col gap-4 p-4 h-screen w-64 border-r border-slate-100 bg-white/80 glass-panel fixed left-0 top-0 z-40">
+    <!-- Logo -->
+    <div class="mb-xxl">
+        <h1 class="text-lg font-bold text-slate-900">Cobrate POS</h1>
+        <p class="text-caption-xs font-caption-xs text-text-secondary">
+            {{ user.get_full_name|default:user.username }}
+            <span class="ml-1 uppercase text-[10px] font-bold px-1 py-px rounded
+                {% if user.rol == 'admin' %}bg-primary/10 text-primary
+                {% else %}bg-slate-100 text-slate-500{% endif %}">
+                {{ user.rol }}
+            </span>
+        </p>
+    </div>
+
+    <!-- Navigation Menu -->
+    <nav class="flex flex-col gap-sm flex-grow">
+
+        {% url 'productos:dashboard' as url_inventario %}
+
+        {# Ventas — activo cuando: feature/ventas esté lista, reemplazar href="#" por {% url 'ventas:pos' %} #}
+        <a class="flex items-center gap-md p-md rounded-lg transition-transform hover:translate-x-1 font-inter text-sm font-semibold
+                  text-slate-600 hover:bg-slate-50 {% if request.path == '/ventas/' %}bg-success text-white shadow-[0_0_10px_rgba(37,211,102,0.4)]{% endif %}"
+           href="#">
+            <span class="material-symbols-outlined" data-icon="point_of_sale">point_of_sale</span>
+            Ventas
+        </a>
+
+        {# Inventario — activo #}
+        <a class="flex items-center gap-md p-md rounded-lg font-inter text-sm font-semibold
+                  {% if request.path|slice:':22' == '/dashboard/inventario' %}bg-success text-white shadow-[0_0_10px_rgba(37,211,102,0.4)]{% else %}text-slate-600 hover:bg-slate-50 transition-transform hover:translate-x-1{% endif %}"
+           href="{{ url_inventario }}">
+            <span class="material-symbols-outlined" data-icon="inventory_2"
+                  {% if request.path|slice:':22' == '/dashboard/inventario' %}style="font-variation-settings: 'FILL' 1;"{% endif %}>inventory_2</span>
+            Inventario
+        </a>
+
+        {# Caja — activo cuando: feature/caja esté lista, reemplazar href="#" por {% url 'caja:dashboard' %} #}
+        <a class="flex items-center gap-md p-md rounded-lg transition-transform hover:translate-x-1 font-inter text-sm font-semibold
+                  text-slate-600 hover:bg-slate-50 {% if request.path == '/caja/' %}bg-success text-white shadow-[0_0_10px_rgba(37,211,102,0.4)]{% endif %}"
+           href="#">
+            <span class="material-symbols-outlined" data-icon="point_of_sale">payments</span>
+            Caja
+        </a>
+
+        {# Compras — solo admin. Reemplazar href="#" por {% url 'compras:lista' %} #}
+        {% if user.rol == 'admin' %}
+        <a class="flex items-center gap-md p-md rounded-lg transition-transform hover:translate-x-1 font-inter text-sm font-semibold
+                  text-slate-600 hover:bg-slate-50"
+           href="#">
+            <span class="material-symbols-outlined" data-icon="local_shipping">local_shipping</span>
+            Compras
+        </a>
+        {% endif %}
+
+        {# Reportes — solo admin. Reemplazar href="#" por {% url 'reportes:dashboard' %} #}
+        {% if user.rol == 'admin' %}
+        <a class="flex items-center gap-md p-md rounded-lg transition-transform hover:translate-x-1 font-inter text-sm font-semibold
+                  text-slate-600 hover:bg-slate-50"
+           href="#">
+            <span class="material-symbols-outlined" data-icon="bar_chart">bar_chart</span>
+            Reportes
+        </a>
+        {% endif %}
+
+    </nav>
+
+    <!-- Nueva Venta CTA — deshabilitado hasta feature/ventas -->
+    <button disabled
+            class="bg-primary/50 text-white p-md rounded-lg font-label-md text-label-md flex items-center justify-center gap-sm cursor-not-allowed w-full"
+            title="Disponible cuando el módulo de ventas esté listo">
+        <span class="material-symbols-outlined" data-icon="add">add</span>
+        Nueva Venta
+    </button>
+</aside>

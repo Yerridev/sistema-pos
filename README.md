@@ -22,7 +22,7 @@ El sistema cuenta con roles diferenciados:
 - **Backend:** Django 5.2 + Django REST Framework 3.17
 - **Frontend:** Django Templates + Tailwind CSS *(alternativa: Next.js + API REST)*
 - **Base de datos:** PostgreSQL 15
-- **Autenticación:** SimpleJWT con roles (Admin, Cajero, Supervisor)
+- **Autenticación:** SimpleJWT con roles (Admin, Cajero)
 - **Documentación API:** Swagger/OpenAPI (drf-spectacular)
 - **Containerización:** Docker Compose
 - **Testing:** Django Test Framework
