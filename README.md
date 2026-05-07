@@ -1,7 +1,7 @@
 # Sistema de Punto de Venta (POS)
 
 ## Descripción
-Sistema para gestionar ventas en mostrador, control de inventario, apertura y cierre de caja, y reportes de ventas diarios y por producto. Orientado a negocios retail, permite una gestión eficiente de productos, proveedores, compras y ventas.  
+Sistema para gestionar ventas en mostrador, control de inventario, apertura y cierre de caja, y reportes de ventas diarios y por producto. Orientado a negocios retail, permite una gestión eficiente de productos, proveedores, compras y ventas.
 
 El sistema cuenta con roles diferenciados:
 - **Admin**: acceso completo a todas las funcionalidades y reportes.
@@ -10,21 +10,22 @@ El sistema cuenta con roles diferenciados:
 ---
 
 ## Integrantes del Grupo 6
-- Chilcon Ramirez Abondanyerri	
-- Chinchay Campos Jhon Jairo 	
-- Puluche Espejo Pietro Ralf	
-- Bardales Vasquez Keysi Jeanpierre	
+- Chilcon Ramirez Abondanyerri
+- Chinchay Campos Jhon Jairo
+- Puluche Espejo Pietro Ralf
+- Bardales Vasquez Keysi Jeanpierre
 - Hidrogo Mateo Jeslyn Nicole
 
 ---
 
 ## Tecnologías
-- **Backend:** Django + Django REST Framework
-- **Frontend:** Django Templates + Bootstrap 5 *(alternativa: React/Vue + API REST)*
-- **Base de datos:** PostgreSQL / SQLite para desarrollo
-- **Autenticación:** JWT con roles (Admin, Cajero)
-- **Testing:** Pytest / Django Test Framework
-- **Documentación API:** Swagger/OpenAPI
+- **Backend:** Django 5.2 + Django REST Framework 3.17
+- **Frontend:** Django Templates + Tailwind CSS *(alternativa: Next.js + API REST)*
+- **Base de datos:** PostgreSQL 15
+- **Autenticación:** SimpleJWT con roles (Admin, Cajero, Supervisor)
+- **Documentación API:** Swagger/OpenAPI (drf-spectacular)
+- **Containerización:** Docker Compose
+- **Testing:** Django Test Framework
 
 ---
 
@@ -41,6 +42,12 @@ El sistema cuenta con roles diferenciados:
 ---
 
 ## Funcionalidades Principales
+
+### Autenticación ✅
+- Login con username + password vía `/api/token/`
+- Renovación de tokens vía `/api/token/refresh/`
+- Roles en response: `admin`, `cajero`, `supervisor`
+- Página de login en `/login/`
 
 ### Ventas
 - Registrar venta con actualización de stock y caja.
@@ -66,60 +73,212 @@ El sistema cuenta con roles diferenciados:
 - Stock crítico: productos bajo mínimo con sugerencias de reposición.
 - Utilidad: ingresos vs costos por período.
 
-### Autenticación y Roles
-- JWT con roles diferenciados (Admin, Cajero).
+### Roles y Permisos
+- JWT con roles diferenciados (Admin, Cajero, Supervisor).
 - Cajero restringido a ventas y caja.
 - Admin con acceso completo a reportes y compras.
 
 ---
 
-## Flujo de Trabajo Colaborativo
-1. **Ramas principales**
-   - `main`: versión estable
-   - `develop`: integración de funcionalidades
+## Instalación con Docker Compose (Recomendado)
 
-2. **Ramas de desarrollo**
-   - Cada integrante crea su branch:
-     ```
-     git checkout -b feature/nombre-funcionalidad
-     ```
-   - Commit claros y atómicos:
-     ```
-     feat: agregar búsqueda de productos
-     fix: corregir cálculo de total en ventas
-     docs: actualizar README con endpoints
-     ```
+### Requisitos
+- Docker Desktop instalado
+- Git
 
-3. **Pull Requests**
-   - Abrir PR hacia `develop`
-   - Revisar y aprobar antes de merge
-   - Merge a `main` solo cuando esté estable
+### 1. Clonar repositorio
+```bash
+git clone https://github.com/Yerridev/sistema-pos.git
+cd sistema-pos
+```
 
-4. **Roles en GitHub**
-   - Todos los integrantes tienen permisos de **Write**
-   - `main` protegida con branch protection rules
+### 2. Configurar variables de entorno
+```bash
+# Copiar ejemplo y editar con tus valores
+copy .env.example .env
+
+# Editar .env con tus datos:
+# SECRET_KEY=tu-clave-secreta-generada
+# DEBUG=True
+# DB_NAME=pos_db
+# DB_USER=postgres
+# DB_PASSWORD=tu_password_seguro
+# DB_HOST=db
+# DB_PORT=5432
+```
+
+### 3. Generar SECRET_KEY
+```bash
+python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+```
+
+### 4. Levantar servicios
+```bash
+docker compose up -d
+```
+
+### 5. Crear superusuario
+```bash
+docker compose exec web python manage.py createsuperuser
+```
+
+### 6. Verificar que funcione
+- **API:** http://localhost:8000/api/docs/ (Swagger)
+- **Login:** http://localhost:8000/login/
+- **Admin:** http://localhost:8000/admin/
+
+### Comandos Docker útiles
+```bash
+# Ver logs
+docker compose logs -f web
+
+# Detener servicios
+docker compose down
+
+# Reiniciar servicios
+docker compose restart
+
+# Solo base de datos
+docker compose up -d db
+```
 
 ---
 
-## Instalación Rápida (Desarrollo)
+## Instalación Local (Sin Docker)
+
+### Requisitos
+- Python 3.11+
+- PostgreSQL 15 corriendo en puerto 5432
+
+### 1. Clonar repositorio
 ```bash
-# Clonar repositorio
 git clone https://github.com/Yerridev/sistema-pos.git
 cd sistema-pos
+```
 
-# Crear entorno virtual
+### 2. Crear entorno virtual
+```bash
 python -m venv venv
-source venv/bin/activate   # Linux/Mac
 venv\Scripts\activate      # Windows
+source venv/bin/activate   # Linux/Mac
+```
 
-# Instalar dependencias
+### 3. Instalar dependencias
+```bash
 pip install -r requirements.txt
+```
 
-# Migrar base de datos
+### 4. Configurar variables de entorno
+```bash
+copy .env.example .env
+
+# Editar .env:
+# DB_HOST=localhost (NO usar 'db' en desarrollo local)
+```
+
+### 5. Crear base de datos PostgreSQL
+```sql
+CREATE DATABASE pos_db;
+CREATE USER postgres WITH PASSWORD 'tu_password';
+GRANT ALL PRIVILEGES ON DATABASE pos_db TO postgres;
+```
+
+### 6. Migrar base de datos
+```bash
 python manage.py migrate
+```
 
-# Crear superusuario
+### 7. Crear superusuario
+```bash
 python manage.py createsuperuser
+```
 
-# Ejecutar servidor
+### 8. Ejecutar servidor
+```bash
 python manage.py runserver
+```
+
+---
+
+## Endpoints de API
+
+### Autenticación
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| POST | `/api/token/` | Login — retorna access + refresh tokens + rol |
+| POST | `/api/token/refresh/` | Renovar access token |
+| GET | `/login/` | Página de login (frontend) |
+
+### Documentación
+| Endpoint | Descripción |
+|----------|-------------|
+| `/api/docs/` | Swagger UI |
+| `/api/schema/` | OpenAPI Schema (JSON) |
+
+### Uso de tokens
+```bash
+# Login
+curl -X POST http://localhost:8000/api/token/ \
+  -H "Content-Type: application/json" \
+  -d '{"username": "admin", "password": "password123"}'
+
+# Usar token en requests
+curl -X GET http://localhost:8000/api/productos/ \
+  -H "Authorization: Bearer <tu_access_token>"
+```
+
+---
+
+## Flujo de Trabajo Colaborativo
+
+### Ramas
+- `main`: versión estable
+- `develop`: integración de funcionalidades
+- `feature/nombre-funcionalidad`: desarrollo individual
+
+### Commits convencionales
+```
+feat: agregar nueva funcionalidad
+fix: corregir bug
+docs: actualizar documentación
+test: agregar tests
+refactor: refactorizar código
+```
+
+### Pull Requests
+- Crear PR hacia `develop`
+- Revisar y aprobar antes de merge
+- Merge a `main` solo cuando esté estable
+
+---
+
+## Estructura del Proyecto
+
+```
+sistema-pos/
+├── config/              # Configuración Django (settings, urls, wsgi)
+├── templates/           # Plantillas HTML (login.html)
+├── usuarios/            # Modelo Usuario + Auth API
+│   ├── auth_views.py    # Vistas JWT (login, refresh)
+│   ├── serializers.py  # Serializers JWT
+│   └── models.py       # Modelo Usuario con roles
+├── productos/           # CRUD de productos [PENDIENTE]
+├── ventas/              # Lógica de ventas [PENDIENTE]
+├── caja/                # Apertura/cierre de caja [PENDIENTE]
+├── compras/             # Compras a proveedores [PENDIENTE]
+├── reportes/            # Reportes y estadísticas [PENDIENTE]
+├── docker-compose.yml   # Servicios Docker
+├── Dockerfile           # Imagen Python/Django
+├── .env.example         # Variables de entorno de ejemplo
+└── requirements.txt     # Dependencias Python
+```
+
+---
+
+## Notas de Desarrollo
+
+- **Localización:** `es-pe`, zona horaria `America/Lima`, moneda PEN (S/.)
+- **AUTH_USER_MODEL:** `usuarios.Usuario` — nunca usar el modelo User por defecto
+- **JWT Only:** Session auth desactivado, solo tokens Bearer
+- **`.env` obligatorio:** Sin él, Django no inicia
+- **Facturación SUNAT:** Próximamente (XML UBL 2.1, integración PSE/OSE)
