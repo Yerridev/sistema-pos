@@ -39,7 +39,7 @@ class ProductoViewSet(viewsets.ModelViewSet):
     queryset = Producto.objects.select_related('categoria').all()
     permission_classes = [IsAuthenticated, IsAdminOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['categoria', 'activo', 'stock_critico']
+    filterset_fields = ['categoria', 'activo']
     search_fields = ['codigo_barra', 'nombre', 'categoria__nombre']
     ordering_fields = ['nombre', 'precio_venta', 'stock_actual', 'created_at']
     ordering = ['nombre']
