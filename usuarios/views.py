@@ -49,3 +49,11 @@ def logout_view(request):
     from django.contrib.auth import logout
     logout(request)
     return redirect('login')
+
+
+@require_http_methods(["GET"])
+def dashboard_view(request):
+    """
+    Renderiza el panel principal posterior al login.
+    """
+    return render(request, 'dashboard.html')
