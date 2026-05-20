@@ -8,6 +8,8 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from .permissions import IsCajeroOrAdmin, CanAccessVentaObject, CanAnularVenta
+
 
 class VentaFallbackSerializer(serializers.Serializer):
     """Serializer mínimo para que el ViewSet pueda cargar antes del merge final."""
@@ -18,7 +20,7 @@ def get_model(app_label, model_name):
 
 
 class VentaViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsCajeroOrAdmin, CanAccessVentaObject, CanAnularVenta]
 
     def get_serializer_class(self):
         try:

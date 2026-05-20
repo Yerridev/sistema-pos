@@ -7,13 +7,15 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from .permissions import CanAccessCaja
+
 
 class CajaFallbackSerializer(serializers.Serializer):
     """Serializer mínimo para que el ViewSet pueda cargar antes del merge final."""
 
 
 class CajaViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CanAccessCaja]
 
     def _model(self):
         return apps.get_model('caja', 'Caja')
@@ -54,6 +56,8 @@ class CajaViewSet(viewsets.ModelViewSet):
         Caja = self._model()
         caja = self.get_object()
 
+        if caja.cajero_id != request.user.id and request.user.rol != 'admin':
+            return Response({'detail': 'No puede abrir una caja de otro cajero.'}, status=status.HTTP_403_FORBIDDEN)
         if Caja.objects.filter(cajero=request.user, estado='ABIERTA').exclude(pk=caja.pk).exists():
             return Response({'detail': 'Ya existe una caja ABIERTA para este cajero.'}, status=status.HTTP_400_BAD_REQUEST)
         if caja.estado == 'ABIERTA':

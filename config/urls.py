@@ -18,11 +18,11 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
-from caja.views import CajaViewSet
 from usuarios.auth_views import CustomTokenObtainPairView, CustomTokenRefreshView
-from usuarios.views import dashboard_view, login_view, logout_view
+from usuarios.views import login_view, logout_view
 from productos.views import CategoriaViewSet, ProductoViewSet
 from ventas.views import VentaViewSet
+from caja.views import CajaViewSet
 
 # Router para API
 router = DefaultRouter()
@@ -37,7 +37,6 @@ urlpatterns = [
     # Auth
     path('login/', login_view, name='login'),
     path('logout/', logout_view, name='logout'),
-    path('dashboard/', dashboard_view, name='dashboard'),
 
     # Dashboard
     path('', include('productos.urls')),
