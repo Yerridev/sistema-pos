@@ -31,6 +31,9 @@ class CanAnularVenta(BasePermission):
     def has_object_permission(self, request, view, obj):
         if getattr(view, "action", None) != "anular":
             return True
+        method = getattr(request, "method", "POST")
+        if method.upper() != "POST":
+            return False
 
         user = request.user
         if not user or not user.is_authenticated:

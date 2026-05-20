@@ -21,9 +21,19 @@ class CajaSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["saldo_actual", "saldo_final", "estado", "fecha_apertura", "fecha_cierre"]
 
+    def validate_saldo_inicial(self, value):
+        if value < 0:
+            raise serializers.ValidationError("El saldo inicial no puede ser negativo.")
+        return value
+
 
 class MovimientoCajaSerializer(serializers.ModelSerializer):
     class Meta:
         model = MovimientoCaja
         fields = ["id", "tipo", "monto", "concepto", "fecha", "usuario", "caja"]
         read_only_fields = ["fecha", "usuario"]
+
+    def validate_monto(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("El monto debe ser mayor que cero.")
+        return value

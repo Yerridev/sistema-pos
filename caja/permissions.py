@@ -13,6 +13,9 @@ class CanAccessCaja(BasePermission):
         )
 
     def has_object_permission(self, request, view, obj):
+        method = getattr(request, "method", "GET")
+        if method.upper() not in {"GET", "HEAD", "OPTIONS", "POST", "PUT", "PATCH", "DELETE"}:
+            return False
         user = request.user
         if not user or not user.is_authenticated:
             return False
