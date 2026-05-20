@@ -21,11 +21,15 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from usuarios.auth_views import CustomTokenObtainPairView, CustomTokenRefreshView
 from usuarios.views import login_view, logout_view
 from productos.views import CategoriaViewSet, ProductoViewSet
+from ventas.views import VentaViewSet
+from caja.views import CajaViewSet
 
 # Router para API
 router = DefaultRouter()
 router.register(r'categorias', CategoriaViewSet, basename='categoria')
 router.register(r'productos', ProductoViewSet, basename='producto')
+router.register(r'ventas', VentaViewSet, basename='venta')
+router.register(r'cajas', CajaViewSet, basename='caja')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
