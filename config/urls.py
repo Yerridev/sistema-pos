@@ -40,6 +40,8 @@ urlpatterns = [
 
     # Dashboard
     path('', include('productos.urls')),
+    path('', include('usuarios.urls')),
+    path('', include('ventas.dashboard_urls')),
 
     # Auth endpoints (API)
     path('api/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
