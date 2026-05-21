@@ -34,14 +34,14 @@ def _ventas_queryset(request):
 
 def _venta_resumen(queryset):
     resumen = queryset.aggregate(
-        total=Sum("total"),
+        total_general=Sum("total"),
         cantidad=Count("id"),
         efectivo=Sum("total", filter=Q(metodo_pago="EFECTIVO", estado="COMPLETADA")),
         tarjeta=Sum("total", filter=Q(metodo_pago="TARJETA", estado="COMPLETADA")),
         transferencia=Sum("total", filter=Q(metodo_pago="TRANSFERENCIA", estado="COMPLETADA")),
     )
     return {
-        "total": resumen["total"] or Decimal("0.00"),
+        "total": resumen["total_general"] or Decimal("0.00"),
         "cantidad": resumen["cantidad"] or 0,
         "efectivo": resumen["efectivo"] or Decimal("0.00"),
         "tarjeta": resumen["tarjeta"] or Decimal("0.00"),
