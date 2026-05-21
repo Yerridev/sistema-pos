@@ -1,87 +1,289 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 
 {% block title %}Nueva Venta - Cobrate POS{% endblock %}
 {% block page_title %}Nueva Venta{% endblock %}
 
 {% block content %}
 <div class="flex flex-col gap-xl">
+  <div id="venta-alert" class="hidden rounded-lg px-md py-sm text-sm"></div>
+
   <section class="bg-white rounded-xl shadow-sm border border-border-subtle p-lg">
-    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-md">
-      <div>
-        <h1 class="text-2xl font-bold text-text-primary">Preparar venta</h1>
-        <p class="text-sm text-text-secondary mt-xs">Consulta cajas disponibles, revisa productos en stock y prepara una nueva operación de venta.</p>
+    <div class="flex flex-col lg:flex-row lg:items-end gap-md">
+      <div class="flex-1">
+        <label class="text-caption-xs font-medium text-text-secondary" for="scanner-input">Escáner / Código de barras</label>
+        <input id="scanner-input" type="text" placeholder="Escanea y presiona Enter"
+               class="mt-xs w-full rounded-lg border border-border-subtle px-md py-sm text-sm font-mono focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
       </div>
-      <a href="{% url 'ventas:dashboard' %}" class="inline-flex items-center gap-xs px-md py-sm rounded-lg border border-border-subtle text-text-secondary hover:bg-slate-50 text-sm transition-colors">
-        <span class="material-symbols-outlined text-[18px]">arrow_back</span>
-        Volver a ventas
-      </a>
+      <div class="w-full lg:w-[220px]">
+        <label class="text-caption-xs font-medium text-text-secondary" for="caja-id">Caja abierta *</label>
+        <select id="caja-id" class="mt-xs w-full rounded-lg border border-border-subtle px-md py-sm text-sm">
+          <option value="">Selecciona caja</option>
+          {% for caja in cajas_abiertas %}
+          <option value="{{ caja.id }}">{{ caja.nombre }} ({{ caja.cajero.username }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="w-full lg:w-[200px]">
+        <label class="text-caption-xs font-medium text-text-secondary" for="metodo-pago">Método pago *</label>
+        <select id="metodo-pago" class="mt-xs w-full rounded-lg border border-border-subtle px-md py-sm text-sm">
+          {% for value, label in metodos_pago %}
+          <option value="{{ value }}">{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="w-full lg:w-[180px]">
+        <label class="text-caption-xs font-medium text-text-secondary" for="descuento-global">Descuento</label>
+        <input id="descuento-global" type="number" min="0" step="0.01" value="0"
+               class="mt-xs w-full rounded-lg border border-border-subtle px-md py-sm text-sm" />
+      </div>
+      <div class="flex gap-sm">
+        <button id="btn-buscar" type="button" class="h-[42px] inline-flex items-center justify-center rounded-lg border border-border-subtle px-md text-text-secondary hover:bg-slate-50">
+          <span class="material-symbols-outlined text-[18px]">search</span>
+        </button>
+        <button id="btn-cobrar" type="button" class="h-[42px] inline-flex items-center gap-xs rounded-lg bg-primary text-white px-md hover:bg-primary-hover neon-glow disabled:opacity-60" {% if not cajas_abiertas %}disabled{% endif %}>
+          <span class="material-symbols-outlined text-[18px]">point_of_sale</span>
+          Cobrar
+        </button>
+      </div>
     </div>
-  </section>
-
-  <section class="grid grid-cols-1 xl:grid-cols-[1.2fr,1fr] gap-md">
-    <article class="bg-white rounded-xl shadow-sm border border-border-subtle p-lg">
-      <h2 class="font-semibold text-text-primary">Cajas abiertas disponibles</h2>
-      <div class="mt-md flex flex-col gap-sm">
-        {% for caja in cajas_abiertas %}
-        <div class="rounded-lg border border-border-subtle px-md py-sm flex items-center justify-between">
-          <div>
-            <p class="font-medium text-text-primary">{{ caja.nombre }}</p>
-            <p class="text-sm text-text-secondary">{{ caja.cajero.username }} · Saldo actual S/. {{ caja.saldo_actual }}</p>
-          </div>
-          <span class="inline-flex px-sm py-[2px] rounded-full text-[11px] font-semibold bg-primary/10 text-primary">{{ caja.get_estado_display }}</span>
-        </div>
-        {% empty %}
-        <p class="text-sm text-text-secondary">No hay cajas abiertas para este usuario.</p>
-        {% endfor %}
-      </div>
-    </article>
-
-    <article class="bg-white rounded-xl shadow-sm border border-border-subtle p-lg">
-      <h2 class="font-semibold text-text-primary">Metodos de pago</h2>
-      <div class="mt-md flex flex-col gap-sm">
-        {% for value, label in metodos_pago %}
-        <div class="rounded-lg bg-surface-container px-md py-sm text-sm text-text-primary">{{ label }}</div>
-        {% endfor %}
-      </div>
-      <div class="mt-lg rounded-lg border border-dashed border-border-subtle p-md">
-        <p class="text-sm text-text-secondary">Selecciona el método de pago correspondiente para continuar con el registro de la venta.</p>
-      </div>
-    </article>
+    {% if not cajas_abiertas %}
+    <p class="mt-sm text-sm text-error">No hay caja abierta para este usuario. <a href="{% url 'ventas:caja_dashboard' %}" class="underline">Ir a caja</a>.</p>
+    {% endif %}
   </section>
 
   <section class="bg-white rounded-xl shadow-sm border border-border-subtle overflow-hidden">
-    <div class="px-lg py-md border-b border-border-subtle">
-      <h2 class="font-semibold text-text-primary">Productos disponibles</h2>
-      <p class="text-caption-xs text-text-secondary">Consulta rápida de productos disponibles para armar el ticket.</p>
+    <div class="px-lg py-md border-b border-border-subtle flex items-center justify-between">
+      <h2 class="font-semibold text-text-primary">Carrito</h2>
+      <div class="flex items-center gap-sm">
+        <button id="btn-agregar-manual" type="button" class="text-sm text-text-secondary hover:text-primary">Agregar manual</button>
+        <button id="btn-limpiar" type="button" class="text-sm text-text-secondary hover:text-error">Limpiar</button>
+      </div>
     </div>
     <div class="overflow-x-auto">
       <table class="w-full text-left border-collapse text-sm">
         <thead>
           <tr class="bg-slate-50 border-b border-border-subtle">
-            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase">Codigo</th>
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase">Código</th>
             <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase">Producto</th>
-            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase">Categoria</th>
-            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase text-right">Stock</th>
             <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase text-right">Precio</th>
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase text-right">Cant.</th>
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase text-right">Desc.</th>
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase text-right">Subtotal</th>
+            <th class="px-lg py-sm"></th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-border-subtle">
-          {% for producto in productos %}
-          <tr class="hover:bg-slate-50 transition-colors">
-            <td class="px-lg py-sm font-mono text-xs text-text-secondary">{{ producto.codigo_barra|default:"-" }}</td>
-            <td class="px-lg py-sm text-text-primary font-medium">{{ producto.nombre }}</td>
-            <td class="px-lg py-sm text-text-secondary">{{ producto.categoria.nombre }}</td>
-            <td class="px-lg py-sm text-right font-mono text-text-primary">{{ producto.stock_actual }}</td>
-            <td class="px-lg py-sm text-right font-mono font-semibold text-text-primary">S/. {{ producto.precio_venta }}</td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="5" class="px-lg py-xxl text-center text-text-secondary">No hay productos disponibles en inventario.</td>
-          </tr>
-          {% endfor %}
+        <tbody id="carrito-body" class="divide-y divide-border-subtle">
+          <tr><td colspan="7" class="px-lg py-xxl text-center text-text-secondary">Escanea un producto para empezar.</td></tr>
         </tbody>
       </table>
     </div>
   </section>
+
+  <section class="grid grid-cols-1 md:grid-cols-4 gap-md">
+    <article class="bg-white rounded-xl shadow-sm border border-border-subtle p-md"><p class="text-caption-xs text-text-secondary">Items</p><p id="sum-items" class="text-2xl font-bold text-text-primary">0</p></article>
+    <article class="bg-white rounded-xl shadow-sm border border-border-subtle p-md"><p class="text-caption-xs text-text-secondary">Subtotal</p><p id="sum-subtotal" class="text-2xl font-bold text-text-primary">S/. 0.00</p></article>
+    <article class="bg-white rounded-xl shadow-sm border border-border-subtle p-md"><p class="text-caption-xs text-text-secondary">IGV (18%)</p><p id="sum-igv" class="text-2xl font-bold text-text-primary">S/. 0.00</p></article>
+    <article class="bg-white rounded-xl shadow-sm border border-border-subtle p-md"><p class="text-caption-xs text-text-secondary">Total</p><p id="sum-total" class="text-2xl font-bold text-primary">S/. 0.00</p></article>
+  </section>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CSRF = '{{ csrf_token }}';
+const ENDPOINTS = {
+  productos: '/api/productos/',
+  ventas: '/api/ventas/',
+};
+let carrito = [];
+
+const scannerInput = document.getElementById('scanner-input');
+const alertBox = document.getElementById('venta-alert');
+const body = document.getElementById('carrito-body');
+
+function showAlert(msg, type='error') {
+  alertBox.className = 'rounded-lg px-md py-sm text-sm ' + (type === 'success' ? 'bg-primary/10 text-primary' : 'bg-critical-red-light text-error');
+  alertBox.textContent = msg;
+  alertBox.classList.remove('hidden');
+  setTimeout(() => alertBox.classList.add('hidden'), 3200);
+}
+
+function money(n) { return `S/. ${Number(n).toFixed(2)}`; }
+
+function calcTotals() {
+  const descuentoGlobal = Number(document.getElementById('descuento-global').value || 0);
+  const subtotal = carrito.reduce((a, i) => a + ((i.precio * i.cantidad) - i.descuento_linea), 0);
+  const igv = subtotal * 0.18;
+  const total = Math.max(0, subtotal + igv - descuentoGlobal);
+  document.getElementById('sum-items').textContent = carrito.reduce((a, i) => a + i.cantidad, 0);
+  document.getElementById('sum-subtotal').textContent = money(subtotal);
+  document.getElementById('sum-igv').textContent = money(igv);
+  document.getElementById('sum-total').textContent = money(total);
+}
+
+function renderCarrito() {
+  if (!carrito.length) {
+    body.innerHTML = '<tr><td colspan="7" class="px-lg py-xxl text-center text-text-secondary">Escanea un producto para empezar.</td></tr>';
+    calcTotals();
+    return;
+  }
+
+  body.innerHTML = carrito.map((i, idx) => {
+    const sub = (i.precio * i.cantidad) - i.descuento_linea;
+    return `
+      <tr>
+        <td class="px-lg py-sm font-mono text-xs text-text-secondary">${i.codigo || '-'}</td>
+        <td class="px-lg py-sm text-text-primary font-medium">${i.nombre}<div class="text-[11px] text-text-secondary">Stock: ${i.stock}</div></td>
+        <td class="px-lg py-sm text-right font-mono">${money(i.precio)}</td>
+        <td class="px-lg py-sm text-right"><input data-idx="${idx}" data-k="cantidad" type="number" min="1" max="${i.stock}" value="${i.cantidad}" class="w-20 rounded border border-border-subtle px-xs py-xs text-right"/></td>
+        <td class="px-lg py-sm text-right"><input data-idx="${idx}" data-k="descuento_linea" type="number" min="0" step="0.01" value="${Number(i.descuento_linea).toFixed(2)}" class="w-24 rounded border border-border-subtle px-xs py-xs text-right"/></td>
+        <td class="px-lg py-sm text-right font-mono font-semibold">${money(sub)}</td>
+        <td class="px-lg py-sm text-right"><button data-rm="${idx}" class="text-error hover:underline text-xs">Quitar</button></td>
+      </tr>`;
+  }).join('');
+
+  body.querySelectorAll('input[data-idx]').forEach(inp => {
+    inp.addEventListener('change', (e) => {
+      const idx = Number(e.target.dataset.idx);
+      const key = e.target.dataset.k;
+      let val = Number(e.target.value || 0);
+      if (key === 'cantidad') {
+        if (val < 1) val = 1;
+        if (val > carrito[idx].stock) { val = carrito[idx].stock; showAlert('Cantidad supera stock disponible.'); }
+      }
+      if (key === 'descuento_linea' && val < 0) val = 0;
+      carrito[idx][key] = val;
+      renderCarrito();
+    });
+  });
+
+  body.querySelectorAll('button[data-rm]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      carrito.splice(Number(btn.dataset.rm), 1);
+      renderCarrito();
+    });
+  });
+
+  calcTotals();
+}
+
+async function apiGetProductoByBarcode(code) {
+  const res = await fetch(`${ENDPOINTS.productos}?search=${encodeURIComponent(code)}&activo=true`, { credentials: 'same-origin' });
+  if (!res.ok) throw new Error('No se pudo consultar productos.');
+  const data = await res.json();
+  const results = Array.isArray(data) ? data : (data.results || []);
+  const exact = results.find(p => (p.codigo_barra || '') === code);
+  return exact || null;
+}
+
+function addOrIncrement(p) {
+  const found = carrito.find(i => i.id === p.id);
+  if (found) {
+    if (found.cantidad + 1 > found.stock) {
+      showAlert('No puedes exceder el stock disponible.');
+      return;
+    }
+    found.cantidad += 1;
+  } else {
+    carrito.push({
+      id: p.id,
+      codigo: p.codigo_barra || '',
+      nombre: p.nombre,
+      precio: Number(p.precio_venta),
+      stock: Number(p.stock_actual),
+      cantidad: 1,
+      descuento_linea: 0,
+    });
+  }
+  renderCarrito();
+}
+
+async function procesarScanner(codeOverride = null) {
+  const code = (codeOverride ?? scannerInput.value).trim();
+  if (!code) return;
+  try {
+    const p = await apiGetProductoByBarcode(code);
+    if (!p) {
+      showAlert('Producto no encontrado por código de barras.');
+    } else if (Number(p.stock_actual) <= 0) {
+      showAlert('Producto sin stock.');
+    } else {
+      addOrIncrement(p);
+      showAlert(`Producto agregado: ${p.nombre}`, 'success');
+    }
+  } catch {
+    showAlert('Error consultando producto.');
+  } finally {
+    scannerInput.value = '';
+    scannerInput.focus();
+  }
+}
+
+scannerInput?.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    procesarScanner();
+  }
+});
+
+document.getElementById('btn-buscar')?.addEventListener('click', procesarScanner);
+document.getElementById('descuento-global')?.addEventListener('input', calcTotals);
+document.getElementById('btn-limpiar')?.addEventListener('click', () => { carrito = []; renderCarrito(); scannerInput.focus(); });
+document.getElementById('btn-agregar-manual')?.addEventListener('click', async () => {
+  const codigo = prompt('Ingresa código de barras:');
+  if (!codigo) return;
+  await procesarScanner(codigo);
+});
+
+async function cobrarVenta() {
+  const cajaId = document.getElementById('caja-id').value;
+  const metodo = document.getElementById('metodo-pago').value;
+  const descuento = Number(document.getElementById('descuento-global').value || 0);
+
+  if (!cajaId) { showAlert('Selecciona una caja abierta.'); return; }
+  if (!carrito.length) { showAlert('No hay productos en el carrito.'); return; }
+
+  const payload = {
+    caja_id: Number(cajaId),
+    metodo_pago: metodo,
+    descuento,
+    detalles: carrito.map(i => ({
+      producto: i.id,
+      cantidad: i.cantidad,
+      precio_unitario: i.precio,
+      descuento_linea: i.descuento_linea,
+    })),
+  };
+
+  const btn = document.getElementById('btn-cobrar');
+  btn.disabled = true;
+  try {
+    const res = await fetch(ENDPOINTS.ventas, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      const msg = data?.detail || data?.caja_id || data?.stock || data?.detalles || 'No se pudo registrar la venta.';
+      showAlert(Array.isArray(msg) ? msg.join(', ') : msg);
+      return;
+    }
+    showAlert(`Venta #${data.id} registrada correctamente.`, 'success');
+    carrito = [];
+    renderCarrito();
+    document.getElementById('descuento-global').value = 0;
+    scannerInput.focus();
+  } catch {
+    showAlert('Error de conexión al registrar venta.');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+document.getElementById('btn-cobrar')?.addEventListener('click', cobrarVenta);
+renderCarrito();
+setTimeout(() => scannerInput?.focus(), 150);
+</script>
 {% endblock %}

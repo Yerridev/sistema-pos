@@ -6,6 +6,7 @@ from .views import (
     ProductoUpdateView,
     ProductoDeleteView,
     CategoriaListView,
+    CategoriaCreateView,
 )
 
 app_name = 'productos'
@@ -16,4 +17,5 @@ urlpatterns = [
     path('dashboard/inventario/<int:pk>/editar/', ProductoUpdateView.as_view(), name='producto_editar'),
     path('dashboard/inventario/<int:pk>/eliminar/', ProductoDeleteView.as_view(), name='producto_eliminar'),
     path('dashboard/categorias/', CategoriaListView.as_view(), name='categorias'),
+    path('dashboard/categorias/crear/', CategoriaCreateView.as_view(), name='categoria_crear'),
 ]

@@ -16,6 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.views.generic import RedirectView
 from rest_framework.routers import DefaultRouter
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from usuarios.auth_views import CustomTokenObtainPairView, CustomTokenRefreshView
@@ -32,6 +33,7 @@ router.register(r'ventas', VentaViewSet, basename='venta')
 router.register(r'cajas', CajaViewSet, basename='caja')
 
 urlpatterns = [
+    path('', RedirectView.as_view(url='/login/', permanent=False), name='root_redirect'),
     path('admin/', admin.site.urls),
 
     # Auth

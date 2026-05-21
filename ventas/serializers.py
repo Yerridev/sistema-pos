@@ -12,6 +12,10 @@ class DetalleVentaSerializer(serializers.ModelSerializer):
         model = DetalleVenta
         fields = ["producto", "cantidad", "precio_unitario", "descuento_linea", "subtotal"]
         read_only_fields = ["subtotal"]
+        extra_kwargs = {
+            "precio_unitario": {"required": False},
+            "descuento_linea": {"required": False, "default": Decimal("0.00")},
+        }
 
 
 class VentaSerializer(serializers.ModelSerializer):

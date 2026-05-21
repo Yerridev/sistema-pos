@@ -4,7 +4,21 @@
         <div class="flex items-center gap-0.5">
             <span class="text-xl font-black drop-shadow-[0_0_5px_rgba(0, 0, 0,0.5)] font-inter tracking-tight">Cobrate</span><span class="text-xl font-black text-success drop-shadow-[0_0_5px_rgba(37,211,102,0.5)] font-inter tracking-tight">POS</span>
         </div>
-        <h2 class="font-title-lg text-title-lg text-text-primary">{% block page_title %}Inventario{% endblock %}</h2>
+        <h2 class="font-title-lg text-title-lg text-text-primary">
+            {% if page_title %}
+                {{ page_title }}
+            {% elif '/dashboard/inventario/' in request.path %}
+                Inventario
+            {% elif '/dashboard/ventas/nueva/' in request.path %}
+                Nueva Venta
+            {% elif '/dashboard/ventas/' in request.path %}
+                Ventas
+            {% elif '/dashboard/caja/' in request.path %}
+                Caja
+            {% else %}
+                Dashboard
+            {% endif %}
+        </h2>
     </div>
     
     <div class="flex items-center gap-lg">

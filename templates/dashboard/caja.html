@@ -5,6 +5,16 @@
 
 {% block content %}
 <div class="flex flex-col gap-xl">
+  {% if messages %}
+  <section class="flex flex-col gap-sm">
+    {% for message in messages %}
+    <div class="rounded-lg px-md py-sm text-sm {% if message.tags == 'error' %}bg-critical-red-light text-error{% elif message.tags == 'success' %}bg-primary/10 text-primary{% else %}bg-surface-container text-text-primary{% endif %}">
+      {{ message }}
+    </div>
+    {% endfor %}
+  </section>
+  {% endif %}
+
   <section class="grid grid-cols-1 xl:grid-cols-[1.3fr,1fr] gap-md">
     <article class="bg-white rounded-xl shadow-sm border border-border-subtle p-lg">
       <div class="flex items-start justify-between gap-md">
@@ -36,12 +46,40 @@
         </div>
       </div>
       <div class="flex flex-wrap gap-sm mt-lg">
-        <a href="/api/cajas/{{ caja_actual.id }}/abrir/" class="px-md py-sm rounded-lg border border-border-subtle text-text-secondary hover:bg-slate-50 text-sm transition-colors">Abrir caja</a>
-        <a href="/api/cajas/{{ caja_actual.id }}/cerrar/" class="px-md py-sm rounded-lg border border-border-subtle text-text-secondary hover:bg-slate-50 text-sm transition-colors">Cerrar caja</a>
+        {% if caja_actual.estado == 'CERRADA' %}
+        <form method="post" action="{% url 'ventas:caja_accion' caja_actual.id 'abrir' %}" class="flex items-center gap-sm">
+          {% csrf_token %}
+          <input type="number" min="0" step="0.01" name="saldo_inicial" placeholder="Saldo inicial"
+                 class="w-36 rounded-lg border border-border-subtle px-sm py-sm text-sm">
+          <button type="submit" class="px-md py-sm rounded-lg bg-primary text-white hover:bg-primary-hover text-sm transition-colors">Abrir caja</button>
+        </form>
+        {% endif %}
+        {% if caja_actual.estado == 'ABIERTA' %}
+        <form method="post" action="{% url 'ventas:caja_accion' caja_actual.id 'cerrar' %}">
+          {% csrf_token %}
+          <button type="submit" class="px-md py-sm rounded-lg border border-border-subtle text-text-secondary hover:bg-slate-50 text-sm transition-colors">Cerrar caja</button>
+        </form>
+        {% endif %}
         <a href="/api/cajas/{{ caja_actual.id }}/" class="px-md py-sm rounded-lg bg-primary text-white hover:bg-primary-hover text-sm transition-colors">Ver API</a>
       </div>
       {% else %}
       <p class="text-sm text-text-secondary mt-md">Aun no hay una caja visible para este usuario.</p>
+      <form method="post" action="{% url 'ventas:caja_abrir_nueva' %}" class="mt-md flex flex-wrap items-end gap-sm">
+        {% csrf_token %}
+        <div class="flex flex-col gap-xs">
+          <label class="text-caption-xs font-medium text-text-secondary">Nombre de caja</label>
+          <input type="text" name="nombre" placeholder="Caja principal"
+                 class="w-44 rounded-lg border border-border-subtle px-sm py-sm text-sm">
+        </div>
+        <div class="flex flex-col gap-xs">
+          <label class="text-caption-xs font-medium text-text-secondary">Saldo inicial</label>
+          <input type="number" min="0" step="0.01" name="saldo_inicial" value="0"
+                 class="w-32 rounded-lg border border-border-subtle px-sm py-sm text-sm">
+        </div>
+        <button type="submit" class="px-md py-sm rounded-lg bg-primary text-white hover:bg-primary-hover text-sm transition-colors">
+          Crear y abrir caja
+        </button>
+      </form>
       {% endif %}
     </article>
 

@@ -317,3 +317,35 @@ class CategoriaListView(View):
     def get(self, request):
         cats = list(Categoria.objects.filter(activo=True).order_by('nombre').values('id', 'nombre'))
         return JsonResponse({'results': cats})
+
+
+@method_decorator(login_required, name='dispatch')
+class CategoriaCreateView(View):
+    """Crea categoria desde dashboard inventario (modal)."""
+
+    def post(self, request):
+        if not get_role_permissions(getattr(request.user, 'rol', None))['can_edit']:
+            return JsonResponse({'error': 'Sin permisos para crear categorías.'}, status=403)
+
+        try:
+            data = json.loads(request.body)
+        except (json.JSONDecodeError, ValueError):
+            data = request.POST.dict()
+
+        nombre = (data.get('nombre') or '').strip()
+        descripcion = (data.get('descripcion') or '').strip()
+        if not nombre:
+            return JsonResponse({'errors': {'nombre': 'El nombre es obligatorio.'}}, status=400)
+
+        if Categoria.objects.filter(nombre__iexact=nombre).exists():
+            return JsonResponse({'errors': {'nombre': 'La categoría ya existe.'}}, status=400)
+
+        categoria = Categoria.objects.create(nombre=nombre, descripcion=descripcion or None, activo=True)
+        return JsonResponse(
+            {
+                'success': True,
+                'message': f'Categoría "{categoria.nombre}" creada correctamente.',
+                'categoria': {'id': categoria.id, 'nombre': categoria.nombre},
+            },
+            status=201,
+        )

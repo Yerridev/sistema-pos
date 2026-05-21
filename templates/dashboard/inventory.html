@@ -1,75 +1,84 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 
-{% block title %}Inventario — Cobrate POS{% endblock %}
+{% block title %}Inventario â€” Cobrate POS{% endblock %}
 {% block page_title %}Inventario{% endblock %}
 
 {% block content %}
 <div class="flex flex-col gap-xl">
 
-  {# ── Toast de feedback ── #}
-  <div id="toast"
-       class="hidden fixed top-5 right-5 z-[200] flex items-center gap-sm px-lg py-md rounded-xl shadow-lg text-white text-sm font-medium transition-all"
-       role="alert" aria-live="polite">
-    <span class="material-symbols-outlined text-[18px]" id="toast-icon">check_circle</span>
-    <span id="toast-msg"></span>
-  </div>
-
-  {# ── Barra de filtros ── #}
+    {# Barra de filtros #}
   <section class="bg-white rounded-xl shadow-sm border border-border-subtle p-md">
-    <form method="get" class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-md items-end">
-      <div class="col-span-2 md:col-span-1 flex flex-col gap-xs">
-        <label class="text-caption-xs font-medium text-text-secondary" for="search">Buscar</label>
-        <input id="search" name="search" type="text" value="{{ filters.search }}"
-               placeholder="Nombre o código de barras"
-               class="rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
-      </div>
-      <div class="flex flex-col gap-xs">
-        <label class="text-caption-xs font-medium text-text-secondary" for="categoria">Categoría</label>
-        <select id="categoria" name="categoria"
-                class="rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
-          <option value="">Todas</option>
-          {% for cat in categories %}
-          <option value="{{ cat.id }}" {% if filters.categoria == cat.id|stringformat:"s" %}selected{% endif %}>
-            {{ cat.nombre }}
-          </option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="flex flex-col gap-xs">
-        <label class="text-caption-xs font-medium text-text-secondary" for="stock_status">Stock</label>
-        <select id="stock_status" name="stock_status"
-                class="rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
-          <option value="" {% if not filters.stock_status %}selected{% endif %}>Todos</option>
-          <option value="normal"  {% if filters.stock_status == "normal" %}selected{% endif %}>Normal</option>
-          <option value="bajo"    {% if filters.stock_status == "bajo" %}selected{% endif %}>Bajo</option>
-          <option value="critico" {% if filters.stock_status == "critico" %}selected{% endif %}>Crítico</option>
-        </select>
-      </div>
-      <div class="flex gap-sm">
-        <button type="submit"
-                class="flex-1 bg-primary text-white rounded-lg py-sm px-md text-sm font-medium hover:bg-primary-hover transition-colors active:scale-95">
-          Filtrar
+    <form method="get" class="flex flex-col gap-md">
+      <div class="flex flex-wrap items-end gap-sm">
+        <div class="flex-1 min-w-[260px] flex flex-col gap-xs">
+          <label class="text-caption-xs font-medium text-text-secondary" for="search">Buscar</label>
+          <input id="search" name="search" type="text" value="{{ filters.search }}"
+                 placeholder="Nombre o código de barras"
+                 class="w-full rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+        </div>
+
+        <button type="button" id="btn-toggle-filtros"
+                class="h-[42px] inline-flex items-center gap-xs rounded-lg border border-border-subtle px-md text-sm text-text-secondary hover:bg-slate-50 transition-colors">
+          <span class="material-symbols-outlined text-[18px]">filter_list</span>
+          Filtros
         </button>
-        {% if filters.search or filters.categoria or filters.stock_status %}
-        <a href="{% url 'productos:dashboard' %}"
-           class="px-md py-sm rounded-lg border border-border-subtle text-text-secondary hover:bg-slate-50 text-sm transition-colors">
-          ✕
-        </a>
+
+        <button type="submit"
+                class="h-[42px] inline-flex items-center justify-center rounded-lg bg-primary text-white px-md hover:bg-primary-hover transition-colors active:scale-95"
+                aria-label="Buscar" title="Buscar">
+          <span class="material-symbols-outlined text-[18px]">search</span>
+        </button>
+
+        {% if can_edit %}
+        <button type="button" id="btn-nueva-categoria"
+                class="h-[42px] inline-flex items-center justify-center rounded-lg bg-secondary text-white px-md hover:opacity-90 active:scale-95 transition-all"
+                aria-label="Nueva categoría" title="Nueva categoría">
+          <span class="material-symbols-outlined text-[18px]">category</span>
+        </button>
+        <button type="button" id="btn-nuevo"
+                class="h-[42px] inline-flex items-center justify-center rounded-lg bg-primary text-white px-md hover:bg-primary-hover active:scale-95 transition-all neon-glow"
+                aria-label="Nuevo producto" title="Nuevo producto">
+          <span class="material-symbols-outlined text-[18px]">add</span>
+        </button>
         {% endif %}
       </div>
-      {% if can_edit %}
-      <div class="col-span-2 md:col-span-1 flex items-end justify-end">
-        <button type="button" id="btn-nuevo"
-                class="flex items-center gap-xs bg-primary text-white rounded-lg py-sm px-md text-sm font-medium hover:bg-primary-hover active:scale-95 transition-all neon-glow w-full md:w-auto justify-center">
-          <span class="material-symbols-outlined text-[18px]">add</span>
-          Nuevo producto
-        </button>
+
+      <div id="panel-filtros" class="{% if filters.categoria or filters.stock_status %}{% else %}hidden {% endif %}grid grid-cols-1 md:grid-cols-3 gap-md">
+        <div class="flex flex-col gap-xs">
+          <label class="text-caption-xs font-medium text-text-secondary" for="categoria">Categoría</label>
+          <select id="categoria" name="categoria"
+                  class="rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+            <option value="">Todas</option>
+            {% for cat in categories %}
+            <option value="{{ cat.id }}" {% if filters.categoria == cat.id|stringformat:"s" %}selected{% endif %}>
+              {{ cat.nombre }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="flex flex-col gap-xs">
+          <label class="text-caption-xs font-medium text-text-secondary" for="stock_status">Stock</label>
+          <select id="stock_status" name="stock_status"
+                  class="rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+            <option value="" {% if not filters.stock_status %}selected{% endif %}>Todos</option>
+            <option value="normal"  {% if filters.stock_status == "normal" %}selected{% endif %}>Normal</option>
+            <option value="bajo"    {% if filters.stock_status == "bajo" %}selected{% endif %}>Bajo</option>
+            <option value="critico" {% if filters.stock_status == "critico" %}selected{% endif %}>Crítico</option>
+          </select>
+        </div>
+        <div class="flex items-end gap-sm">
+          {% if filters.search or filters.categoria or filters.stock_status %}
+          <a href="{% url 'productos:dashboard' %}"
+             class="h-[42px] inline-flex items-center rounded-lg border border-border-subtle px-md text-sm text-text-secondary hover:bg-slate-50 transition-colors">
+            Limpiar
+          </a>
+          {% endif %}
+        </div>
       </div>
-      {% endif %}
     </form>
   </section>
 
-  {# ── Stats ── #}
+  {# â”€â”€ Stats â”€â”€ #}
   <section class="grid grid-cols-2 xl:grid-cols-4 gap-md">
     {% for stat in stats_list %}
     <div class="bg-white rounded-xl shadow-sm border {% if stat.warning and stat.value > 0 %}border-warning/40{% else %}border-border-subtle{% endif %} p-md flex items-start gap-md">
@@ -82,15 +91,15 @@
     {% endfor %}
   </section>
 
-  {# ── Tabla de productos ── #}
+  {# â”€â”€ Tabla de productos â”€â”€ #}
   <section class="bg-white rounded-xl shadow-sm border border-border-subtle overflow-hidden">
     <div class="px-lg py-md border-b border-border-subtle flex items-center justify-between">
       <div>
-        <h2 class="font-semibold text-text-primary">Catálogo de productos</h2>
+        <h2 class="font-semibold text-text-primary">CatÃ¡logo de productos</h2>
         <p class="text-caption-xs text-text-secondary">{{ total_count }} producto{{ total_count|pluralize }}</p>
       </div>
       <div class="flex items-center gap-sm text-caption-xs text-text-secondary">
-        <span class="w-2.5 h-2.5 rounded-full bg-error inline-block"></span>Stock crítico
+        <span class="w-2.5 h-2.5 rounded-full bg-error inline-block"></span>Stock crÃ­tico
         <span class="w-2.5 h-2.5 rounded-full bg-warning inline-block ml-sm"></span>Stock bajo
       </div>
     </div>
@@ -99,9 +108,9 @@
       <table class="w-full text-left border-collapse text-sm">
         <thead>
           <tr class="bg-slate-50 border-b border-border-subtle">
-            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase tracking-wider">Código</th>
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase tracking-wider">CÃ³digo</th>
             <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase tracking-wider">Nombre</th>
-            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase tracking-wider hidden md:table-cell">Categoría</th>
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase tracking-wider hidden md:table-cell">CategorÃ­a</th>
             <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase tracking-wider hidden lg:table-cell">Unidad</th>
             <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase tracking-wider text-right">Stock</th>
             <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase tracking-wider text-right hidden sm:table-cell">Costo</th>
@@ -115,12 +124,12 @@
           {% with es_critico=p.stock_critico %}
           <tr class="hover:bg-slate-50 transition-colors {% if es_critico %}bg-red-50{% elif p.stock_actual <= p.stock_minimo|add:p.stock_minimo %}bg-amber-50/40{% endif %}"
               data-id="{{ p.id }}">
-            <td class="px-lg py-sm font-mono text-xs text-text-secondary">{{ p.codigo_barra|default:"—" }}</td>
+            <td class="px-lg py-sm font-mono text-xs text-text-secondary">{{ p.codigo_barra|default:"â€”" }}</td>
             <td class="px-lg py-sm font-medium text-text-primary">
               {{ p.nombre }}
               {% if es_critico %}
               <span class="ml-xs inline-flex items-center gap-xs text-[10px] font-bold text-error bg-red-100 px-xs py-[2px] rounded-full">
-                <span class="material-symbols-outlined text-[10px]">warning</span>CRÍTICO
+                <span class="material-symbols-outlined text-[10px]">warning</span>CRÃTICO
               </span>
               {% endif %}
             </td>
@@ -165,11 +174,11 @@
       </table>
     </div>
 
-    {# ── Paginación ── #}
+    {# â”€â”€ PaginaciÃ³n â”€â”€ #}
     {% if page_obj.paginator.num_pages > 1 %}
     <div class="px-lg py-md bg-white border-t border-border-subtle flex items-center justify-between flex-wrap gap-sm">
       <span class="text-caption-xs text-text-secondary">
-        Mostrando {{ page_obj.start_index }}–{{ page_obj.end_index }} de {{ page_obj.paginator.count }} productos
+        Mostrando {{ page_obj.start_index }}â€“{{ page_obj.end_index }} de {{ page_obj.paginator.count }} productos
       </span>
       <div class="flex gap-xs">
         {% if page_obj.has_previous %}
@@ -224,9 +233,9 @@
 </div>{# /flex flex-col gap-xl #}
 
 
-{# ════════════════════════════════════════════════════════════════ #}
-{# ── MODAL: Crear / Editar producto ── #}
-{# ════════════════════════════════════════════════════════════════ #}
+{# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• #}
+{# â”€â”€ MODAL: Crear / Editar producto â”€â”€ #}
+{# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• #}
 {% if can_edit %}
 <div id="modal-producto"
      class="hidden fixed inset-0 z-[100] flex items-center justify-center p-lg"
@@ -271,24 +280,24 @@
           <p class="field-error hidden text-[11px] text-error" id="err-nombre"></p>
         </div>
 
-        {# Código de barras #}
+        {# CÃ³digo de barras #}
         <div class="flex flex-col gap-xs">
           <label class="text-caption-xs font-medium text-text-secondary" for="f-codigo">
-            Código de barras
+            CÃ³digo de barras
           </label>
           <input id="f-codigo" name="codigo_barra" type="text" maxlength="50"
                  placeholder="Ej. 7751234567890"
                  class="form-field font-mono rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
         </div>
 
-        {# Categoría #}
+        {# CategorÃ­a #}
         <div class="flex flex-col gap-xs">
           <label class="text-caption-xs font-medium text-text-secondary" for="f-categoria">
-            Categoría <span class="text-error">*</span>
+            CategorÃ­a <span class="text-error">*</span>
           </label>
           <select id="f-categoria" name="categoria"
                   class="form-field rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
-            <option value="">— Selecciona categoría —</option>
+            <option value="">â€” Selecciona categorÃ­a â€”</option>
           </select>
           <p class="field-error hidden text-[11px] text-error" id="err-categoria"></p>
         </div>
@@ -344,18 +353,18 @@
                  class="form-field font-mono rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
         </div>
 
-        {# Stock mínimo #}
+        {# Stock mÃ­nimo #}
         <div class="flex flex-col gap-xs">
-          <label class="text-caption-xs font-medium text-text-secondary" for="f-stock-min">Stock mínimo</label>
+          <label class="text-caption-xs font-medium text-text-secondary" for="f-stock-min">Stock mÃ­nimo</label>
           <input id="f-stock-min" name="stock_minimo" type="number" min="0" value="10"
                  class="form-field font-mono rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
         </div>
 
-        {# Descripción #}
+        {# DescripciÃ³n #}
         <div class="sm:col-span-2 flex flex-col gap-xs">
-          <label class="text-caption-xs font-medium text-text-secondary" for="f-descripcion">Descripción</label>
+          <label class="text-caption-xs font-medium text-text-secondary" for="f-descripcion">DescripciÃ³n</label>
           <textarea id="f-descripcion" name="descripcion" rows="2"
-                    placeholder="Descripción opcional del producto..."
+                    placeholder="DescripciÃ³n opcional del producto..."
                     class="form-field rounded-lg border border-border-subtle px-md py-sm text-sm resize-none focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"></textarea>
         </div>
 
@@ -378,7 +387,7 @@
 </div>
 {% endif %}
 
-{# ── MODAL: Confirmar eliminación ── #}
+{# â”€â”€ MODAL: Confirmar eliminaciÃ³n â”€â”€ #}
 {% if can_delete %}
 <div id="modal-eliminar"
      class="hidden fixed inset-0 z-[100] flex items-center justify-center p-lg"
@@ -389,12 +398,12 @@
       <span class="material-symbols-outlined text-[36px] text-error">delete_forever</span>
       <div>
         <h3 class="font-semibold text-text-primary">Eliminar producto</h3>
-        <p class="text-caption-xs text-text-secondary">Esta acción no se puede deshacer fácilmente.</p>
+        <p class="text-caption-xs text-text-secondary">Esta acciÃ³n no se puede deshacer fÃ¡cilmente.</p>
       </div>
     </div>
     <p class="text-sm text-text-secondary">
-      ¿Estás seguro de eliminar <strong id="del-nombre" class="text-text-primary"></strong>?
-      El producto se marcará como inactivo.
+      Â¿EstÃ¡s seguro de eliminar <strong id="del-nombre" class="text-text-primary"></strong>?
+      El producto se marcarÃ¡ como inactivo.
     </p>
     <div class="flex gap-sm justify-end">
       <button id="btn-cancelar-eliminar" type="button"
@@ -411,25 +420,70 @@
 </div>
 {% endif %}
 
+{% if can_edit %}
+<div id="modal-categoria"
+     class="hidden fixed inset-0 z-[100] flex items-center justify-center p-lg"
+     role="dialog" aria-modal="true">
+  <div id="modal-categoria-backdrop" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+  <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md z-10 p-xl flex flex-col gap-md">
+    <div class="flex items-center justify-between">
+      <h3 class="font-semibold text-lg text-text-primary">Nueva categorÃ­a</h3>
+      <button id="btn-cerrar-categoria" type="button" class="p-sm rounded-full hover:bg-slate-100 transition-colors">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div id="categoria-error" class="hidden p-sm rounded-lg bg-critical-red-light border border-error/30 text-sm text-error"></div>
+    <div class="flex flex-col gap-xs">
+      <label class="text-caption-xs font-medium text-text-secondary" for="cat-nombre">Nombre *</label>
+      <input id="cat-nombre" type="text" maxlength="100"
+             class="rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+             placeholder="Ej. Abarrotes" />
+    </div>
+    <div class="flex flex-col gap-xs">
+      <label class="text-caption-xs font-medium text-text-secondary" for="cat-desc">DescripciÃ³n</label>
+      <textarea id="cat-desc" rows="2"
+                class="rounded-lg border border-border-subtle px-md py-sm text-sm resize-none focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                placeholder="Opcional"></textarea>
+    </div>
+    <div class="flex justify-end gap-sm">
+      <button id="btn-cancelar-categoria" type="button"
+              class="px-lg py-sm rounded-lg border border-border-subtle text-text-secondary hover:bg-slate-50 text-sm transition-colors">
+        Cancelar
+      </button>
+      <button id="btn-guardar-categoria" type="button"
+              class="px-lg py-sm rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary-hover transition-colors">
+        Guardar categorÃ­a
+      </button>
+    </div>
+  </div>
+</div>
+{% endif %}
+
 {% endblock %}
 
 
 {% block extra_js %}
 <script>
-/* ══════════════════════════════════════════════════════════
-   Inventario — CRUD via fetch + Modales
-   ══════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   Inventario â€” CRUD via fetch + Modales
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 const CSRF = '{{ csrf_token }}';
 const URLS = {
   crear:    '{% url "productos:producto_crear" %}',
   editar:   (id) => `/dashboard/inventario/${id}/editar/`,
   eliminar: (id) => `/dashboard/inventario/${id}/eliminar/`,
+  categoriaCrear: '{% url "productos:categoria_crear" %}',
 };
 const CATEGORIAS = {{ categories_json|safe }};
 const CAN_EDIT   = {{ can_edit|yesno:"true,false" }};
 const CAN_DELETE = {{ can_delete|yesno:"true,false" }};
 
-/* ── Helpers ─────────────────────────────────────────────── */
+/* Toggle panel filtros */
+const btnToggleFiltros = document.getElementById('btn-toggle-filtros');
+const panelFiltros = document.getElementById('panel-filtros');
+btnToggleFiltros?.addEventListener('click', () => panelFiltros?.classList.toggle('hidden'));
+
+/* â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 function showToast(msg, type = 'success') {
   const el   = document.getElementById('toast');
   const icon = document.getElementById('toast-icon');
@@ -453,7 +507,7 @@ async function apiFetch(url, method = 'GET', body = null) {
   return { ok: res.ok, status: res.status, data };
 }
 
-/* ── Modal Producto ──────────────────────────────────────── */
+/* â”€â”€ Modal Producto â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const modalProducto = document.getElementById('modal-producto');
 const modalTitulo   = document.getElementById('modal-titulo');
 const modalSub      = document.getElementById('modal-subtitulo');
@@ -510,7 +564,7 @@ function showErrors(errors) {
 function populateCategorias(selectedId = null) {
   const sel = document.getElementById('f-categoria');
   if (!sel) return;
-  sel.innerHTML = '<option value="">— Selecciona categoría —</option>';
+  sel.innerHTML = '<option value="">â€” Selecciona categorÃ­a â€”</option>';
   CATEGORIAS.forEach(c => {
     const opt = document.createElement('option');
     opt.value = c.id;
@@ -557,15 +611,15 @@ function setLoading(state) {
   btnGuardarIco.textContent = state ? 'hourglass_top' : 'save';
 }
 
-/* ── Abrir modal "Nuevo producto" ─────────────────────────── */
+/* â”€â”€ Abrir modal "Nuevo producto" â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 document.getElementById('btn-nuevo')?.addEventListener('click', () => {
   editingId = null;
   resetForm();
   populateCategorias();
-  openModal('Nuevo producto', 'Completa los campos para agregar al catálogo');
+  openModal('Nuevo producto', 'Completa los campos para agregar al catÃ¡logo');
 });
 
-/* ── Abrir modal "Editar" ────────────────────────────────── */
+/* â”€â”€ Abrir modal "Editar" â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 document.querySelectorAll('.btn-editar').forEach(btn => {
   btn.addEventListener('click', async () => {
     const id = btn.dataset.id;
@@ -585,12 +639,12 @@ document.querySelectorAll('.btn-editar').forEach(btn => {
       updateMargen();
       openModal('Editar producto', `Editando: ${data.nombre}`);
     } catch(e) {
-      showToast('Error de conexión.', 'error');
+      showToast('Error de conexiÃ³n.', 'error');
     }
   });
 });
 
-/* ── Guardar (crear o editar) ─────────────────────────────── */
+/* â”€â”€ Guardar (crear o editar) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 btnGuardar?.addEventListener('click', async () => {
   clearErrors();
   modalError.classList.add('hidden');
@@ -610,24 +664,24 @@ btnGuardar?.addEventListener('click', async () => {
       modalError.classList.remove('hidden');
     }
   } catch(e) {
-    modalErrorTxt.textContent = 'Error de conexión con el servidor.';
+    modalErrorTxt.textContent = 'Error de conexiÃ³n con el servidor.';
     modalError.classList.remove('hidden');
   } finally {
     setLoading(false);
   }
 });
 
-/* ── Cierre de modal ─────────────────────────────────────── */
+/* â”€â”€ Cierre de modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 document.getElementById('btn-cerrar-modal')?.addEventListener('click', closeModal);
 document.getElementById('btn-cancelar-modal')?.addEventListener('click', closeModal);
 document.getElementById('modal-backdrop')?.addEventListener('click', closeModal);
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
-/* ── Margen en tiempo real ───────────────────────────────── */
+/* â”€â”€ Margen en tiempo real â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 document.getElementById('f-precio')?.addEventListener('input', updateMargen);
 document.getElementById('f-costo')?.addEventListener('input', updateMargen);
 
-/* ── Modal Eliminar ──────────────────────────────────────── */
+/* â”€â”€ Modal Eliminar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const modalEliminar = document.getElementById('modal-eliminar');
 let deleteId = null;
 
@@ -659,11 +713,54 @@ document.getElementById('btn-confirmar-eliminar')?.addEventListener('click', asy
       modalEliminar?.classList.add('hidden');
     }
   } catch(e) {
-    showToast('Error de conexión.', 'error');
+    showToast('Error de conexiÃ³n.', 'error');
   } finally {
     btn.disabled = false;
     deleteId = null;
   }
 });
+
+/* Modal categorÃ­a */
+const modalCategoria = document.getElementById('modal-categoria');
+function cerrarCategoriaModal() {
+  modalCategoria?.classList.add('hidden');
+  document.getElementById('cat-nombre').value = '';
+  document.getElementById('cat-desc').value = '';
+  document.getElementById('categoria-error').classList.add('hidden');
+}
+document.getElementById('btn-nueva-categoria')?.addEventListener('click', () => modalCategoria?.classList.remove('hidden'));
+document.getElementById('btn-cerrar-categoria')?.addEventListener('click', cerrarCategoriaModal);
+document.getElementById('btn-cancelar-categoria')?.addEventListener('click', cerrarCategoriaModal);
+document.getElementById('modal-categoria-backdrop')?.addEventListener('click', cerrarCategoriaModal);
+
+document.getElementById('btn-guardar-categoria')?.addEventListener('click', async () => {
+  const nombre = document.getElementById('cat-nombre').value.trim();
+  const descripcion = document.getElementById('cat-desc').value.trim();
+  const errorBox = document.getElementById('categoria-error');
+
+  const { ok, data } = await apiFetch(URLS.categoriaCrear, 'POST', { nombre, descripcion });
+  if (!ok) {
+    const msg = data?.errors?.nombre || data?.error || 'No se pudo crear la categorÃ­a.';
+    errorBox.textContent = msg;
+    errorBox.classList.remove('hidden');
+    return;
+  }
+
+  if (data?.categoria) {
+    CATEGORIAS.push(data.categoria);
+    populateCategorias(data.categoria.id);
+    const filtroCat = document.getElementById('categoria');
+    if (filtroCat) {
+      const opt = document.createElement('option');
+      opt.value = data.categoria.id;
+      opt.textContent = data.categoria.nombre;
+      filtroCat.appendChild(opt);
+    }
+  }
+  showToast(data.message || 'CategorÃ­a creada correctamente.', 'success');
+  cerrarCategoriaModal();
+});
 </script>
 {% endblock %}
+
+
