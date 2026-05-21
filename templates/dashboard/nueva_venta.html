@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Nueva Venta - Cobrate POS{% endblock %}
+{% block page_title %}Nueva Venta{% endblock %}
+
+{% block content %}
+<div class="flex flex-col gap-xl">
+  <section class="bg-white rounded-xl shadow-sm border border-border-subtle p-lg">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-md">
+      <div>
+        <h1 class="text-2xl font-bold text-text-primary">Preparar venta</h1>
+        <p class="text-sm text-text-secondary mt-xs">Pantalla base conectada al inventario y cajas activas para continuar el flujo comercial.</p>
+      </div>
+      <a href="{% url 'ventas:dashboard' %}" class="inline-flex items-center gap-xs px-md py-sm rounded-lg border border-border-subtle text-text-secondary hover:bg-slate-50 text-sm transition-colors">
+        <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+        Volver a ventas
+      </a>
+    </div>
+  </section>
+
+  <section class="grid grid-cols-1 xl:grid-cols-[1.2fr,1fr] gap-md">
+    <article class="bg-white rounded-xl shadow-sm border border-border-subtle p-lg">
+      <h2 class="font-semibold text-text-primary">Cajas abiertas disponibles</h2>
+      <div class="mt-md flex flex-col gap-sm">
+        {% for caja in cajas_abiertas %}
+        <div class="rounded-lg border border-border-subtle px-md py-sm flex items-center justify-between">
+          <div>
+            <p class="font-medium text-text-primary">{{ caja.nombre }}</p>
+            <p class="text-sm text-text-secondary">{{ caja.cajero.username }} · Saldo actual S/. {{ caja.saldo_actual }}</p>
+          </div>
+          <span class="inline-flex px-sm py-[2px] rounded-full text-[11px] font-semibold bg-primary/10 text-primary">{{ caja.get_estado_display }}</span>
+        </div>
+        {% empty %}
+        <p class="text-sm text-text-secondary">No hay cajas abiertas para este usuario.</p>
+        {% endfor %}
+      </div>
+    </article>
+
+    <article class="bg-white rounded-xl shadow-sm border border-border-subtle p-lg">
+      <h2 class="font-semibold text-text-primary">Metodos de pago</h2>
+      <div class="mt-md flex flex-col gap-sm">
+        {% for value, label in metodos_pago %}
+        <div class="rounded-lg bg-surface-container px-md py-sm text-sm text-text-primary">{{ label }}</div>
+        {% endfor %}
+      </div>
+      <div class="mt-lg rounded-lg border border-dashed border-border-subtle p-md">
+        <p class="text-sm text-text-secondary">La creacion operativa de ventas ya esta expuesta por la API en <code>/api/ventas/</code>. Esta vista deja el dashboard listo para terminar de conectar el flujo de cobro desde frontend.</p>
+      </div>
+    </article>
+  </section>
+
+  <section class="bg-white rounded-xl shadow-sm border border-border-subtle overflow-hidden">
+    <div class="px-lg py-md border-b border-border-subtle">
+      <h2 class="font-semibold text-text-primary">Productos disponibles</h2>
+      <p class="text-caption-xs text-text-secondary">Muestra inicial para armar el ticket desde interfaz</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse text-sm">
+        <thead>
+          <tr class="bg-slate-50 border-b border-border-subtle">
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase">Codigo</th>
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase">Producto</th>
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase">Categoria</th>
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase text-right">Stock</th>
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase text-right">Precio</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border-subtle">
+          {% for producto in productos %}
+          <tr class="hover:bg-slate-50 transition-colors">
+            <td class="px-lg py-sm font-mono text-xs text-text-secondary">{{ producto.codigo_barra|default:"-" }}</td>
+            <td class="px-lg py-sm text-text-primary font-medium">{{ producto.nombre }}</td>
+            <td class="px-lg py-sm text-text-secondary">{{ producto.categoria.nombre }}</td>
+            <td class="px-lg py-sm text-right font-mono text-text-primary">{{ producto.stock_actual }}</td>
+            <td class="px-lg py-sm text-right font-mono font-semibold text-text-primary">S/. {{ producto.precio_venta }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="px-lg py-xxl text-center text-text-secondary">No hay productos disponibles en inventario.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{% endblock %}

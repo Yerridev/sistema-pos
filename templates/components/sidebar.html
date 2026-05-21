@@ -1,6 +1,5 @@
 <!-- Sidebar Navigation -->
 <aside class="hidden md:flex flex-col gap-4 p-4 h-screen w-64 border-r border-slate-100 bg-white/80 glass-panel fixed left-0 top-0 z-40">
-    <!-- Logo -->
     <div class="mb-xxl">
         <h1 class="text-lg font-bold text-slate-900">Cobrate POS</h1>
         <p class="text-caption-xs font-caption-xs text-text-secondary">
@@ -13,20 +12,19 @@
         </p>
     </div>
 
-    <!-- Navigation Menu -->
     <nav class="flex flex-col gap-sm flex-grow">
-
         {% url 'productos:dashboard' as url_inventario %}
+        {% url 'ventas:dashboard' as url_ventas %}
+        {% url 'ventas:caja_dashboard' as url_caja %}
+        {% url 'ventas:nueva_venta' as url_nueva_venta %}
 
-        {# Ventas — activo cuando: feature/ventas esté lista, reemplazar href="#" por {% url 'ventas:pos' %} #}
         <a class="flex items-center gap-md p-md rounded-lg transition-transform hover:translate-x-1 font-inter text-sm font-semibold
-                  text-slate-600 hover:bg-slate-50 {% if request.path == '/ventas/' %}bg-success text-white shadow-[0_0_10px_rgba(37,211,102,0.4)]{% endif %}"
-           href="#">
+                  {% if request.path|slice:':17' == '/dashboard/ventas' %}bg-success text-white shadow-[0_0_10px_rgba(37,211,102,0.4)]{% else %}text-slate-600 hover:bg-slate-50{% endif %}"
+           href="{{ url_ventas }}">
             <span class="material-symbols-outlined" data-icon="point_of_sale">point_of_sale</span>
             Ventas
         </a>
 
-        {# Inventario — activo #}
         <a class="flex items-center gap-md p-md rounded-lg font-inter text-sm font-semibold
                   {% if request.path|slice:':22' == '/dashboard/inventario' %}bg-success text-white shadow-[0_0_10px_rgba(37,211,102,0.4)]{% else %}text-slate-600 hover:bg-slate-50 transition-transform hover:translate-x-1{% endif %}"
            href="{{ url_inventario }}">
@@ -35,15 +33,13 @@
             Inventario
         </a>
 
-        {# Caja — activo cuando: feature/caja esté lista, reemplazar href="#" por {% url 'caja:dashboard' %} #}
         <a class="flex items-center gap-md p-md rounded-lg transition-transform hover:translate-x-1 font-inter text-sm font-semibold
-                  text-slate-600 hover:bg-slate-50 {% if request.path == '/caja/' %}bg-success text-white shadow-[0_0_10px_rgba(37,211,102,0.4)]{% endif %}"
-           href="#">
-            <span class="material-symbols-outlined" data-icon="point_of_sale">payments</span>
+                  {% if request.path == '/dashboard/caja/' %}bg-success text-white shadow-[0_0_10px_rgba(37,211,102,0.4)]{% else %}text-slate-600 hover:bg-slate-50{% endif %}"
+           href="{{ url_caja }}">
+            <span class="material-symbols-outlined" data-icon="payments">payments</span>
             Caja
         </a>
 
-        {# Compras — solo admin. Reemplazar href="#" por {% url 'compras:lista' %} #}
         {% if user.rol == 'admin' %}
         <a class="flex items-center gap-md p-md rounded-lg transition-transform hover:translate-x-1 font-inter text-sm font-semibold
                   text-slate-600 hover:bg-slate-50"
@@ -53,7 +49,6 @@
         </a>
         {% endif %}
 
-        {# Reportes — solo admin. Reemplazar href="#" por {% url 'reportes:dashboard' %} #}
         {% if user.rol == 'admin' %}
         <a class="flex items-center gap-md p-md rounded-lg transition-transform hover:translate-x-1 font-inter text-sm font-semibold
                   text-slate-600 hover:bg-slate-50"
@@ -62,14 +57,11 @@
             Reportes
         </a>
         {% endif %}
-
     </nav>
 
-    <!-- Nueva Venta CTA — deshabilitado hasta feature/ventas -->
-    <button disabled
-            class="bg-primary/50 text-white p-md rounded-lg font-label-md text-label-md flex items-center justify-center gap-sm cursor-not-allowed w-full"
-            title="Disponible cuando el módulo de ventas esté listo">
+    <a href="{{ url_nueva_venta }}"
+       class="bg-primary text-white p-md rounded-lg font-label-md text-label-md flex items-center justify-center gap-sm w-full text-center neon-glow hover:bg-primary-hover transition-colors">
         <span class="material-symbols-outlined" data-icon="add">add</span>
         Nueva Venta
-    </button>
+    </a>
 </aside>
