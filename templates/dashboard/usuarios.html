@@ -1,0 +1,438 @@
+{% extends "base.html" %}
+
+{% block title %}Usuarios — Cobrate POS{% endblock %}
+{% block page_title %}Usuarios{% endblock %}
+
+{% block content %}
+<div class="flex flex-col gap-xl">
+  <div id="toast"
+       class="hidden fixed top-5 right-5 z-[200] flex items-center gap-sm px-lg py-md rounded-xl shadow-lg text-white text-sm font-medium transition-all"
+       role="alert" aria-live="polite">
+    <span class="material-symbols-outlined text-[18px]" id="toast-icon">check_circle</span>
+    <span id="toast-msg"></span>
+  </div>
+  <section class="bg-white rounded-xl shadow-sm border border-border-subtle p-md flex flex-col gap-md">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-md">
+      <div>
+        <h2 class="font-semibold text-text-primary">Gestión de usuarios</h2>
+        <p class="text-caption-xs text-text-secondary">Administra accesos y roles del sistema</p>
+      </div>
+      <button id="btn-nuevo" type="button"
+              class="flex items-center gap-xs bg-primary text-white rounded-lg py-sm px-md text-sm font-medium hover:bg-primary-hover active:scale-95 transition-all neon-glow">
+        <span class="material-symbols-outlined text-[18px]">person_add</span>
+        Nuevo usuario
+      </button>
+    </div>
+  </section>
+
+  <section class="bg-white rounded-xl shadow-sm border border-border-subtle overflow-hidden">
+    <div class="px-lg py-md border-b border-border-subtle flex items-center justify-between">
+      <div>
+        <h3 class="font-semibold text-text-primary">Usuarios registrados</h3>
+        <p class="text-caption-xs text-text-secondary">{{ users|length }} usuarios</p>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse text-sm">
+        <thead>
+          <tr class="bg-slate-50 border-b border-border-subtle">
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase tracking-wider">Usuario</th>
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase tracking-wider">Nombre</th>
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase tracking-wider hidden md:table-cell">Email</th>
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase tracking-wider">Rol</th>
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase tracking-wider">Estado</th>
+            <th class="px-lg py-sm"></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border-subtle">
+          {% for u in users %}
+          <tr class="hover:bg-slate-50 transition-colors" data-id="{{ u.id }}">
+            <td class="px-lg py-sm font-medium text-text-primary">{{ u.username }}</td>
+            <td class="px-lg py-sm text-text-secondary">{{ u.get_full_name|default:"—" }}</td>
+            <td class="px-lg py-sm hidden md:table-cell text-text-secondary">{{ u.email|default:"—" }}</td>
+            <td class="px-lg py-sm">
+              <span class="uppercase text-[10px] font-bold px-2 py-0.5 rounded-full
+                {% if u.rol == 'admin' %}bg-primary/10 text-primary{% else %}bg-slate-100 text-slate-500{% endif %}">
+                {{ u.rol }}
+              </span>
+            </td>
+            <td class="px-lg py-sm">
+              {% if u.is_active %}
+              <span class="text-xs font-semibold text-success">Activo</span>
+              {% else %}
+              <span class="text-xs font-semibold text-error">Inactivo</span>
+              {% endif %}
+            </td>
+            <td class="px-lg py-sm text-right">
+              <div class="flex items-center justify-end gap-xs">
+                <button class="btn-editar p-xs rounded hover:bg-slate-100 text-text-secondary transition-colors"
+                        data-id="{{ u.id }}" title="Editar">
+                  <span class="material-symbols-outlined text-[18px]">edit</span>
+                </button>
+                <button class="btn-password p-xs rounded hover:bg-slate-100 text-text-secondary transition-colors"
+                        data-id="{{ u.id }}" title="Resetear contraseña">
+                  <span class="material-symbols-outlined text-[18px]">lock_reset</span>
+                </button>
+                {% if u.id != current_user_id %}
+                <button class="btn-estado p-xs rounded hover:bg-slate-100 text-text-secondary transition-colors"
+                        data-id="{{ u.id }}" data-active="{{ u.is_active|yesno:'true,false' }}"
+                        title="{% if u.is_active %}Desactivar{% else %}Activar{% endif %}">
+                  <span class="material-symbols-outlined text-[18px]">{% if u.is_active %}toggle_on{% else %}toggle_off{% endif %}</span>
+                </button>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="px-lg py-xxl text-center text-text-secondary">
+              <span class="material-symbols-outlined text-[48px] block mb-md opacity-30">group</span>
+              No hay usuarios registrados.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+{# ════════════════════════════════════════════════════════════════ #}
+{# ── MODAL: Crear / Editar usuario ── #}
+{# ════════════════════════════════════════════════════════════════ #}
+<div id="modal-usuario"
+     class="hidden fixed inset-0 z-[100] flex items-center justify-center p-lg"
+     role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
+  <div id="modal-backdrop" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+  <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl z-10">
+    <div class="sticky top-0 bg-white px-xl py-md border-b border-border-subtle flex items-center justify-between z-10 rounded-t-2xl">
+      <div>
+        <h3 id="modal-titulo" class="font-semibold text-lg text-text-primary"></h3>
+        <p id="modal-subtitulo" class="text-caption-xs text-text-secondary"></p>
+      </div>
+      <button id="btn-cerrar-modal" type="button"
+              class="p-sm rounded-full hover:bg-slate-100 transition-colors active:scale-95"
+              aria-label="Cerrar">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <div id="modal-error-banner" class="hidden mx-xl mt-md p-md bg-critical-red-light rounded-lg border border-error/20">
+      <p class="text-sm text-error font-medium" id="modal-error-text"></p>
+    </div>
+
+    <div class="p-xl">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-md">
+        <div class="flex flex-col gap-xs">
+          <label class="text-caption-xs font-medium text-text-secondary" for="f-username">Usuario <span class="text-error">*</span></label>
+          <input id="f-username" name="username" type="text" maxlength="150"
+                 class="form-field rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+          <p class="field-error hidden text-[11px] text-error" id="err-username"></p>
+        </div>
+        <div class="flex flex-col gap-xs">
+          <label class="text-caption-xs font-medium text-text-secondary" for="f-email">Email</label>
+          <input id="f-email" name="email" type="email" maxlength="254"
+                 class="form-field rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+          <p class="field-error hidden text-[11px] text-error" id="err-email"></p>
+        </div>
+        <div class="flex flex-col gap-xs">
+          <label class="text-caption-xs font-medium text-text-secondary" for="f-first">Nombres</label>
+          <input id="f-first" name="first_name" type="text" maxlength="150"
+                 class="form-field rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+        </div>
+        <div class="flex flex-col gap-xs">
+          <label class="text-caption-xs font-medium text-text-secondary" for="f-last">Apellidos</label>
+          <input id="f-last" name="last_name" type="text" maxlength="150"
+                 class="form-field rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+        </div>
+        <div class="flex flex-col gap-xs">
+          <label class="text-caption-xs font-medium text-text-secondary" for="f-rol">Rol <span class="text-error">*</span></label>
+          <select id="f-rol" name="rol"
+                  class="form-field rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+            <option value="">— Selecciona rol —</option>
+            {% for value, label in roles %}
+            <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+          <p class="field-error hidden text-[11px] text-error" id="err-rol"></p>
+        </div>
+        <div class="flex flex-col gap-xs" id="password-field">
+          <label class="text-caption-xs font-medium text-text-secondary" for="f-password">Contraseña <span class="text-error">*</span></label>
+          <input id="f-password" name="password" type="password" maxlength="128"
+                 class="form-field rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+          <p class="field-error hidden text-[11px] text-error" id="err-password"></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="sticky bottom-0 bg-white px-xl py-md border-t border-border-subtle flex items-center justify-end gap-sm rounded-b-2xl">
+      <button id="btn-cancelar-modal" type="button"
+              class="px-lg py-sm rounded-lg border border-border-subtle text-text-secondary hover:bg-slate-50 text-sm transition-colors">
+        Cancelar
+      </button>
+      <button id="btn-guardar" type="button"
+              class="flex items-center gap-xs px-lg py-sm rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary-hover active:scale-95 transition-all neon-glow disabled:opacity-60 disabled:pointer-events-none">
+        <span class="material-symbols-outlined text-[18px]" id="btn-guardar-icon">save</span>
+        <span id="btn-guardar-text">Guardar</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+{# ── MODAL: Reset contraseña ── #}
+<div id="modal-password"
+     class="hidden fixed inset-0 z-[100] flex items-center justify-center p-lg"
+     role="dialog" aria-modal="true">
+  <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+  <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm z-10 p-xl flex flex-col gap-lg">
+    <div class="flex items-center gap-md">
+      <span class="material-symbols-outlined text-[36px] text-warning">lock_reset</span>
+      <div>
+        <h3 class="font-semibold text-text-primary">Resetear contraseña</h3>
+        <p class="text-caption-xs text-text-secondary">Define una nueva clave</p>
+      </div>
+    </div>
+    <div class="flex flex-col gap-xs">
+      <label class="text-caption-xs font-medium text-text-secondary" for="reset-password">Nueva contraseña</label>
+      <input id="reset-password" type="password" maxlength="128"
+             class="rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+      <p class="text-[11px] text-error hidden" id="err-reset-password"></p>
+    </div>
+    <div class="flex gap-sm justify-end">
+      <button id="btn-cancelar-reset" type="button"
+              class="px-lg py-sm rounded-lg border border-border-subtle text-text-secondary hover:bg-slate-50 text-sm transition-colors">
+        Cancelar
+      </button>
+      <button id="btn-confirmar-reset" type="button"
+              class="flex items-center gap-xs px-lg py-sm rounded-lg bg-warning text-white text-sm font-medium hover:opacity-90 active:scale-95 transition-all">
+        <span class="material-symbols-outlined text-[18px]">lock</span>
+        Guardar
+      </button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CSRF = '{{ csrf_token }}';
+const URLS = {
+  crear: '{% url "usuarios:create" %}',
+  detalle: (id) => `/dashboard/usuarios/${id}/`,
+  editar:  (id) => `/dashboard/usuarios/${id}/editar/`,
+  estado:  (id) => `/dashboard/usuarios/${id}/estado/`,
+  pass:    (id) => `/dashboard/usuarios/${id}/password/`,
+};
+
+function showToast(msg, type = 'success') {
+  const el   = document.getElementById('toast');
+  const icon = document.getElementById('toast-icon');
+  const text = document.getElementById('toast-msg');
+  if (!el) return;
+  el.className = el.className.replace(/bg-\w+(-\w+)?/g, '');
+  el.classList.add(type === 'success' ? 'bg-primary' : 'bg-error');
+  el.classList.remove('hidden');
+  icon.textContent = type === 'success' ? 'check_circle' : 'error';
+  text.textContent = msg;
+  setTimeout(() => el.classList.add('hidden'), 4000);
+}
+
+async function apiFetch(url, method = 'GET', body = null) {
+  const opts = { method, headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(url, opts);
+  const data = await res.json();
+  return { ok: res.ok, status: res.status, data };
+}
+
+const modalUsuario = document.getElementById('modal-usuario');
+const modalTitulo = document.getElementById('modal-titulo');
+const modalSub = document.getElementById('modal-subtitulo');
+const modalError = document.getElementById('modal-error-banner');
+const modalErrorTxt = document.getElementById('modal-error-text');
+const btnGuardar = document.getElementById('btn-guardar');
+const btnGuardarTxt = document.getElementById('btn-guardar-text');
+const btnGuardarIco = document.getElementById('btn-guardar-icon');
+const passwordField = document.getElementById('password-field');
+
+let editingId = null;
+
+function clearErrors() {
+  document.querySelectorAll('.field-error').forEach(el => el.classList.add('hidden'));
+  document.querySelectorAll('.form-field').forEach(el => el.classList.remove('border-error'));
+}
+
+function showErrors(errors) {
+  Object.entries(errors).forEach(([field, msg]) => {
+    const errEl = document.getElementById(`err-${field}`);
+    const inpMap = { username: 'f-username', email: 'f-email', rol: 'f-rol', password: 'f-password' };
+    const inp = document.getElementById(inpMap[field]);
+    if (errEl) { errEl.textContent = msg; errEl.classList.remove('hidden'); }
+    if (inp) inp.classList.add('border-error');
+  });
+}
+
+function resetForm() {
+  ['f-username','f-email','f-first','f-last','f-password'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  const rol = document.getElementById('f-rol');
+  if (rol) rol.value = '';
+}
+
+function openModal(titulo, subtitulo, showPassword) {
+  modalTitulo.textContent = titulo;
+  modalSub.textContent = subtitulo;
+  modalError.classList.add('hidden');
+  clearErrors();
+  if (passwordField) passwordField.classList.toggle('hidden', !showPassword);
+  modalUsuario?.classList.remove('hidden');
+  document.getElementById('f-username')?.focus();
+}
+
+function closeModal() {
+  modalUsuario?.classList.add('hidden');
+  resetForm();
+  editingId = null;
+}
+
+function getFormData() {
+  return {
+    username: document.getElementById('f-username')?.value.trim(),
+    email: document.getElementById('f-email')?.value.trim(),
+    first_name: document.getElementById('f-first')?.value.trim(),
+    last_name: document.getElementById('f-last')?.value.trim(),
+    rol: document.getElementById('f-rol')?.value,
+    password: document.getElementById('f-password')?.value,
+  };
+}
+
+function setLoading(state) {
+  if (!btnGuardar) return;
+  btnGuardar.disabled = state;
+  btnGuardarTxt.textContent = state ? 'Guardando...' : 'Guardar';
+  btnGuardarIco.textContent = state ? 'hourglass_top' : 'save';
+}
+
+document.getElementById('btn-nuevo')?.addEventListener('click', () => {
+  editingId = null;
+  resetForm();
+  openModal('Nuevo usuario', 'Completa los datos para crear un usuario', true);
+});
+
+document.querySelectorAll('.btn-editar').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const id = btn.dataset.id;
+    try {
+      const { ok, data } = await apiFetch(URLS.detalle(id), 'GET');
+      if (!ok) { showToast('Error al cargar el usuario.', 'error'); return; }
+      editingId = id;
+      document.getElementById('f-username').value = data.username || '';
+      document.getElementById('f-email').value = data.email || '';
+      document.getElementById('f-first').value = data.first_name || '';
+      document.getElementById('f-last').value = data.last_name || '';
+      document.getElementById('f-rol').value = data.rol || '';
+      openModal('Editar usuario', `Editando: ${data.username}`, false);
+    } catch (e) {
+      showToast('Error de conexión.', 'error');
+    }
+  });
+});
+
+btnGuardar?.addEventListener('click', async () => {
+  clearErrors();
+  modalError.classList.add('hidden');
+  const formData = getFormData();
+  setLoading(true);
+  try {
+    const url = editingId ? URLS.editar(editingId) : URLS.crear;
+    const payload = { ...formData };
+    if (editingId) delete payload.password;
+    const { ok, data } = await apiFetch(url, 'POST', payload);
+    if (ok && data.success) {
+      showToast(data.message, 'success');
+      closeModal();
+      setTimeout(() => location.reload(), 800);
+    } else if (data.errors) {
+      showErrors(data.errors);
+    } else {
+      modalErrorTxt.textContent = data.error || 'Error inesperado.';
+      modalError.classList.remove('hidden');
+    }
+  } catch (e) {
+    modalErrorTxt.textContent = 'Error de conexión con el servidor.';
+    modalError.classList.remove('hidden');
+  } finally {
+    setLoading(false);
+  }
+});
+
+document.getElementById('btn-cerrar-modal')?.addEventListener('click', closeModal);
+document.getElementById('btn-cancelar-modal')?.addEventListener('click', closeModal);
+document.getElementById('modal-backdrop')?.addEventListener('click', closeModal);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+const modalPassword = document.getElementById('modal-password');
+let resetId = null;
+
+document.querySelectorAll('.btn-password').forEach(btn => {
+  btn.addEventListener('click', () => {
+    resetId = btn.dataset.id;
+    document.getElementById('reset-password').value = '';
+    document.getElementById('err-reset-password').classList.add('hidden');
+    modalPassword?.classList.remove('hidden');
+  });
+});
+
+document.getElementById('btn-cancelar-reset')?.addEventListener('click', () => {
+  modalPassword?.classList.add('hidden');
+  resetId = null;
+});
+
+document.getElementById('btn-confirmar-reset')?.addEventListener('click', async () => {
+  const pwd = document.getElementById('reset-password').value.trim();
+  if (!pwd) {
+    const err = document.getElementById('err-reset-password');
+    err.textContent = 'La contraseña es obligatoria.';
+    err.classList.remove('hidden');
+    return;
+  }
+  try {
+    const { ok, data } = await apiFetch(URLS.pass(resetId), 'POST', { password: pwd });
+    if (ok && data.success) {
+      showToast(data.message, 'success');
+      modalPassword?.classList.add('hidden');
+    } else if (data.errors) {
+      const err = document.getElementById('err-reset-password');
+      err.textContent = data.errors.password || 'Error al actualizar.';
+      err.classList.remove('hidden');
+    } else {
+      showToast(data.error || 'Error al actualizar.', 'error');
+    }
+  } catch (e) {
+    showToast('Error de conexión.', 'error');
+  }
+});
+
+document.querySelectorAll('.btn-estado').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const id = btn.dataset.id;
+    const active = btn.dataset.active === 'true';
+    try {
+      const { ok, data } = await apiFetch(URLS.estado(id), 'POST', { is_active: (!active).toString() });
+      if (ok && data.success) {
+        showToast(data.message, 'success');
+        setTimeout(() => location.reload(), 500);
+      } else {
+        showToast(data.error || 'Error al actualizar.', 'error');
+      }
+    } catch (e) {
+      showToast('Error de conexión.', 'error');
+    }
+  });
+});
+</script>
+{% endblock %}
