@@ -6,7 +6,6 @@ class Usuario(AbstractUser):
     ROL_CHOICES = [
         ('admin', 'Administrador'),
         ('cajero', 'Cajero'),
-        ('supervisor', 'Supervisor'),
     ]
     rol = models.CharField(max_length=20, choices=ROL_CHOICES, default='cajero')
 

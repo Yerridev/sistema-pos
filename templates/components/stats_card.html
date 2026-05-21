@@ -1,0 +1,9 @@
+<!-- Stats Card Component -->
+<!-- Usage: {% include "components/stats_card.html" with label="Total Products" value="1,284" icon="inventory_2" %} -->
+<div class="bg-white p-lg rounded-xl shadow-sm border border-border-subtle flex flex-col gap-xs">
+    <span class="text-caption-xs font-caption-xs text-text-secondary">{{ label }}</span>
+    <div class="flex items-end justify-between">
+        <span class="text-title-lg font-title-lg {% if error %}text-error{% elif warning %}text-warning{% else %}text-on-surface{% endif %}">{{ value }}</span>
+        {% if icon %}<span class="material-symbols-outlined text-2xl text-text-secondary opacity-20" data-icon="{{ icon }}">{{ icon }}</span>{% endif %}
+    </div>
+</div>

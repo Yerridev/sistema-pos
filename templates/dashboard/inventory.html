@@ -1,0 +1,669 @@
+{% extends "base.html" %}
+
+{% block title %}Inventario — Cobrate POS{% endblock %}
+{% block page_title %}Inventario{% endblock %}
+
+{% block content %}
+<div class="flex flex-col gap-xl">
+
+  {# ── Toast de feedback ── #}
+  <div id="toast"
+       class="hidden fixed top-5 right-5 z-[200] flex items-center gap-sm px-lg py-md rounded-xl shadow-lg text-white text-sm font-medium transition-all"
+       role="alert" aria-live="polite">
+    <span class="material-symbols-outlined text-[18px]" id="toast-icon">check_circle</span>
+    <span id="toast-msg"></span>
+  </div>
+
+  {# ── Barra de filtros ── #}
+  <section class="bg-white rounded-xl shadow-sm border border-border-subtle p-md">
+    <form method="get" class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-md items-end">
+      <div class="col-span-2 md:col-span-1 flex flex-col gap-xs">
+        <label class="text-caption-xs font-medium text-text-secondary" for="search">Buscar</label>
+        <input id="search" name="search" type="text" value="{{ filters.search }}"
+               placeholder="Nombre o código de barras"
+               class="rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+      </div>
+      <div class="flex flex-col gap-xs">
+        <label class="text-caption-xs font-medium text-text-secondary" for="categoria">Categoría</label>
+        <select id="categoria" name="categoria"
+                class="rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+          <option value="">Todas</option>
+          {% for cat in categories %}
+          <option value="{{ cat.id }}" {% if filters.categoria == cat.id|stringformat:"s" %}selected{% endif %}>
+            {{ cat.nombre }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="flex flex-col gap-xs">
+        <label class="text-caption-xs font-medium text-text-secondary" for="stock_status">Stock</label>
+        <select id="stock_status" name="stock_status"
+                class="rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+          <option value="" {% if not filters.stock_status %}selected{% endif %}>Todos</option>
+          <option value="normal"  {% if filters.stock_status == "normal" %}selected{% endif %}>Normal</option>
+          <option value="bajo"    {% if filters.stock_status == "bajo" %}selected{% endif %}>Bajo</option>
+          <option value="critico" {% if filters.stock_status == "critico" %}selected{% endif %}>Crítico</option>
+        </select>
+      </div>
+      <div class="flex gap-sm">
+        <button type="submit"
+                class="flex-1 bg-primary text-white rounded-lg py-sm px-md text-sm font-medium hover:bg-primary-hover transition-colors active:scale-95">
+          Filtrar
+        </button>
+        {% if filters.search or filters.categoria or filters.stock_status %}
+        <a href="{% url 'productos:dashboard' %}"
+           class="px-md py-sm rounded-lg border border-border-subtle text-text-secondary hover:bg-slate-50 text-sm transition-colors">
+          ✕
+        </a>
+        {% endif %}
+      </div>
+      {% if can_edit %}
+      <div class="col-span-2 md:col-span-1 flex items-end justify-end">
+        <button type="button" id="btn-nuevo"
+                class="flex items-center gap-xs bg-primary text-white rounded-lg py-sm px-md text-sm font-medium hover:bg-primary-hover active:scale-95 transition-all neon-glow w-full md:w-auto justify-center">
+          <span class="material-symbols-outlined text-[18px]">add</span>
+          Nuevo producto
+        </button>
+      </div>
+      {% endif %}
+    </form>
+  </section>
+
+  {# ── Stats ── #}
+  <section class="grid grid-cols-2 xl:grid-cols-4 gap-md">
+    {% for stat in stats_list %}
+    <div class="bg-white rounded-xl shadow-sm border {% if stat.warning and stat.value > 0 %}border-warning/40{% else %}border-border-subtle{% endif %} p-md flex items-start gap-md">
+      <span class="material-symbols-outlined text-[28px] {% if stat.warning and stat.value > 0 %}text-warning{% else %}text-primary{% endif %} mt-xs">{{ stat.icon }}</span>
+      <div>
+        <p class="text-caption-xs text-text-secondary font-medium leading-tight">{{ stat.label }}</p>
+        <p class="text-xl font-bold text-text-primary mt-xs {% if stat.warning and stat.value > 0 %}text-warning{% endif %}">{{ stat.value }}</p>
+      </div>
+    </div>
+    {% endfor %}
+  </section>
+
+  {# ── Tabla de productos ── #}
+  <section class="bg-white rounded-xl shadow-sm border border-border-subtle overflow-hidden">
+    <div class="px-lg py-md border-b border-border-subtle flex items-center justify-between">
+      <div>
+        <h2 class="font-semibold text-text-primary">Catálogo de productos</h2>
+        <p class="text-caption-xs text-text-secondary">{{ total_count }} producto{{ total_count|pluralize }}</p>
+      </div>
+      <div class="flex items-center gap-sm text-caption-xs text-text-secondary">
+        <span class="w-2.5 h-2.5 rounded-full bg-error inline-block"></span>Stock crítico
+        <span class="w-2.5 h-2.5 rounded-full bg-warning inline-block ml-sm"></span>Stock bajo
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse text-sm">
+        <thead>
+          <tr class="bg-slate-50 border-b border-border-subtle">
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase tracking-wider">Código</th>
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase tracking-wider">Nombre</th>
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase tracking-wider hidden md:table-cell">Categoría</th>
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase tracking-wider hidden lg:table-cell">Unidad</th>
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase tracking-wider text-right">Stock</th>
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase tracking-wider text-right hidden sm:table-cell">Costo</th>
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase tracking-wider text-right">P. Venta</th>
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase tracking-wider text-right hidden lg:table-cell">Margen</th>
+            <th class="px-lg py-sm"></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border-subtle">
+          {% for p in products %}
+          {% with es_critico=p.stock_critico %}
+          <tr class="hover:bg-slate-50 transition-colors {% if es_critico %}bg-red-50{% elif p.stock_actual <= p.stock_minimo|add:p.stock_minimo %}bg-amber-50/40{% endif %}"
+              data-id="{{ p.id }}">
+            <td class="px-lg py-sm font-mono text-xs text-text-secondary">{{ p.codigo_barra|default:"—" }}</td>
+            <td class="px-lg py-sm font-medium text-text-primary">
+              {{ p.nombre }}
+              {% if es_critico %}
+              <span class="ml-xs inline-flex items-center gap-xs text-[10px] font-bold text-error bg-red-100 px-xs py-[2px] rounded-full">
+                <span class="material-symbols-outlined text-[10px]">warning</span>CRÍTICO
+              </span>
+              {% endif %}
+            </td>
+            <td class="px-lg py-sm hidden md:table-cell text-text-secondary">{{ p.categoria.nombre }}</td>
+            <td class="px-lg py-sm hidden lg:table-cell text-text-secondary capitalize">{{ p.get_unidad_display }}</td>
+            <td class="px-lg py-sm text-right font-mono font-medium {% if es_critico %}text-error{% elif p.stock_actual <= p.stock_minimo|add:p.stock_minimo %}text-warning{% else %}text-text-primary{% endif %}">
+              {{ p.stock_actual }}
+              <span class="text-text-secondary font-normal text-[11px]">/{{ p.stock_minimo }}</span>
+            </td>
+            <td class="px-lg py-sm text-right font-mono hidden sm:table-cell text-text-secondary">S/. {{ p.costo }}</td>
+            <td class="px-lg py-sm text-right font-mono font-semibold text-text-primary">S/. {{ p.precio_venta }}</td>
+            <td class="px-lg py-sm text-right font-mono hidden lg:table-cell text-success">
+              S/. {{ p.ganancia_unitaria }}
+            </td>
+            <td class="px-lg py-sm text-right">
+              <div class="flex items-center justify-end gap-xs">
+                {% if can_edit %}
+                <button class="btn-editar p-xs rounded hover:bg-slate-100 text-text-secondary transition-colors"
+                        data-id="{{ p.id }}" title="Editar">
+                  <span class="material-symbols-outlined text-[18px]">edit</span>
+                </button>
+                {% endif %}
+                {% if can_delete %}
+                <button class="btn-eliminar p-xs rounded hover:bg-red-50 text-error transition-colors"
+                        data-id="{{ p.id }}" data-nombre="{{ p.nombre }}" title="Eliminar">
+                  <span class="material-symbols-outlined text-[18px]">delete</span>
+                </button>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endwith %}
+          {% empty %}
+          <tr>
+            <td colspan="9" class="px-lg py-xxl text-center text-text-secondary">
+              <span class="material-symbols-outlined text-[48px] block mb-md opacity-30">inventory_2</span>
+              No se encontraron productos con los filtros aplicados.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {# ── Paginación ── #}
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div class="px-lg py-md bg-white border-t border-border-subtle flex items-center justify-between flex-wrap gap-sm">
+      <span class="text-caption-xs text-text-secondary">
+        Mostrando {{ page_obj.start_index }}–{{ page_obj.end_index }} de {{ page_obj.paginator.count }} productos
+      </span>
+      <div class="flex gap-xs">
+        {% if page_obj.has_previous %}
+        <a href="?page=1{% if pagination_query %}&{{ pagination_query }}{% endif %}"
+           class="p-xs px-sm border border-border-subtle rounded hover:bg-slate-50 active:scale-95 transition-all">
+          <span class="material-symbols-outlined text-[18px]">first_page</span>
+        </a>
+        <a href="?page={{ page_obj.previous_page_number }}{% if pagination_query %}&{{ pagination_query }}{% endif %}"
+           class="p-xs px-sm border border-border-subtle rounded hover:bg-slate-50 active:scale-95 transition-all">
+          <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+        </a>
+        {% else %}
+        <button disabled class="p-xs px-sm border border-border-subtle rounded opacity-40 cursor-not-allowed">
+          <span class="material-symbols-outlined text-[18px]">first_page</span>
+        </button>
+        <button disabled class="p-xs px-sm border border-border-subtle rounded opacity-40 cursor-not-allowed">
+          <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+        </button>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+          {% if page_obj.number == num %}
+          <button disabled class="p-xs px-sm bg-primary text-white rounded font-bold text-xs">{{ num }}</button>
+          {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+          <a href="?page={{ num }}{% if pagination_query %}&{{ pagination_query }}{% endif %}"
+             class="p-xs px-sm border border-border-subtle rounded hover:bg-slate-50 active:scale-95 transition-all text-xs">{{ num }}</a>
+          {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if pagination_query %}&{{ pagination_query }}{% endif %}"
+           class="p-xs px-sm border border-border-subtle rounded hover:bg-slate-50 active:scale-95 transition-all">
+          <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+        </a>
+        <a href="?page={{ page_obj.paginator.num_pages }}{% if pagination_query %}&{{ pagination_query }}{% endif %}"
+           class="p-xs px-sm border border-border-subtle rounded hover:bg-slate-50 active:scale-95 transition-all">
+          <span class="material-symbols-outlined text-[18px]">last_page</span>
+        </a>
+        {% else %}
+        <button disabled class="p-xs px-sm border border-border-subtle rounded opacity-40 cursor-not-allowed">
+          <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+        </button>
+        <button disabled class="p-xs px-sm border border-border-subtle rounded opacity-40 cursor-not-allowed">
+          <span class="material-symbols-outlined text-[18px]">last_page</span>
+        </button>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </section>
+
+</div>{# /flex flex-col gap-xl #}
+
+
+{# ════════════════════════════════════════════════════════════════ #}
+{# ── MODAL: Crear / Editar producto ── #}
+{# ════════════════════════════════════════════════════════════════ #}
+{% if can_edit %}
+<div id="modal-producto"
+     class="hidden fixed inset-0 z-[100] flex items-center justify-center p-lg"
+     role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
+
+  {# Backdrop #}
+  <div id="modal-backdrop" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+
+  {# Panel #}
+  <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto z-10">
+
+    {# Header #}
+    <div class="sticky top-0 bg-white px-xl py-md border-b border-border-subtle flex items-center justify-between z-10 rounded-t-2xl">
+      <div>
+        <h3 id="modal-titulo" class="font-semibold text-lg text-text-primary"></h3>
+        <p id="modal-subtitulo" class="text-caption-xs text-text-secondary"></p>
+      </div>
+      <button id="btn-cerrar-modal" type="button"
+              class="p-sm rounded-full hover:bg-slate-100 transition-colors active:scale-95"
+              aria-label="Cerrar">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    {# Alerta de errores #}
+    <div id="modal-error-banner" class="hidden mx-xl mt-md p-md bg-critical-red-light rounded-lg border border-error/20">
+      <p class="text-sm text-error font-medium" id="modal-error-text"></p>
+    </div>
+
+    {# Body #}
+    <div class="p-xl">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-md">
+
+        {# Nombre #}
+        <div class="sm:col-span-2 flex flex-col gap-xs">
+          <label class="text-caption-xs font-medium text-text-secondary" for="f-nombre">
+            Nombre <span class="text-error">*</span>
+          </label>
+          <input id="f-nombre" name="nombre" type="text" maxlength="200"
+                 placeholder="Ej. Arroz extra fino 1kg"
+                 class="form-field rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+          <p class="field-error hidden text-[11px] text-error" id="err-nombre"></p>
+        </div>
+
+        {# Código de barras #}
+        <div class="flex flex-col gap-xs">
+          <label class="text-caption-xs font-medium text-text-secondary" for="f-codigo">
+            Código de barras
+          </label>
+          <input id="f-codigo" name="codigo_barra" type="text" maxlength="50"
+                 placeholder="Ej. 7751234567890"
+                 class="form-field font-mono rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+        </div>
+
+        {# Categoría #}
+        <div class="flex flex-col gap-xs">
+          <label class="text-caption-xs font-medium text-text-secondary" for="f-categoria">
+            Categoría <span class="text-error">*</span>
+          </label>
+          <select id="f-categoria" name="categoria"
+                  class="form-field rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+            <option value="">— Selecciona categoría —</option>
+          </select>
+          <p class="field-error hidden text-[11px] text-error" id="err-categoria"></p>
+        </div>
+
+        {# Unidad #}
+        <div class="flex flex-col gap-xs">
+          <label class="text-caption-xs font-medium text-text-secondary" for="f-unidad">Unidad</label>
+          <select id="f-unidad" name="unidad"
+                  class="form-field rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+            <option value="unidad">Unidad</option>
+            <option value="kg">Kilogramo</option>
+            <option value="litro">Litro</option>
+            <option value="metro">Metro</option>
+            <option value="docena">Docena</option>
+          </select>
+        </div>
+
+        {# Precio venta #}
+        <div class="flex flex-col gap-xs">
+          <label class="text-caption-xs font-medium text-text-secondary" for="f-precio">
+            Precio de venta (S/.) <span class="text-error">*</span>
+          </label>
+          <input id="f-precio" name="precio_venta" type="number" min="0" step="0.01"
+                 placeholder="0.00"
+                 class="form-field font-mono rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+          <p class="field-error hidden text-[11px] text-error" id="err-precio_venta"></p>
+        </div>
+
+        {# Costo #}
+        <div class="flex flex-col gap-xs">
+          <label class="text-caption-xs font-medium text-text-secondary" for="f-costo">
+            Costo (S/.) <span class="text-error">*</span>
+          </label>
+          <input id="f-costo" name="costo" type="number" min="0" step="0.01"
+                 placeholder="0.00"
+                 class="form-field font-mono rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+          <p class="field-error hidden text-[11px] text-error" id="err-costo"></p>
+        </div>
+
+        {# Margen calculado #}
+        <div class="sm:col-span-2">
+          <div id="margen-preview"
+               class="hidden flex items-center gap-sm text-xs bg-surface-container rounded-lg px-md py-sm">
+            <span class="material-symbols-outlined text-[16px] text-success">trending_up</span>
+            <span>Margen estimado: <strong id="margen-valor" class="text-success font-mono"></strong></span>
+          </div>
+        </div>
+
+        {# Stock actual #}
+        <div class="flex flex-col gap-xs">
+          <label class="text-caption-xs font-medium text-text-secondary" for="f-stock">Stock actual</label>
+          <input id="f-stock" name="stock_actual" type="number" min="0" value="0"
+                 class="form-field font-mono rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+        </div>
+
+        {# Stock mínimo #}
+        <div class="flex flex-col gap-xs">
+          <label class="text-caption-xs font-medium text-text-secondary" for="f-stock-min">Stock mínimo</label>
+          <input id="f-stock-min" name="stock_minimo" type="number" min="0" value="10"
+                 class="form-field font-mono rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+        </div>
+
+        {# Descripción #}
+        <div class="sm:col-span-2 flex flex-col gap-xs">
+          <label class="text-caption-xs font-medium text-text-secondary" for="f-descripcion">Descripción</label>
+          <textarea id="f-descripcion" name="descripcion" rows="2"
+                    placeholder="Descripción opcional del producto..."
+                    class="form-field rounded-lg border border-border-subtle px-md py-sm text-sm resize-none focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"></textarea>
+        </div>
+
+      </div>{# /grid #}
+    </div>{# /body #}
+
+    {# Footer de acciones #}
+    <div class="sticky bottom-0 bg-white px-xl py-md border-t border-border-subtle flex items-center justify-end gap-sm rounded-b-2xl">
+      <button id="btn-cancelar-modal" type="button"
+              class="px-lg py-sm rounded-lg border border-border-subtle text-text-secondary hover:bg-slate-50 text-sm transition-colors">
+        Cancelar
+      </button>
+      <button id="btn-guardar" type="button"
+              class="flex items-center gap-xs px-lg py-sm rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary-hover active:scale-95 transition-all neon-glow disabled:opacity-60 disabled:pointer-events-none">
+        <span class="material-symbols-outlined text-[18px]" id="btn-guardar-icon">save</span>
+        <span id="btn-guardar-text">Guardar</span>
+      </button>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{# ── MODAL: Confirmar eliminación ── #}
+{% if can_delete %}
+<div id="modal-eliminar"
+     class="hidden fixed inset-0 z-[100] flex items-center justify-center p-lg"
+     role="dialog" aria-modal="true">
+  <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+  <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm z-10 p-xl flex flex-col gap-lg">
+    <div class="flex items-center gap-md">
+      <span class="material-symbols-outlined text-[36px] text-error">delete_forever</span>
+      <div>
+        <h3 class="font-semibold text-text-primary">Eliminar producto</h3>
+        <p class="text-caption-xs text-text-secondary">Esta acción no se puede deshacer fácilmente.</p>
+      </div>
+    </div>
+    <p class="text-sm text-text-secondary">
+      ¿Estás seguro de eliminar <strong id="del-nombre" class="text-text-primary"></strong>?
+      El producto se marcará como inactivo.
+    </p>
+    <div class="flex gap-sm justify-end">
+      <button id="btn-cancelar-eliminar" type="button"
+              class="px-lg py-sm rounded-lg border border-border-subtle text-text-secondary hover:bg-slate-50 text-sm transition-colors">
+        Cancelar
+      </button>
+      <button id="btn-confirmar-eliminar" type="button"
+              class="flex items-center gap-xs px-lg py-sm rounded-lg bg-error text-white text-sm font-medium hover:opacity-90 active:scale-95 transition-all">
+        <span class="material-symbols-outlined text-[18px]">delete</span>
+        Eliminar
+      </button>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+/* ══════════════════════════════════════════════════════════
+   Inventario — CRUD via fetch + Modales
+   ══════════════════════════════════════════════════════════ */
+const CSRF = '{{ csrf_token }}';
+const URLS = {
+  crear:    '{% url "productos:producto_crear" %}',
+  editar:   (id) => `/dashboard/inventario/${id}/editar/`,
+  eliminar: (id) => `/dashboard/inventario/${id}/eliminar/`,
+};
+const CATEGORIAS = {{ categories_json|safe }};
+const CAN_EDIT   = {{ can_edit|yesno:"true,false" }};
+const CAN_DELETE = {{ can_delete|yesno:"true,false" }};
+
+/* ── Helpers ─────────────────────────────────────────────── */
+function showToast(msg, type = 'success') {
+  const el   = document.getElementById('toast');
+  const icon = document.getElementById('toast-icon');
+  const text = document.getElementById('toast-msg');
+  el.className = el.className.replace(/bg-\w+(-\w+)?/g, '');
+  el.classList.add(type === 'success' ? 'bg-primary' : 'bg-error');
+  el.classList.remove('hidden');
+  icon.textContent = type === 'success' ? 'check_circle' : 'error';
+  text.textContent = msg;
+  setTimeout(() => el.classList.add('hidden'), 4000);
+}
+
+async function apiFetch(url, method = 'GET', body = null) {
+  const opts = {
+    method,
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(url, opts);
+  const data = await res.json();
+  return { ok: res.ok, status: res.status, data };
+}
+
+/* ── Modal Producto ──────────────────────────────────────── */
+const modalProducto = document.getElementById('modal-producto');
+const modalTitulo   = document.getElementById('modal-titulo');
+const modalSub      = document.getElementById('modal-subtitulo');
+const modalError    = document.getElementById('modal-error-banner');
+const modalErrorTxt = document.getElementById('modal-error-text');
+const btnGuardar    = document.getElementById('btn-guardar');
+const btnGuardarTxt = document.getElementById('btn-guardar-text');
+const btnGuardarIco = document.getElementById('btn-guardar-icon');
+
+let editingId = null;
+
+function openModal(titulo, subtitulo) {
+  modalTitulo.textContent = titulo;
+  modalSub.textContent    = subtitulo;
+  modalError.classList.add('hidden');
+  clearErrors();
+  modalProducto?.classList.remove('hidden');
+  document.getElementById('f-nombre')?.focus();
+}
+
+function closeModal() {
+  modalProducto?.classList.add('hidden');
+  resetForm();
+  editingId = null;
+}
+
+function resetForm() {
+  ['f-nombre','f-codigo','f-precio','f-costo','f-stock','f-stock-min','f-descripcion'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = id === 'f-stock' ? '0' : id === 'f-stock-min' ? '10' : '';
+  });
+  const cat = document.getElementById('f-categoria');
+  if (cat) cat.value = '';
+  const uni = document.getElementById('f-unidad');
+  if (uni) uni.value = 'unidad';
+  document.getElementById('margen-preview')?.classList.add('hidden');
+}
+
+function clearErrors() {
+  document.querySelectorAll('.field-error').forEach(el => el.classList.add('hidden'));
+  document.querySelectorAll('.form-field').forEach(el => el.classList.remove('border-error'));
+}
+
+function showErrors(errors) {
+  Object.entries(errors).forEach(([field, msg]) => {
+    const errEl  = document.getElementById(`err-${field}`);
+    const inpMap = {nombre:'f-nombre', categoria:'f-categoria', precio_venta:'f-precio', costo:'f-costo'};
+    const inp = document.getElementById(inpMap[field]);
+    if (errEl) { errEl.textContent = msg; errEl.classList.remove('hidden'); }
+    if (inp) inp.classList.add('border-error');
+  });
+}
+
+function populateCategorias(selectedId = null) {
+  const sel = document.getElementById('f-categoria');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— Selecciona categoría —</option>';
+  CATEGORIAS.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = c.nombre;
+    if (selectedId && c.id == selectedId) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+/* Margen en tiempo real */
+function updateMargen() {
+  const precio = parseFloat(document.getElementById('f-precio')?.value) || 0;
+  const costo  = parseFloat(document.getElementById('f-costo')?.value)  || 0;
+  const preview = document.getElementById('margen-preview');
+  const valorEl = document.getElementById('margen-valor');
+  if (precio > 0 && costo > 0) {
+    const margen = ((precio - costo) / precio * 100).toFixed(1);
+    valorEl.textContent = `S/. ${(precio - costo).toFixed(2)} (${margen}%)`;
+    valorEl.className = precio >= costo ? 'text-success font-mono' : 'text-error font-mono';
+    preview?.classList.remove('hidden');
+  } else {
+    preview?.classList.add('hidden');
+  }
+}
+
+function getFormData() {
+  return {
+    nombre:       document.getElementById('f-nombre')?.value.trim(),
+    codigo_barra: document.getElementById('f-codigo')?.value.trim(),
+    categoria:    document.getElementById('f-categoria')?.value,
+    unidad:       document.getElementById('f-unidad')?.value,
+    precio_venta: document.getElementById('f-precio')?.value,
+    costo:        document.getElementById('f-costo')?.value,
+    stock_actual: document.getElementById('f-stock')?.value,
+    stock_minimo: document.getElementById('f-stock-min')?.value,
+    descripcion:  document.getElementById('f-descripcion')?.value.trim(),
+  };
+}
+
+function setLoading(state) {
+  if (!btnGuardar) return;
+  btnGuardar.disabled = state;
+  btnGuardarTxt.textContent = state ? 'Guardando...' : 'Guardar';
+  btnGuardarIco.textContent = state ? 'hourglass_top' : 'save';
+}
+
+/* ── Abrir modal "Nuevo producto" ─────────────────────────── */
+document.getElementById('btn-nuevo')?.addEventListener('click', () => {
+  editingId = null;
+  resetForm();
+  populateCategorias();
+  openModal('Nuevo producto', 'Completa los campos para agregar al catálogo');
+});
+
+/* ── Abrir modal "Editar" ────────────────────────────────── */
+document.querySelectorAll('.btn-editar').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const id = btn.dataset.id;
+    try {
+      const {ok, data} = await apiFetch(URLS.editar(id), 'GET');
+      if (!ok) { showToast('Error al cargar el producto.', 'error'); return; }
+      editingId = id;
+      populateCategorias(data.categoria);
+      document.getElementById('f-nombre').value     = data.nombre || '';
+      document.getElementById('f-codigo').value     = data.codigo_barra || '';
+      document.getElementById('f-precio').value     = data.precio_venta || '';
+      document.getElementById('f-costo').value      = data.costo || '';
+      document.getElementById('f-stock').value      = data.stock_actual ?? 0;
+      document.getElementById('f-stock-min').value  = data.stock_minimo ?? 10;
+      document.getElementById('f-unidad').value     = data.unidad || 'unidad';
+      document.getElementById('f-descripcion').value= data.descripcion || '';
+      updateMargen();
+      openModal('Editar producto', `Editando: ${data.nombre}`);
+    } catch(e) {
+      showToast('Error de conexión.', 'error');
+    }
+  });
+});
+
+/* ── Guardar (crear o editar) ─────────────────────────────── */
+btnGuardar?.addEventListener('click', async () => {
+  clearErrors();
+  modalError.classList.add('hidden');
+  const formData = getFormData();
+  setLoading(true);
+  try {
+    const url    = editingId ? URLS.editar(editingId) : URLS.crear;
+    const {ok, data} = await apiFetch(url, 'POST', formData);
+    if (ok && data.success) {
+      showToast(data.message, 'success');
+      closeModal();
+      setTimeout(() => location.reload(), 800);
+    } else if (data.errors) {
+      showErrors(data.errors);
+    } else {
+      modalErrorTxt.textContent = data.error || 'Error inesperado.';
+      modalError.classList.remove('hidden');
+    }
+  } catch(e) {
+    modalErrorTxt.textContent = 'Error de conexión con el servidor.';
+    modalError.classList.remove('hidden');
+  } finally {
+    setLoading(false);
+  }
+});
+
+/* ── Cierre de modal ─────────────────────────────────────── */
+document.getElementById('btn-cerrar-modal')?.addEventListener('click', closeModal);
+document.getElementById('btn-cancelar-modal')?.addEventListener('click', closeModal);
+document.getElementById('modal-backdrop')?.addEventListener('click', closeModal);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+/* ── Margen en tiempo real ───────────────────────────────── */
+document.getElementById('f-precio')?.addEventListener('input', updateMargen);
+document.getElementById('f-costo')?.addEventListener('input', updateMargen);
+
+/* ── Modal Eliminar ──────────────────────────────────────── */
+const modalEliminar = document.getElementById('modal-eliminar');
+let deleteId = null;
+
+document.querySelectorAll('.btn-eliminar').forEach(btn => {
+  btn.addEventListener('click', () => {
+    deleteId = btn.dataset.id;
+    document.getElementById('del-nombre').textContent = btn.dataset.nombre;
+    modalEliminar?.classList.remove('hidden');
+  });
+});
+
+document.getElementById('btn-cancelar-eliminar')?.addEventListener('click', () => {
+  modalEliminar?.classList.add('hidden');
+  deleteId = null;
+});
+
+document.getElementById('btn-confirmar-eliminar')?.addEventListener('click', async () => {
+  if (!deleteId) return;
+  const btn = document.getElementById('btn-confirmar-eliminar');
+  btn.disabled = true;
+  try {
+    const {ok, data} = await apiFetch(URLS.eliminar(deleteId), 'POST');
+    if (ok && data.success) {
+      showToast(data.message, 'success');
+      modalEliminar?.classList.add('hidden');
+      setTimeout(() => location.reload(), 800);
+    } else {
+      showToast(data.error || 'Error al eliminar.', 'error');
+      modalEliminar?.classList.add('hidden');
+    }
+  } catch(e) {
+    showToast('Error de conexión.', 'error');
+  } finally {
+    btn.disabled = false;
+    deleteId = null;
+  }
+});
+</script>
+{% endblock %}

@@ -15,21 +15,40 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from usuarios.auth_views import CustomTokenObtainPairView, CustomTokenRefreshView
-from usuarios.views import login_view
+from usuarios.views import login_view, logout_view
+from productos.views import CategoriaViewSet, ProductoViewSet
+from ventas.views import VentaViewSet
+from caja.views import CajaViewSet
+
+# Router para API
+router = DefaultRouter()
+router.register(r'categorias', CategoriaViewSet, basename='categoria')
+router.register(r'productos', ProductoViewSet, basename='producto')
+router.register(r'ventas', VentaViewSet, basename='venta')
+router.register(r'cajas', CajaViewSet, basename='caja')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    
-    # Frontend pages
+
+    # Auth
     path('login/', login_view, name='login'),
-    
-    # Auth endpoints
+    path('logout/', logout_view, name='logout'),
+
+    # Dashboard
+    path('', include('productos.urls')),
+    path('', include('ventas.dashboard_urls')),
+
+    # Auth endpoints (API)
     path('api/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', CustomTokenRefreshView.as_view(), name='token_refresh'),
-    
+
+    # API routes
+    path('api/', include(router.urls)),
+
     # API Documentation
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),

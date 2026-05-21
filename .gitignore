@@ -4,6 +4,7 @@ __pycache__/
 *.pyo
 venv/
 env/
+.venv/
 .env
 
 # Django
@@ -18,3 +19,10 @@ media/
 # OS
 .DS_Store
 Thumbs.db
+
+# Node
+node_modules/
+package-lock.json
+
+# AI tooling
+.atl/

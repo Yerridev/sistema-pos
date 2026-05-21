@@ -1,3 +1,319 @@
-from django.shortcuts import render
+import json
+from django.db import models
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from django.http import JsonResponse
+from django.shortcuts import render, redirect, get_object_or_404
+from django.utils.decorators import method_decorator
+from django.views import View
+from django.views.decorators.http import require_POST
+from urllib.parse import urlencode
 
-# Create your views here.
+from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.utils import extend_schema
+from rest_framework import filters, viewsets
+from rest_framework.permissions import IsAuthenticated
+
+from .models import Categoria, Producto
+from .permissions import IsAdminOrReadOnly
+from .serializers import CategoriaSerializer, ProductoListSerializer, ProductoSerializer
+from .utils import get_role_permissions
+
+
+# ─── API ViewSets ─────────────────────────────────────────────────────────────
+
+class CategoriaViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet para gestionar categorías de productos.
+    - Admin: CRUD completo
+    - Cajero: Solo lectura
+    """
+    queryset = Categoria.objects.all()
+    serializer_class = CategoriaSerializer
+    permission_classes = [IsAuthenticated, IsAdminOrReadOnly]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['nombre', 'descripcion']
+    ordering_fields = ['nombre', 'created_at']
+    ordering = ['nombre']
+
+    @extend_schema(
+        summary="Listar categorías",
+        description="Retorna lista de categorías. Solo admin puede crear/editar.",
+        tags=['Categorías'],
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+
+class ProductoViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet para gestionar productos.
+    - Admin: CRUD completo
+    - Cajero/Otros: Solo lectura
+    """
+    queryset = Producto.objects.select_related('categoria').all()
+    permission_classes = [IsAuthenticated, IsAdminOrReadOnly]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['categoria', 'activo']
+    search_fields = ['codigo_barra', 'nombre', 'categoria__nombre']
+    ordering_fields = ['nombre', 'precio_venta', 'stock_actual', 'created_at']
+    ordering = ['nombre']
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return ProductoListSerializer
+        return ProductoSerializer
+
+    @extend_schema(summary="Listar productos", tags=['Productos'])
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    @extend_schema(summary="Crear producto", tags=['Productos'])
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+
+    @extend_schema(summary="Obtener detalle de producto", tags=['Productos'])
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
+
+
+# ─── Dashboard Template Views ─────────────────────────────────────────────────
+
+def _build_queryset(request):
+    """Construye y filtra el queryset base de productos según parámetros GET."""
+    search = request.GET.get('search', '').strip() or None
+    categoria = request.GET.get('categoria', '').strip() or None
+    stock_status = request.GET.get('stock_status', '').strip() or None
+
+    qs = Producto.objects.select_related('categoria').filter(activo=True)
+
+    if search:
+        qs = qs.filter(
+            models.Q(nombre__icontains=search) | models.Q(codigo_barra__icontains=search)
+        )
+    if categoria:
+        qs = qs.filter(categoria_id=categoria)
+    if stock_status == 'critico':
+        qs = qs.filter(stock_actual__lt=models.F('stock_minimo'))
+    elif stock_status == 'bajo':
+        qs = qs.filter(
+            stock_actual__gte=models.F('stock_minimo'),
+            stock_actual__lte=models.F('stock_minimo') * 2,
+        )
+    elif stock_status == 'normal':
+        qs = qs.filter(stock_actual__gt=models.F('stock_minimo') * 2)
+
+    return qs, {'search': search or '', 'categoria': categoria or '', 'stock_status': stock_status or ''}
+
+
+def _build_stats(qs):
+    """Calcula estadísticas del queryset."""
+    from collections import Counter
+    total = qs.count()
+    criticos = qs.filter(stock_actual__lt=models.F('stock_minimo')).count()
+    valor = sum(p.precio_venta * p.stock_actual for p in qs)
+    cats = Counter(qs.values_list('categoria__nombre', flat=True))
+    top_cat = cats.most_common(1)[0][0] if cats else 'N/A'
+    return [
+        {'label': 'Total productos', 'value': total,            'icon': 'inventory_2', 'warning': False},
+        {'label': 'Stock crítico',   'value': criticos,         'icon': 'warning',     'warning': True},
+        {'label': 'Valor inventario','value': f"S/. {valor:.2f}",'icon': 'savings',    'warning': False},
+        {'label': 'Categoría top',   'value': top_cat,          'icon': 'category',    'warning': False},
+    ]
+
+
+@method_decorator(login_required, name='dispatch')
+class InventarioDashboardView(View):
+
+    def get(self, request):
+        page = int(request.GET.get('page', 1))
+        qs, filters_ctx = _build_queryset(request)
+
+        paginator = Paginator(qs, 20)
+        page_obj = paginator.get_page(page)
+        products = list(page_obj.object_list)
+
+        pagination_query = urlencode({k: v for k, v in filters_ctx.items() if v})
+        permissions = get_role_permissions(getattr(request.user, 'rol', None))
+        categories = list(Categoria.objects.filter(activo=True).order_by('nombre'))
+
+        context = {
+            'stats_list': _build_stats(qs),
+            'products': products,
+            'page_obj': page_obj,
+            'filters': {**filters_ctx, 'page': page},
+            'can_edit': permissions['can_edit'],
+            'can_delete': permissions['can_delete'],
+            'categories': categories,
+            'categories_json': json.dumps([{'id': c.id, 'nombre': c.nombre} for c in categories]),
+            'pagination_query': pagination_query,
+            'total_count': paginator.count,
+        }
+        return render(request, 'dashboard/inventory.html', context)
+
+
+@method_decorator(login_required, name='dispatch')
+class ProductoCreateView(View):
+    """Crea un producto vía POST (usado por el modal AJAX)."""
+
+    def post(self, request):
+        if not get_role_permissions(getattr(request.user, 'rol', None))['can_edit']:
+            return JsonResponse({'error': 'Sin permisos para crear productos.'}, status=403)
+
+        try:
+            data = json.loads(request.body)
+        except (json.JSONDecodeError, ValueError):
+            data = request.POST.dict()
+
+        errors = {}
+        nombre = data.get('nombre', '').strip()
+        categoria_id = data.get('categoria')
+        precio_venta = data.get('precio_venta')
+        costo = data.get('costo')
+        stock_actual = data.get('stock_actual', 0)
+        stock_minimo = data.get('stock_minimo', 10)
+        unidad = data.get('unidad', 'unidad')
+        codigo_barra = data.get('codigo_barra', '').strip() or None
+        descripcion = data.get('descripcion', '').strip()
+
+        if not nombre:
+            errors['nombre'] = 'El nombre es obligatorio.'
+        if not categoria_id:
+            errors['categoria'] = 'La categoría es obligatoria.'
+        if precio_venta is None:
+            errors['precio_venta'] = 'El precio de venta es obligatorio.'
+        if costo is None:
+            errors['costo'] = 'El costo es obligatorio.'
+
+        try:
+            precio_venta = float(precio_venta)
+            costo = float(costo)
+            if precio_venta < costo:
+                errors['precio_venta'] = 'El precio de venta debe ser mayor al costo.'
+        except (TypeError, ValueError):
+            errors['precio_venta'] = 'Valores numéricos inválidos.'
+
+        if errors:
+            return JsonResponse({'errors': errors}, status=400)
+
+        try:
+            categoria = get_object_or_404(Categoria, pk=categoria_id)
+            producto = Producto.objects.create(
+                nombre=nombre,
+                categoria=categoria,
+                precio_venta=precio_venta,
+                costo=costo,
+                stock_actual=int(stock_actual),
+                stock_minimo=int(stock_minimo),
+                unidad=unidad,
+                codigo_barra=codigo_barra,
+                descripcion=descripcion,
+            )
+            return JsonResponse({
+                'success': True,
+                'id': producto.id,
+                'nombre': producto.nombre,
+                'message': f'Producto "{producto.nombre}" creado correctamente.',
+            }, status=201)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+
+@method_decorator(login_required, name='dispatch')
+class ProductoUpdateView(View):
+    """Actualiza un producto vía POST/PUT (usado por el modal AJAX)."""
+
+    def get(self, request, pk):
+        """Devuelve datos del producto en JSON para pre-llenar el modal."""
+        producto = get_object_or_404(Producto, pk=pk)
+        return JsonResponse({
+            'id': producto.id,
+            'nombre': producto.nombre,
+            'codigo_barra': producto.codigo_barra or '',
+            'categoria': producto.categoria_id,
+            'descripcion': producto.descripcion or '',
+            'precio_venta': str(producto.precio_venta),
+            'costo': str(producto.costo),
+            'stock_actual': producto.stock_actual,
+            'stock_minimo': producto.stock_minimo,
+            'unidad': producto.unidad,
+            'activo': producto.activo,
+        })
+
+    def post(self, request, pk):
+        if not get_role_permissions(getattr(request.user, 'rol', None))['can_edit']:
+            return JsonResponse({'error': 'Sin permisos para editar productos.'}, status=403)
+
+        try:
+            data = json.loads(request.body)
+        except (json.JSONDecodeError, ValueError):
+            data = request.POST.dict()
+
+        producto = get_object_or_404(Producto, pk=pk)
+        errors = {}
+
+        nombre = data.get('nombre', '').strip()
+        categoria_id = data.get('categoria')
+        precio_venta = data.get('precio_venta')
+        costo = data.get('costo')
+
+        if not nombre:
+            errors['nombre'] = 'El nombre es obligatorio.'
+        if not categoria_id:
+            errors['categoria'] = 'La categoría es obligatoria.'
+        try:
+            precio_venta = float(precio_venta)
+            costo = float(costo)
+            if precio_venta < costo:
+                errors['precio_venta'] = 'El precio de venta debe ser mayor al costo.'
+        except (TypeError, ValueError):
+            errors['precio_venta'] = 'Valores numéricos inválidos.'
+
+        if errors:
+            return JsonResponse({'errors': errors}, status=400)
+
+        try:
+            categoria = get_object_or_404(Categoria, pk=categoria_id)
+            producto.nombre = nombre
+            producto.categoria = categoria
+            producto.precio_venta = precio_venta
+            producto.costo = costo
+            producto.stock_actual = int(data.get('stock_actual', producto.stock_actual))
+            producto.stock_minimo = int(data.get('stock_minimo', producto.stock_minimo))
+            producto.unidad = data.get('unidad', producto.unidad)
+            producto.codigo_barra = data.get('codigo_barra', '').strip() or None
+            producto.descripcion = data.get('descripcion', '').strip()
+            producto.activo = data.get('activo', True)
+            producto.save()
+            return JsonResponse({
+                'success': True,
+                'message': f'Producto "{producto.nombre}" actualizado correctamente.',
+            })
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+
+@method_decorator(login_required, name='dispatch')
+class ProductoDeleteView(View):
+    """Elimina (desactiva) un producto vía POST."""
+
+    def post(self, request, pk):
+        if not get_role_permissions(getattr(request.user, 'rol', None))['can_delete']:
+            return JsonResponse({'error': 'Sin permisos para eliminar productos.'}, status=403)
+
+        producto = get_object_or_404(Producto, pk=pk)
+        nombre = producto.nombre
+        # Soft delete — conservar historial de ventas
+        producto.activo = False
+        producto.save()
+        return JsonResponse({'success': True, 'message': f'Producto "{nombre}" eliminado.'})
+
+
+@method_decorator(login_required, name='dispatch')
+class CategoriaListView(View):
+    """Lista categorías en JSON (para selects dinámicos)."""
+
+    def get(self, request):
+        cats = list(Categoria.objects.filter(activo=True).order_by('nombre').values('id', 'nombre'))
+        return JsonResponse({'results': cats})
