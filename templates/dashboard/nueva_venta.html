@@ -9,7 +9,7 @@
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-md">
       <div>
         <h1 class="text-2xl font-bold text-text-primary">Preparar venta</h1>
-        <p class="text-sm text-text-secondary mt-xs">Pantalla base conectada al inventario y cajas activas para continuar el flujo comercial.</p>
+        <p class="text-sm text-text-secondary mt-xs">Consulta cajas disponibles, revisa productos en stock y prepara una nueva operación de venta.</p>
       </div>
       <a href="{% url 'ventas:dashboard' %}" class="inline-flex items-center gap-xs px-md py-sm rounded-lg border border-border-subtle text-text-secondary hover:bg-slate-50 text-sm transition-colors">
         <span class="material-symbols-outlined text-[18px]">arrow_back</span>
@@ -44,7 +44,7 @@
         {% endfor %}
       </div>
       <div class="mt-lg rounded-lg border border-dashed border-border-subtle p-md">
-        <p class="text-sm text-text-secondary">La creacion operativa de ventas ya esta expuesta por la API en <code>/api/ventas/</code>. Esta vista deja el dashboard listo para terminar de conectar el flujo de cobro desde frontend.</p>
+        <p class="text-sm text-text-secondary">Selecciona el método de pago correspondiente para continuar con el registro de la venta.</p>
       </div>
     </article>
   </section>
@@ -52,7 +52,7 @@
   <section class="bg-white rounded-xl shadow-sm border border-border-subtle overflow-hidden">
     <div class="px-lg py-md border-b border-border-subtle">
       <h2 class="font-semibold text-text-primary">Productos disponibles</h2>
-      <p class="text-caption-xs text-text-secondary">Muestra inicial para armar el ticket desde interfaz</p>
+      <p class="text-caption-xs text-text-secondary">Consulta rápida de productos disponibles para armar el ticket.</p>
     </div>
     <div class="overflow-x-auto">
       <table class="w-full text-left border-collapse text-sm">
