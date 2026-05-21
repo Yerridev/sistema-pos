@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.db.models import Sum
+from decimal import Decimal
 from productos.models import Producto
 from caja.models import Caja
 
@@ -36,9 +37,9 @@ class Venta(models.Model):
         return f"Venta #{self.id} - S/{self.total} ({self.get_estado_display()})"
 
     def calcular_totales(self):
-        subtotal = self.detalles.aggregate(total=Sum('subtotal'))['total'] or 0
+        subtotal = self.detalles.aggregate(total=Sum('subtotal'))['total'] or Decimal('0.00')
         self.subtotal = subtotal
-        self.igv = subtotal * 0.18
+        self.igv = subtotal * Decimal('0.18')
         self.total = subtotal + self.igv - self.descuento
         self.save()
 

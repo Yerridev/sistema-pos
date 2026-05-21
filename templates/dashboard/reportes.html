@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Reportes - Cobrate POS{% endblock %}
+{% block page_title %}Reportes{% endblock %}
+
+{% block content %}
+<div class="flex flex-col gap-xl">
+  <section class="grid grid-cols-1 xl:grid-cols-3 gap-md">
+    <article class="bg-white rounded-xl shadow-sm border border-border-subtle p-lg">
+      <p class="text-caption-xs text-text-secondary">Ventas del dia</p>
+      <p class="mt-xs text-3xl font-bold text-text-primary">S/. {{ ventas_dia.total }}</p>
+      <p class="text-sm text-text-secondary">{{ ventas_dia.cantidad }} venta{{ ventas_dia.cantidad|pluralize }}</p>
+    </article>
+    <article class="bg-white rounded-xl shadow-sm border border-border-subtle p-lg">
+      <p class="text-caption-xs text-text-secondary">Utilidad periodo</p>
+      <p class="mt-xs text-3xl font-bold text-primary">S/. {{ utilidad.utilidad }}</p>
+      <p class="text-sm text-text-secondary">Ingresos S/. {{ utilidad.ingresos }} - Costos S/. {{ utilidad.costos }}</p>
+    </article>
+    <article class="bg-white rounded-xl shadow-sm border border-border-subtle p-lg">
+      <p class="text-caption-xs text-text-secondary">Stock critico</p>
+      <p class="mt-xs text-3xl font-bold text-error">{{ stock_critico|length }}</p>
+      <p class="text-sm text-text-secondary">Productos bajo minimo</p>
+    </article>
+  </section>
+
+  <section class="grid grid-cols-1 xl:grid-cols-[1fr,1fr] gap-md">
+    <article class="bg-white rounded-xl shadow-sm border border-border-subtle p-lg">
+      <div class="flex flex-wrap items-end justify-between gap-md">
+        <div>
+          <h2 class="font-semibold text-text-primary">Ventas del dia</h2>
+          <p class="text-caption-xs text-text-secondary">Totales por metodo y top productos</p>
+        </div>
+        <form method="get" class="flex gap-sm items-end">
+          <input name="fecha" type="date" value="{{ filters.fecha|date:'Y-m-d' }}"
+                 class="rounded-lg border border-border-subtle px-md py-sm text-sm" />
+          <button class="rounded-lg bg-primary px-md py-sm text-sm text-white">Filtrar</button>
+        </form>
+      </div>
+
+      <div class="mt-lg grid grid-cols-1 sm:grid-cols-3 gap-sm">
+        {% for metodo, total in ventas_dia.por_metodo.items %}
+        <div class="rounded-lg bg-surface-container p-md">
+          <p class="text-caption-xs text-text-secondary">{{ metodo }}</p>
+          <p class="font-bold text-text-primary">S/. {{ total }}</p>
+        </div>
+        {% empty %}
+        <p class="text-sm text-text-secondary">Sin ventas completadas.</p>
+        {% endfor %}
+      </div>
+
+      <div class="mt-lg">
+        <h3 class="text-sm font-semibold text-text-primary">Top 5 productos</h3>
+        <div class="mt-sm flex flex-col gap-sm">
+          {% for item in ventas_dia.top_productos %}
+          <div class="grid grid-cols-[1fr,80px] gap-sm items-center">
+            <div>
+              <p class="text-sm font-medium text-text-primary">{{ item.nombre }}</p>
+              <div class="mt-xs h-2 rounded-full bg-slate-100 overflow-hidden">
+                <div class="h-full bg-primary" style="width: {% widthratio item.cantidad 20 100 %}%"></div>
+              </div>
+            </div>
+            <p class="text-right font-mono text-sm">{{ item.cantidad }}</p>
+          </div>
+          {% empty %}
+          <p class="text-sm text-text-secondary">Sin productos vendidos.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </article>
+
+    <article class="bg-white rounded-xl shadow-sm border border-border-subtle p-lg">
+      <h2 class="font-semibold text-text-primary">Utilidad</h2>
+      <form method="get" class="mt-md grid grid-cols-1 sm:grid-cols-3 gap-sm items-end">
+        <input name="desde" type="date" value="{{ filters.desde|date:'Y-m-d' }}" class="rounded-lg border border-border-subtle px-md py-sm text-sm" />
+        <input name="hasta" type="date" value="{{ filters.hasta|date:'Y-m-d' }}" class="rounded-lg border border-border-subtle px-md py-sm text-sm" />
+        <button class="rounded-lg bg-primary px-md py-sm text-sm text-white">Filtrar</button>
+      </form>
+      <div class="mt-lg overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-slate-50">
+            <tr>
+              <th class="px-md py-sm text-caption-xs text-text-secondary uppercase">Dia</th>
+              <th class="px-md py-sm text-caption-xs text-text-secondary uppercase text-right">Ventas</th>
+              <th class="px-md py-sm text-caption-xs text-text-secondary uppercase text-right">Total</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border-subtle">
+            {% for dia in utilidad.por_dia %}
+            <tr>
+              <td class="px-md py-sm">{{ dia.dia|date:"d/m/Y" }}</td>
+              <td class="px-md py-sm text-right">{{ dia.ventas }}</td>
+              <td class="px-md py-sm text-right font-mono">S/. {{ dia.total }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3" class="px-md py-lg text-center text-text-secondary">Sin ventas en el periodo.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </article>
+  </section>
+
+  <section class="bg-white rounded-xl shadow-sm border border-border-subtle overflow-hidden">
+    <div class="px-lg py-md border-b border-border-subtle">
+      <h2 class="font-semibold text-text-primary">Stock critico</h2>
+      <p class="text-caption-xs text-text-secondary">Productos bajo el minimo con sugerencia de reposicion</p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm">
+        <thead class="bg-slate-50">
+          <tr>
+            <th class="px-lg py-sm text-caption-xs text-text-secondary uppercase">Producto</th>
+            <th class="px-lg py-sm text-caption-xs text-text-secondary uppercase">Categoria</th>
+            <th class="px-lg py-sm text-caption-xs text-text-secondary uppercase text-right">Stock</th>
+            <th class="px-lg py-sm text-caption-xs text-text-secondary uppercase text-right">Minimo</th>
+            <th class="px-lg py-sm text-caption-xs text-text-secondary uppercase text-right">Reposicion</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border-subtle">
+          {% for producto in stock_critico %}
+          <tr class="bg-red-50">
+            <td class="px-lg py-sm font-medium text-text-primary">{{ producto.nombre }}</td>
+            <td class="px-lg py-sm text-text-secondary">{{ producto.categoria }}</td>
+            <td class="px-lg py-sm text-right font-mono text-error">{{ producto.stock_actual }}</td>
+            <td class="px-lg py-sm text-right font-mono">{{ producto.stock_minimo }}</td>
+            <td class="px-lg py-sm text-right font-mono font-semibold">{{ producto.sugerencia_reposicion }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" class="px-lg py-xxl text-center text-text-secondary">No hay productos criticos.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{% endblock %}

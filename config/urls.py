@@ -23,6 +23,8 @@ from usuarios.views import login_view, logout_view
 from productos.views import CategoriaViewSet, ProductoViewSet
 from ventas.views import VentaViewSet
 from caja.views import CajaViewSet
+from compras.views import CompraViewSet, ProveedorViewSet
+from reportes.views import stock_critico_api, utilidad_api, ventas_del_dia_api
 
 # Router para API
 router = DefaultRouter()
@@ -30,6 +32,8 @@ router.register(r'categorias', CategoriaViewSet, basename='categoria')
 router.register(r'productos', ProductoViewSet, basename='producto')
 router.register(r'ventas', VentaViewSet, basename='venta')
 router.register(r'cajas', CajaViewSet, basename='caja')
+router.register(r'proveedores', ProveedorViewSet, basename='proveedor')
+router.register(r'compras', CompraViewSet, basename='compra')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -42,6 +46,8 @@ urlpatterns = [
     path('', include('productos.urls')),
     path('', include('usuarios.urls')),
     path('', include('ventas.dashboard_urls')),
+    path('', include('reportes.urls')),
+    path('', include('compras.urls')),
 
     # Auth endpoints (API)
     path('api/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
@@ -49,6 +55,9 @@ urlpatterns = [
 
     # API routes
     path('api/', include(router.urls)),
+    path('api/reportes/ventas-del-dia/', ventas_del_dia_api, name='reporte_ventas_del_dia'),
+    path('api/reportes/stock-critico/', stock_critico_api, name='reporte_stock_critico'),
+    path('api/reportes/utilidad/', utilidad_api, name='reporte_utilidad'),
 
     # API Documentation
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
