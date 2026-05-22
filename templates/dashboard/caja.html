@@ -5,16 +5,6 @@
 
 {% block content %}
 <div class="flex flex-col gap-xl">
-  {% if messages %}
-  <div class="flex flex-col gap-sm">
-    {% for message in messages %}
-    <div class="rounded-lg px-md py-sm text-sm {% if message.tags == 'success' %}bg-primary/10 text-primary{% else %}bg-red-50 text-error{% endif %}">
-      {{ message }}
-    </div>
-    {% endfor %}
-  </div>
-  {% endif %}
-
   <section class="grid grid-cols-1 xl:grid-cols-[1.3fr,1fr] gap-md">
     <article class="bg-white rounded-xl shadow-sm border border-border-subtle p-lg">
       <div class="flex items-start justify-between gap-md">
@@ -46,43 +36,16 @@
         </div>
       </div>
       <div class="flex flex-wrap gap-sm mt-lg">
-        {% if caja_actual.estado == 'ABIERTA' %}
-        <form method="post" action="{% url 'ventas:cerrar_caja' caja_actual.id %}">
-          {% csrf_token %}
-          <button type="submit" class="px-md py-sm rounded-lg border border-border-subtle text-text-secondary hover:bg-slate-50 text-sm transition-colors">Cerrar caja</button>
-        </form>
-        {% endif %}
+        <a href="/api/cajas/{{ caja_actual.id }}/abrir/" class="px-md py-sm rounded-lg border border-border-subtle text-text-secondary hover:bg-slate-50 text-sm transition-colors">Abrir caja</a>
+        <a href="/api/cajas/{{ caja_actual.id }}/cerrar/" class="px-md py-sm rounded-lg border border-border-subtle text-text-secondary hover:bg-slate-50 text-sm transition-colors">Cerrar caja</a>
         <a href="/api/cajas/{{ caja_actual.id }}/" class="px-md py-sm rounded-lg bg-primary text-white hover:bg-primary-hover text-sm transition-colors">Ver API</a>
       </div>
       {% else %}
       <p class="text-sm text-text-secondary mt-md">Aun no hay una caja visible para este usuario.</p>
-      <form method="post" action="{% url 'ventas:abrir_caja' %}" class="grid grid-cols-1 sm:grid-cols-3 gap-sm mt-lg">
-        {% csrf_token %}
-        <input name="nombre" type="text" placeholder="Nombre de caja"
-               class="rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
-        <input name="saldo_inicial" type="number" min="0" step="0.01" value="0.00"
-               class="rounded-lg border border-border-subtle px-md py-sm text-sm font-mono focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
-        <button type="submit" class="rounded-lg bg-primary px-md py-sm text-sm font-medium text-white hover:bg-primary-hover transition-colors">Abrir caja</button>
-      </form>
       {% endif %}
     </article>
 
     <article class="bg-white rounded-xl shadow-sm border border-border-subtle p-lg">
-      {% if caja_actual and caja_actual.estado == 'ABIERTA' %}
-      <h2 class="font-semibold text-text-primary">Registrar movimiento</h2>
-      <form method="post" action="{% url 'ventas:movimiento_caja' caja_actual.id %}" class="mt-md flex flex-col gap-sm">
-        {% csrf_token %}
-        <select name="tipo" class="rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
-          <option value="INGRESO">Ingreso</option>
-          <option value="EGRESO">Egreso</option>
-        </select>
-        <input name="monto" type="number" min="0.01" step="0.01" placeholder="Monto"
-               class="rounded-lg border border-border-subtle px-md py-sm text-sm font-mono focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
-        <input name="concepto" type="text" placeholder="Concepto"
-               class="rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
-        <button type="submit" class="rounded-lg bg-primary px-md py-sm text-sm font-medium text-white hover:bg-primary-hover transition-colors">Guardar movimiento</button>
-      </form>
-      {% else %}
       <h2 class="font-semibold text-text-primary">Historial reciente</h2>
       <div class="mt-md flex flex-col gap-sm">
         {% for caja in historial %}
@@ -97,7 +60,6 @@
         <p class="text-sm text-text-secondary">No hay historial disponible.</p>
         {% endfor %}
       </div>
-      {% endif %}
     </article>
   </section>
 
