@@ -5,7 +5,10 @@ from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Count, Prefetch, Q, Sum
 from django.contrib import messages
-from django.shortcuts import redirect, render
+import json
+
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
@@ -14,6 +17,10 @@ from django.views.decorators.http import require_POST
 from caja.models import Caja, MovimientoCaja
 from productos.models import Producto
 from .models import DetalleVenta, Venta
+
+
+def _user_can_access_venta(user, venta):
+    return venta.cajero_id == user.id or getattr(user, "rol", None) == "admin"
 
 
 def _ventas_queryset(request):
@@ -79,16 +86,49 @@ class VentaDashboardView(View):
         return render(request, "dashboard/ventas.html", context)
 
 
+@login_required
+def buscar_productos_venta(request):
+    query = request.GET.get("q", "").strip()
+    if not query:
+        return JsonResponse({"results": []})
+
+    productos = Producto.objects.select_related("categoria").filter(activo=True, stock_actual__gt=0)
+    exact_barcode = productos.filter(codigo_barra__iexact=query).first()
+
+    if exact_barcode:
+        results = [exact_barcode]
+        match_type = "barcode"
+    else:
+        results = productos.filter(
+            Q(nombre__icontains=query) | Q(codigo_barra__icontains=query)
+        ).order_by("nombre")[:10]
+        match_type = "search"
+
+    return JsonResponse({
+        "match_type": match_type,
+        "results": [
+            {
+                "id": producto.id,
+                "codigo_barra": producto.codigo_barra or "",
+                "nombre": producto.nombre,
+                "categoria": producto.categoria.nombre,
+                "precio_venta": str(producto.precio_venta),
+                "stock_actual": producto.stock_actual,
+                "unidad": producto.unidad,
+            }
+            for producto in results
+        ],
+    })
+
+
 @method_decorator(login_required, name="dispatch")
 class NuevaVentaView(View):
     def get(self, request):
-        productos = Producto.objects.select_related("categoria").filter(activo=True, stock_actual__gt=0).order_by("nombre")
         cajas = Caja.objects.filter(estado="ABIERTA")
         if request.user.rol != "admin":
             cajas = cajas.filter(cajero=request.user)
 
         context = {
-            "productos": productos[:30],
             "cajas_abiertas": cajas,
             "metodos_pago": Venta.METODO_PAGO_CHOICES,
         }
@@ -99,6 +139,7 @@ class NuevaVentaView(View):
         caja_id = request.POST.get("caja")
         metodo_pago = request.POST.get("metodo_pago")
         descuento = request.POST.get("descuento", "0").strip() or "0"
+        detalles = self._parse_cart_items(request)
 
         if metodo_pago not in dict(Venta.METODO_PAGO_CHOICES):
             messages.error(request, "Selecciona un metodo de pago valido.")
@@ -122,21 +163,8 @@ class NuevaVentaView(View):
             messages.error(request, "No puedes vender en una caja de otro cajero.")
             return redirect("ventas:nueva_venta")
 
-        detalles = []
-        for key, value in request.POST.items():
-            if not key.startswith("cantidad_"):
-                continue
-            try:
-                cantidad = int(value or 0)
-            except ValueError:
-                cantidad = 0
-            if cantidad <= 0:
-                continue
-            producto_id = key.replace("cantidad_", "", 1)
-            detalles.append((producto_id, cantidad))
-
         if not detalles:
-            messages.error(request, "Agrega al menos un producto con cantidad mayor que cero.")
+            messages.error(request, "Agrega productos al carrito antes de confirmar la venta.")
             return redirect("ventas:nueva_venta")
 
         venta = Venta.objects.create(
@@ -177,7 +205,94 @@ class NuevaVentaView(View):
             usuario=request.user,
         )
         messages.success(request, f"Venta #{venta.id} registrada correctamente por S/. {venta.total}.")
+        return redirect("ventas:detalle_venta", pk=venta.pk)
+
+    def _parse_cart_items(self, request):
+        cart_items = request.POST.get("cart_items", "").strip()
+        if cart_items:
+            try:
+                payload = json.loads(cart_items)
+            except (TypeError, ValueError):
+                return []
+            detalles = []
+            for item in payload:
+                try:
+                    producto_id = int(item.get("producto_id"))
+                    cantidad = int(item.get("cantidad", 0))
+                except (TypeError, ValueError):
+                    continue
+                if cantidad > 0:
+                    detalles.append((producto_id, cantidad))
+            return detalles
+
+        detalles = []
+        for key, value in request.POST.items():
+            if not key.startswith("cantidad_"):
+                continue
+            try:
+                cantidad = int(value or 0)
+            except ValueError:
+                cantidad = 0
+            if cantidad <= 0:
+                continue
+            producto_id = key.replace("cantidad_", "", 1)
+            detalles.append((producto_id, cantidad))
+        return detalles
+
+
+@method_decorator(login_required, name="dispatch")
+class VentaDetalleDashboardView(View):
+    def get(self, request, pk):
+        venta = get_object_or_404(
+            Venta.objects.select_related("cajero", "caja").prefetch_related("detalles__producto"),
+            pk=pk,
+        )
+        if venta.cajero_id != request.user.id and request.user.rol != "admin":
+            messages.error(request, "No puedes ver el detalle de una venta de otro cajero.")
+            return redirect("ventas:dashboard")
+
+        return render(request, "dashboard/detalle_venta.html", {"venta": venta})
+
+
+@login_required
+@require_POST
+@transaction.atomic
+def anular_venta_dashboard(request, pk):
+    venta = get_object_or_404(
+        Venta.objects.select_for_update().select_related("cajero", "caja"),
+        pk=pk,
+    )
+
+    if not _user_can_access_venta(request.user, venta):
+        messages.error(request, "No puedes anular una venta de otro cajero.")
         return redirect("ventas:dashboard")
+    if venta.estado == "ANULADA":
+        messages.error(request, "La venta ya se encuentra anulada.")
+        return redirect("ventas:detalle_venta", pk=venta.pk)
+
+    motivo = request.POST.get("motivo", "").strip() or "Anulacion desde detalle de venta"
+
+    venta.estado = "ANULADA"
+    venta.motivo_anulacion = motivo
+    venta.anulado_por = request.user
+    venta.fecha_anulacion = timezone.now()
+    venta.save(update_fields=["estado", "motivo_anulacion", "anulado_por", "fecha_anulacion"])
+
+    detalles = DetalleVenta.objects.select_related("producto").select_for_update().filter(venta=venta)
+    for detalle in detalles:
+        detalle.producto.stock_actual += detalle.cantidad
+        detalle.producto.save(update_fields=["stock_actual"])
+
+    MovimientoCaja.objects.create(
+        caja=venta.caja,
+        tipo="EGRESO",
+        monto=venta.total,
+        concepto=f"Anulacion venta #{venta.id}: {motivo}",
+        usuario=request.user,
+    )
+
+    messages.success(request, f"Venta #{venta.id} anulada correctamente. El stock fue devuelto.")
+    return redirect("ventas:detalle_venta", pk=venta.pk)
 
 
 @method_decorator(login_required, name="dispatch")

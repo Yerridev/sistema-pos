@@ -4,9 +4,9 @@
 {% block page_title %}Nueva Venta{% endblock %}
 
 {% block content %}
-<div class="flex flex-col gap-xl">
+<div class="flex flex-col gap-lg">
   {% if messages %}
-  <div class="flex flex-col gap-sm">
+  <div class="flex flex-col gap-sm" role="status" aria-live="polite">
     {% for message in messages %}
     <div class="rounded-lg px-md py-sm text-sm {% if message.tags == 'success' %}bg-primary/10 text-primary{% else %}bg-red-50 text-error{% endif %}">
       {{ message }}
@@ -15,110 +15,396 @@
   </div>
   {% endif %}
 
-  <section class="bg-white rounded-xl shadow-sm border border-border-subtle p-lg">
-    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-md">
-      <div>
-        <h1 class="text-2xl font-bold text-text-primary">Registrar venta</h1>
-        <p class="text-sm text-text-secondary mt-xs">Selecciona caja, metodo de pago y cantidades para emitir una venta.</p>
-      </div>
-      <a href="{% url 'ventas:dashboard' %}" class="inline-flex items-center gap-xs px-md py-sm rounded-lg border border-border-subtle text-text-secondary hover:bg-slate-50 text-sm transition-colors">
-        <span class="material-symbols-outlined text-[18px]">arrow_back</span>
-        Volver a ventas
-      </a>
-    </div>
-  </section>
-
-  <form method="post" class="flex flex-col gap-xl">
+  <form id="sale-form" method="post" class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr),440px] gap-lg items-start">
     {% csrf_token %}
+    <input id="cart-items" name="cart_items" type="hidden" value="[]">
 
-    <section class="grid grid-cols-1 xl:grid-cols-[1.2fr,1fr] gap-md">
+    <section class="flex flex-col gap-lg">
       <article class="bg-white rounded-xl shadow-sm border border-border-subtle p-lg">
-        <h2 class="font-semibold text-text-primary">Caja abierta</h2>
-        <div class="mt-md flex flex-col gap-sm">
-          {% for caja in cajas_abiertas %}
-          <label class="rounded-lg border border-border-subtle px-md py-sm flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors">
-            <div>
-              <p class="font-medium text-text-primary">
-                <input type="radio" name="caja" value="{{ caja.id }}" class="mr-sm accent-primary" {% if forloop.first %}checked{% endif %}>
-                {{ caja.nombre }}
-              </p>
-              <p class="text-sm text-text-secondary">{{ caja.cajero.username }} - Saldo actual S/. {{ caja.saldo_actual }}</p>
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-md">
+          <div>
+            <p class="text-caption-xs font-semibold uppercase text-primary">Paso 1</p>
+            <h1 class="text-2xl font-bold text-text-primary mt-xs">Buscar y agregar productos</h1>
+            <p class="text-sm text-text-secondary mt-xs">Escanea un codigo de barras o escribe parte del nombre.</p>
+          </div>
+          <a href="{% url 'ventas:dashboard' %}" class="inline-flex items-center justify-center gap-xs px-md py-sm rounded-lg border border-border-subtle text-text-secondary hover:bg-slate-50 text-sm transition-colors">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_back</span>
+            Volver a ventas
+          </a>
+        </div>
+
+        <div class="mt-lg grid grid-cols-1 lg:grid-cols-[1fr,132px] gap-sm">
+          <div>
+            <label class="sr-only" for="product-search">Buscar producto por nombre o codigo de barras</label>
+            <div class="relative">
+              <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary text-[28px]" aria-hidden="true">barcode_scanner</span>
+              <input id="product-search" type="search" autocomplete="off" inputmode="search"
+                     placeholder="Escanea codigo de barras o busca por nombre"
+                     aria-describedby="search-hint"
+                     class="w-full rounded-lg border-2 border-border-subtle bg-white pl-14 pr-md py-md text-lg text-text-primary placeholder:text-text-secondary focus:ring-4 focus:ring-primary/15 focus:border-primary outline-none">
             </div>
-            <span class="inline-flex px-sm py-[2px] rounded-full text-[11px] font-semibold bg-primary/10 text-primary">{{ caja.get_estado_display }}</span>
-          </label>
-          {% empty %}
-          <p class="text-sm text-text-secondary">No hay cajas abiertas para este usuario. Abre una caja antes de vender.</p>
-          {% endfor %}
+            <p id="search-hint" class="text-sm text-text-secondary mt-sm" role="status" aria-live="polite">
+              Con lector de barras: apunta al campo y escanea. Si el codigo coincide, se agrega con Enter.
+            </p>
+          </div>
+          <button id="search-button" type="button" class="inline-flex min-h-[56px] items-center justify-center gap-xs rounded-lg bg-primary px-md py-sm text-base font-semibold text-white hover:bg-primary-hover focus:ring-4 focus:ring-primary/20 transition-colors">
+            <span class="material-symbols-outlined text-[22px]" aria-hidden="true">search</span>
+            Buscar
+          </button>
         </div>
       </article>
 
-      <article class="bg-white rounded-xl shadow-sm border border-border-subtle p-lg">
-        <h2 class="font-semibold text-text-primary">Metodo de pago</h2>
-        <div class="mt-md grid grid-cols-1 sm:grid-cols-3 gap-sm">
-          {% for value, label in metodos_pago %}
-          <label class="rounded-lg border border-border-subtle bg-surface-container px-md py-sm text-sm text-text-primary cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors">
-            <input type="radio" name="metodo_pago" value="{{ value }}" class="mr-sm accent-primary" {% if value == 'EFECTIVO' %}checked{% endif %}>
-            {{ label }}
-          </label>
-          {% endfor %}
+      <article class="bg-white rounded-xl shadow-sm border border-border-subtle overflow-hidden">
+        <div class="px-lg py-md border-b border-border-subtle flex flex-col sm:flex-row sm:items-center sm:justify-between gap-sm">
+          <div>
+            <p class="text-caption-xs font-semibold uppercase text-primary">Paso 2</p>
+            <h2 class="font-semibold text-text-primary">Resultados disponibles</h2>
+          </div>
+          <span id="results-count" class="text-sm text-text-secondary">Sin busqueda activa</span>
         </div>
-        <div class="mt-lg flex flex-col gap-xs">
-          <label class="text-caption-xs font-medium text-text-secondary" for="descuento">Descuento general (S/.)</label>
-          <input id="descuento" name="descuento" type="number" min="0" step="0.01" value="0.00"
-                 class="rounded-lg border border-border-subtle px-md py-sm text-sm font-mono focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+        <div id="search-results" class="divide-y divide-border-subtle" aria-live="polite">
+          <div class="px-lg py-xxl text-center">
+            <span class="material-symbols-outlined text-[40px] text-text-secondary" aria-hidden="true">manage_search</span>
+            <p class="text-sm text-text-secondary mt-sm">Busca un producto para agregarlo al carrito.</p>
+          </div>
         </div>
       </article>
     </section>
 
-    <section class="bg-white rounded-xl shadow-sm border border-border-subtle overflow-hidden">
-      <div class="px-lg py-md border-b border-border-subtle">
-        <h2 class="font-semibold text-text-primary">Productos disponibles</h2>
-        <p class="text-caption-xs text-text-secondary">Coloca cantidades mayores a cero para agregarlas al ticket.</p>
+    <aside class="bg-white rounded-xl shadow-sm border border-border-subtle overflow-hidden xl:sticky xl:top-6">
+      <div class="px-lg py-md border-b border-border-subtle flex items-start justify-between gap-sm">
+        <div>
+          <p class="text-caption-xs font-semibold uppercase text-primary">Paso 3</p>
+          <h2 class="font-semibold text-text-primary">Carrito y pago</h2>
+          <p id="cart-count" class="text-caption-xs text-text-secondary mt-xs">0 productos agregados</p>
+        </div>
+        <button id="clear-cart" type="button" class="inline-flex items-center justify-center rounded-lg border border-border-subtle p-sm text-text-secondary hover:bg-slate-50 disabled:opacity-40" disabled aria-label="Vaciar carrito">
+          <span class="material-symbols-outlined text-[20px]" aria-hidden="true">delete_sweep</span>
+        </button>
       </div>
-      <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse text-sm">
-          <thead>
-            <tr class="bg-slate-50 border-b border-border-subtle">
-              <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase">Codigo</th>
-              <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase">Producto</th>
-              <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase">Categoria</th>
-              <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase text-right">Stock</th>
-              <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase text-right">Precio</th>
-              <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase text-right">Cantidad</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-border-subtle">
-            {% for producto in productos %}
-            <tr class="hover:bg-slate-50 transition-colors">
-              <td class="px-lg py-sm font-mono text-xs text-text-secondary">{{ producto.codigo_barra|default:"-" }}</td>
-              <td class="px-lg py-sm text-text-primary font-medium">{{ producto.nombre }}</td>
-              <td class="px-lg py-sm text-text-secondary">{{ producto.categoria.nombre }}</td>
-              <td class="px-lg py-sm text-right font-mono text-text-primary">{{ producto.stock_actual }}</td>
-              <td class="px-lg py-sm text-right font-mono font-semibold text-text-primary">S/. {{ producto.precio_venta }}</td>
-              <td class="px-lg py-sm text-right">
-                <input name="cantidad_{{ producto.id }}" type="number" min="0" max="{{ producto.stock_actual }}" value="0"
-                       class="w-20 rounded-lg border border-border-subtle px-sm py-xs text-sm font-mono text-right focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
-              </td>
-            </tr>
+
+      <div class="p-lg flex flex-col gap-md">
+        <fieldset>
+          <legend class="text-caption-xs font-medium text-text-secondary">Caja abierta</legend>
+          <div class="mt-xs flex flex-col gap-sm">
+            {% for caja in cajas_abiertas %}
+            <label class="rounded-lg border-2 border-border-subtle px-md py-sm flex items-start gap-sm cursor-pointer hover:bg-slate-50 has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-colors">
+              <input type="radio" name="caja" value="{{ caja.id }}" class="mt-1 accent-primary" {% if forloop.first %}checked{% endif %}>
+              <span class="min-w-0">
+                <span class="block font-semibold text-text-primary">{{ caja.nombre }}</span>
+                <span class="block text-sm text-text-secondary truncate">{{ caja.cajero.username }} - Saldo S/. {{ caja.saldo_actual }}</span>
+              </span>
+            </label>
             {% empty %}
-            <tr>
-              <td colspan="6" class="px-lg py-xxl text-center text-text-secondary">No hay productos disponibles en inventario.</td>
-            </tr>
+            <div class="text-sm text-error bg-red-50 rounded-lg px-md py-sm">
+              No hay cajas abiertas. Abre una caja antes de vender.
+            </div>
             {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </section>
+          </div>
+        </fieldset>
 
-    <section class="bg-white rounded-xl shadow-sm border border-border-subtle p-md flex flex-col sm:flex-row sm:items-center sm:justify-between gap-sm">
-      <p class="text-sm text-text-secondary">La venta descuenta stock y registra un ingreso en la caja seleccionada.</p>
-      <button type="submit"
-              class="inline-flex items-center justify-center gap-xs rounded-lg bg-primary px-lg py-sm text-sm font-medium text-white hover:bg-primary-hover transition-colors disabled:opacity-60"
-              {% if not cajas_abiertas or not productos %}disabled{% endif %}>
-        <span class="material-symbols-outlined text-[18px]">point_of_sale</span>
-        Registrar venta
-      </button>
-    </section>
+        <fieldset>
+          <legend class="text-caption-xs font-medium text-text-secondary">Metodo de pago</legend>
+          <div class="mt-xs grid grid-cols-1 sm:grid-cols-3 xl:grid-cols-1 gap-sm">
+            {% for value, label in metodos_pago %}
+            <label class="rounded-lg border-2 border-border-subtle px-md py-sm text-sm font-medium text-text-primary cursor-pointer hover:bg-slate-50 has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-colors">
+              <input type="radio" name="metodo_pago" value="{{ value }}" class="sr-only" {% if value == 'EFECTIVO' %}checked{% endif %}>
+              <span class="flex items-center gap-xs">
+                <span class="material-symbols-outlined text-[18px] text-primary" aria-hidden="true">{% if value == 'EFECTIVO' %}payments{% elif value == 'TARJETA' %}credit_card{% else %}account_balance{% endif %}</span>
+                {{ label }}
+              </span>
+            </label>
+            {% endfor %}
+          </div>
+        </fieldset>
+
+        <div>
+          <label class="text-caption-xs font-medium text-text-secondary" for="descuento">Descuento general</label>
+          <div class="relative mt-xs">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-text-secondary">S/.</span>
+            <input id="descuento" name="descuento" type="number" min="0" step="0.01" value="0.00"
+                   class="w-full rounded-lg border border-border-subtle pl-10 pr-md py-sm text-sm font-mono focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+          </div>
+        </div>
+
+        <div class="border border-border-subtle rounded-lg overflow-hidden">
+          <div id="cart-lines" class="divide-y divide-border-subtle max-h-[340px] overflow-y-auto" aria-live="polite">
+            <div class="px-md py-lg text-center text-sm text-text-secondary">El carrito esta vacio.</div>
+          </div>
+        </div>
+
+        <div class="rounded-lg bg-surface-container px-md py-sm flex flex-col gap-xs">
+          <div class="flex justify-between text-sm text-text-secondary">
+            <span>Subtotal</span>
+            <span id="subtotal-label" class="font-mono">S/. 0.00</span>
+          </div>
+          <div class="flex justify-between text-sm text-text-secondary">
+            <span>IGV 18%</span>
+            <span id="igv-label" class="font-mono">S/. 0.00</span>
+          </div>
+          <div class="flex justify-between text-sm text-text-secondary">
+            <span>Descuento</span>
+            <span id="discount-label" class="font-mono">S/. 0.00</span>
+          </div>
+          <div class="flex justify-between text-2xl font-bold text-text-primary pt-sm border-t border-outline-variant">
+            <span>Total</span>
+            <span id="total-label" class="font-mono">S/. 0.00</span>
+          </div>
+        </div>
+
+        <button id="confirm-button" type="submit"
+                class="inline-flex min-h-[52px] items-center justify-center gap-xs rounded-lg bg-primary px-lg py-sm text-base font-semibold text-white hover:bg-primary-hover focus:ring-4 focus:ring-primary/20 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                disabled>
+          <span class="material-symbols-outlined text-[22px]" aria-hidden="true">point_of_sale</span>
+          Confirmar venta
+        </button>
+      </div>
+    </aside>
   </form>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const searchUrl = "{% url 'ventas:buscar_productos' %}";
+  const cart = new Map();
+  const searchInput = document.getElementById("product-search");
+  const searchButton = document.getElementById("search-button");
+  const searchResults = document.getElementById("search-results");
+  const searchHint = document.getElementById("search-hint");
+  const resultsCount = document.getElementById("results-count");
+  const cartLines = document.getElementById("cart-lines");
+  const cartItemsInput = document.getElementById("cart-items");
+  const discountInput = document.getElementById("descuento");
+  const discountLabel = document.getElementById("discount-label");
+  const confirmButton = document.getElementById("confirm-button");
+  const clearCartButton = document.getElementById("clear-cart");
+  const cartCount = document.getElementById("cart-count");
+  const subtotalLabel = document.getElementById("subtotal-label");
+  const igvLabel = document.getElementById("igv-label");
+  const totalLabel = document.getElementById("total-label");
+  let lastResults = new Map();
+
+  function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;",
+    }[char]));
+  }
+
+  function money(value) {
+    return `S/. ${Number(value).toFixed(2)}`;
+  }
+
+  function emptyResults(message, icon = "manage_search") {
+    searchResults.innerHTML = `
+      <div class="px-lg py-xxl text-center">
+        <span class="material-symbols-outlined text-[40px] text-text-secondary" aria-hidden="true">${icon}</span>
+        <p class="text-sm text-text-secondary mt-sm">${escapeHtml(message)}</p>
+      </div>
+    `;
+  }
+
+  function renderResults(products) {
+    lastResults = new Map(products.map(product => [String(product.id), product]));
+    resultsCount.textContent = products.length ? `${products.length} resultado(s)` : "Sin resultados";
+
+    if (!products.length) {
+      emptyResults("No se encontraron productos con stock disponible.", "search_off");
+      return;
+    }
+
+    searchResults.innerHTML = products.map(product => `
+      <div class="px-lg py-md flex flex-col md:flex-row md:items-center md:justify-between gap-md hover:bg-slate-50 transition-colors">
+        <div class="min-w-0">
+          <p class="font-semibold text-text-primary truncate">${escapeHtml(product.nombre)}</p>
+          <p class="text-sm text-text-secondary">${escapeHtml(product.codigo_barra || "Sin codigo")} - ${escapeHtml(product.categoria)}</p>
+          <p class="text-caption-xs text-text-secondary mt-xs">Stock disponible: ${product.stock_actual} ${escapeHtml(product.unidad)}</p>
+        </div>
+        <div class="flex items-center justify-between md:justify-end gap-md">
+          <span class="font-mono text-lg font-bold text-text-primary">${money(product.precio_venta)}</span>
+          <button type="button" class="add-product inline-flex min-h-[44px] items-center gap-xs rounded-lg bg-primary px-md py-sm text-sm font-semibold text-white hover:bg-primary-hover focus:ring-4 focus:ring-primary/20 transition-colors"
+                  data-id="${product.id}">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">add_shopping_cart</span>
+            Agregar
+          </button>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  async function searchProducts(autoAdd = false) {
+    const query = searchInput.value.trim();
+    if (!query) {
+      lastResults = new Map();
+      resultsCount.textContent = "Sin busqueda activa";
+      emptyResults("Busca un producto para agregarlo al carrito.");
+      return;
+    }
+
+    searchButton.disabled = true;
+    searchHint.textContent = "Buscando producto...";
+    try {
+      const response = await fetch(`${searchUrl}?q=${encodeURIComponent(query)}`, {
+        headers: {"X-Requested-With": "XMLHttpRequest"},
+      });
+      const data = await response.json();
+
+      if (autoAdd && data.match_type === "barcode" && data.results.length === 1) {
+        addToCart(data.results[0]);
+        searchInput.value = "";
+        lastResults = new Map();
+        resultsCount.textContent = "Agregado por codigo";
+        emptyResults("Producto agregado. Puedes escanear el siguiente.", "task_alt");
+        searchHint.textContent = `${data.results[0].nombre} agregado al carrito.`;
+        searchInput.focus();
+        return;
+      }
+
+      renderResults(data.results);
+      searchHint.textContent = data.match_type === "barcode"
+        ? "Codigo encontrado. Presiona Agregar o Enter para sumar otra unidad."
+        : "Selecciona un resultado para agregarlo al carrito.";
+    } catch (error) {
+      emptyResults("No se pudo realizar la busqueda. Intenta nuevamente.", "error");
+      searchHint.textContent = "Error de busqueda.";
+    } finally {
+      searchButton.disabled = false;
+    }
+  }
+
+  function addToCart(product) {
+    const id = String(product.id);
+    const current = cart.get(id);
+    if (current) {
+      if (current.cantidad < current.stock_actual) {
+        current.cantidad += 1;
+        searchHint.textContent = `${current.nombre}: cantidad ${current.cantidad}.`;
+      } else {
+        searchHint.textContent = `${current.nombre} ya alcanzo el stock disponible.`;
+      }
+    } else {
+      cart.set(id, {...product, cantidad: 1});
+      searchHint.textContent = `${product.nombre} agregado al carrito.`;
+    }
+    renderCart();
+  }
+
+  function changeQuantity(id, delta) {
+    const item = cart.get(String(id));
+    if (!item) return;
+    item.cantidad = Math.max(1, Math.min(item.cantidad + delta, item.stock_actual));
+    renderCart();
+  }
+
+  function renderCart() {
+    const items = Array.from(cart.values());
+    if (!items.length) {
+      cartLines.innerHTML = '<div class="px-md py-lg text-center text-sm text-text-secondary">El carrito esta vacio.</div>';
+    } else {
+      cartLines.innerHTML = items.map(item => `
+        <div class="px-md py-sm flex flex-col gap-sm">
+          <div class="flex items-start justify-between gap-sm">
+            <div class="min-w-0">
+              <p class="text-sm font-semibold text-text-primary truncate">${escapeHtml(item.nombre)}</p>
+              <p class="text-caption-xs text-text-secondary">${escapeHtml(item.codigo_barra || "Sin codigo")} - Stock ${item.stock_actual}</p>
+            </div>
+            <button type="button" class="remove-product rounded-lg p-xs text-text-secondary hover:bg-red-50 hover:text-error" data-id="${item.id}" aria-label="Quitar ${escapeHtml(item.nombre)}">
+              <span class="material-symbols-outlined text-[20px]" aria-hidden="true">close</span>
+            </button>
+          </div>
+          <div class="flex items-center justify-between gap-sm">
+            <div class="inline-flex items-center rounded-lg border border-border-subtle overflow-hidden">
+              <button type="button" class="qty-minus px-sm py-xs text-text-secondary hover:bg-slate-50" data-id="${item.id}" aria-label="Restar unidad">
+                <span class="material-symbols-outlined text-[18px]" aria-hidden="true">remove</span>
+              </button>
+              <input type="number" min="1" max="${item.stock_actual}" value="${item.cantidad}" data-id="${item.id}" aria-label="Cantidad de ${escapeHtml(item.nombre)}"
+                     class="cart-qty w-16 border-0 px-xs py-xs text-sm font-mono text-center focus:ring-0">
+              <button type="button" class="qty-plus px-sm py-xs text-text-secondary hover:bg-slate-50" data-id="${item.id}" aria-label="Sumar unidad">
+                <span class="material-symbols-outlined text-[18px]" aria-hidden="true">add</span>
+              </button>
+            </div>
+            <div class="text-right">
+              <p class="font-mono text-sm font-bold text-text-primary">${money(Number(item.precio_venta) * item.cantidad)}</p>
+              <p class="text-caption-xs text-text-secondary">${money(item.precio_venta)} c/u</p>
+            </div>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    const subtotal = items.reduce((sum, item) => sum + Number(item.precio_venta) * item.cantidad, 0);
+    const discount = Math.max(Number(discountInput.value || 0), 0);
+    const igv = subtotal * 0.18;
+    const total = Math.max(subtotal + igv - discount, 0);
+    const totalUnits = items.reduce((sum, item) => sum + item.cantidad, 0);
+
+    subtotalLabel.textContent = money(subtotal);
+    igvLabel.textContent = money(igv);
+    discountLabel.textContent = money(discount);
+    totalLabel.textContent = money(total);
+    cartCount.textContent = `${items.length} producto(s), ${totalUnits} unidad(es)`;
+    cartItemsInput.value = JSON.stringify(items.map(item => ({
+      producto_id: item.id,
+      cantidad: item.cantidad,
+    })));
+
+    const hasCaja = Boolean(document.querySelector('input[name="caja"]:checked'));
+    confirmButton.disabled = items.length === 0 || !hasCaja;
+    clearCartButton.disabled = items.length === 0;
+  }
+
+  searchButton.addEventListener("click", () => searchProducts(false));
+  searchInput.addEventListener("keydown", event => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      searchProducts(true);
+    }
+  });
+  searchResults.addEventListener("click", event => {
+    const button = event.target.closest(".add-product");
+    if (!button) return;
+    const product = lastResults.get(String(button.dataset.id));
+    if (product) addToCart(product);
+  });
+  cartLines.addEventListener("input", event => {
+    if (!event.target.classList.contains("cart-qty")) return;
+    const item = cart.get(String(event.target.dataset.id));
+    if (!item) return;
+    item.cantidad = Math.max(1, Math.min(Number(event.target.value || 1), item.stock_actual));
+    event.target.value = item.cantidad;
+    renderCart();
+  });
+  cartLines.addEventListener("click", event => {
+    const removeButton = event.target.closest(".remove-product");
+    const minusButton = event.target.closest(".qty-minus");
+    const plusButton = event.target.closest(".qty-plus");
+    if (removeButton) {
+      cart.delete(String(removeButton.dataset.id));
+      renderCart();
+    }
+    if (minusButton) changeQuantity(minusButton.dataset.id, -1);
+    if (plusButton) changeQuantity(plusButton.dataset.id, 1);
+  });
+  clearCartButton.addEventListener("click", () => {
+    cart.clear();
+    renderCart();
+    searchInput.focus();
+  });
+  discountInput.addEventListener("input", renderCart);
+  document.querySelectorAll('input[name="caja"]').forEach(input => input.addEventListener("change", renderCart));
+  document.getElementById("sale-form").addEventListener("submit", event => {
+    if (!cart.size) {
+      event.preventDefault();
+      searchHint.textContent = "Agrega productos al carrito antes de confirmar.";
+      searchInput.focus();
+    }
+  });
+
+  searchInput.focus();
+  renderCart();
+</script>
 {% endblock %}
