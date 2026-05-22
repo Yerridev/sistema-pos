@@ -58,7 +58,12 @@
         {% endif %}
       </div>
       {% if can_edit %}
-      <div class="col-span-2 md:col-span-1 flex items-end justify-end">
+      <div class="col-span-2 md:col-span-1 flex items-end justify-end gap-sm">
+        <button type="button" id="btn-categorias"
+                class="flex items-center gap-xs border border-border-subtle text-text-secondary rounded-lg py-sm px-md text-sm font-medium hover:bg-slate-50 active:scale-95 transition-all justify-center">
+          <span class="material-symbols-outlined text-[18px]">category</span>
+          Categorias
+        </button>
         <button type="button" id="btn-nuevo"
                 class="flex items-center gap-xs bg-primary text-white rounded-lg py-sm px-md text-sm font-medium hover:bg-primary-hover active:scale-95 transition-all neon-glow w-full md:w-auto justify-center">
           <span class="material-symbols-outlined text-[18px]">add</span>
@@ -378,6 +383,65 @@
 </div>
 {% endif %}
 
+{# Modal categorias #}
+{% if can_edit %}
+<div id="modal-categorias"
+     class="hidden fixed inset-0 z-[100] flex items-center justify-center p-lg"
+     role="dialog" aria-modal="true">
+  <div id="modal-categorias-backdrop" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+  <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto z-10">
+    <div class="sticky top-0 bg-white px-xl py-md border-b border-border-subtle flex items-center justify-between z-10 rounded-t-2xl">
+      <div>
+        <h3 class="font-semibold text-lg text-text-primary">Categorias</h3>
+        <p class="text-caption-xs text-text-secondary">Crea y organiza las categorias del inventario</p>
+      </div>
+      <button id="btn-cerrar-categorias" type="button"
+              class="p-sm rounded-full hover:bg-slate-100 transition-colors active:scale-95"
+              aria-label="Cerrar">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <div class="p-xl flex flex-col gap-lg">
+      <div id="categoria-error-banner" class="hidden p-md bg-critical-red-light rounded-lg border border-error/20">
+        <p class="text-sm text-error font-medium" id="categoria-error-text"></p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-[1fr,1fr,auto] gap-sm items-end">
+        <div class="flex flex-col gap-xs">
+          <label class="text-caption-xs font-medium text-text-secondary" for="cat-nombre">Nombre</label>
+          <input id="cat-nombre" type="text" maxlength="100"
+                 class="rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+          <p class="hidden text-[11px] text-error" id="err-cat-nombre"></p>
+        </div>
+        <div class="flex flex-col gap-xs">
+          <label class="text-caption-xs font-medium text-text-secondary" for="cat-descripcion">Descripcion</label>
+          <input id="cat-descripcion" type="text"
+                 class="rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+        </div>
+        <button id="btn-guardar-categoria" type="button"
+                class="rounded-lg bg-primary px-md py-sm text-sm font-medium text-white hover:bg-primary-hover transition-colors">
+          Guardar
+        </button>
+      </div>
+
+      <div class="overflow-x-auto rounded-lg border border-border-subtle">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-slate-50">
+            <tr>
+              <th class="px-md py-sm text-caption-xs font-semibold text-text-secondary uppercase">Nombre</th>
+              <th class="px-md py-sm text-caption-xs font-semibold text-text-secondary uppercase">Descripcion</th>
+              <th class="px-md py-sm"></th>
+            </tr>
+          </thead>
+          <tbody id="categorias-body" class="divide-y divide-border-subtle"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
 {# ── MODAL: Confirmar eliminación ── #}
 {% if can_delete %}
 <div id="modal-eliminar"
@@ -424,8 +488,11 @@ const URLS = {
   crear:    '{% url "productos:producto_crear" %}',
   editar:   (id) => `/dashboard/inventario/${id}/editar/`,
   eliminar: (id) => `/dashboard/inventario/${id}/eliminar/`,
+  categoriaCrear: '{% url "productos:categoria_crear" %}',
+  categoriaEditar: (id) => `/dashboard/categorias/${id}/editar/`,
+  categoriaEliminar: (id) => `/dashboard/categorias/${id}/eliminar/`,
 };
-const CATEGORIAS = {{ categories_json|safe }};
+let CATEGORIAS = {{ categories_json|safe }};
 const CAN_EDIT   = {{ can_edit|yesno:"true,false" }};
 const CAN_DELETE = {{ can_delete|yesno:"true,false" }};
 
@@ -520,6 +587,36 @@ function populateCategorias(selectedId = null) {
   });
 }
 
+function renderCategorias() {
+  const body = document.getElementById('categorias-body');
+  if (!body) return;
+  body.innerHTML = '';
+  CATEGORIAS.forEach(c => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="px-md py-sm font-medium text-text-primary">${c.nombre}</td>
+      <td class="px-md py-sm text-text-secondary">${c.descripcion || ''}</td>
+      <td class="px-md py-sm text-right">
+        <button type="button" class="btn-cat-edit p-xs rounded hover:bg-slate-100 text-text-secondary transition-colors" data-id="${c.id}" title="Editar">
+          <span class="material-symbols-outlined text-[18px]">edit</span>
+        </button>
+        <button type="button" class="btn-cat-delete p-xs rounded hover:bg-red-50 text-error transition-colors" data-id="${c.id}" title="Eliminar">
+          <span class="material-symbols-outlined text-[18px]">delete</span>
+        </button>
+      </td>`;
+    body.appendChild(tr);
+  });
+}
+
+async function refreshCategorias() {
+  const {ok, data} = await apiFetch('{% url "productos:categorias" %}', 'GET');
+  if (ok) {
+    CATEGORIAS = data.results || [];
+    renderCategorias();
+    populateCategorias(document.getElementById('f-categoria')?.value);
+  }
+}
+
 /* Margen en tiempo real */
 function updateMargen() {
   const precio = parseFloat(document.getElementById('f-precio')?.value) || 0;
@@ -566,6 +663,87 @@ document.getElementById('btn-nuevo')?.addEventListener('click', () => {
 });
 
 /* ── Abrir modal "Editar" ────────────────────────────────── */
+const modalCategorias = document.getElementById('modal-categorias');
+let editingCategoriaId = null;
+
+function resetCategoriaForm() {
+  document.getElementById('cat-nombre').value = '';
+  document.getElementById('cat-descripcion').value = '';
+  document.getElementById('err-cat-nombre')?.classList.add('hidden');
+  document.getElementById('categoria-error-banner')?.classList.add('hidden');
+  editingCategoriaId = null;
+}
+
+function closeCategoriasModal() {
+  modalCategorias?.classList.add('hidden');
+  resetCategoriaForm();
+}
+
+document.getElementById('btn-categorias')?.addEventListener('click', async () => {
+  resetCategoriaForm();
+  modalCategorias?.classList.remove('hidden');
+  await refreshCategorias();
+});
+
+document.getElementById('btn-cerrar-categorias')?.addEventListener('click', closeCategoriasModal);
+document.getElementById('modal-categorias-backdrop')?.addEventListener('click', closeCategoriasModal);
+
+document.getElementById('btn-guardar-categoria')?.addEventListener('click', async () => {
+  const nombre = document.getElementById('cat-nombre').value.trim();
+  const descripcion = document.getElementById('cat-descripcion').value.trim();
+  const errNombre = document.getElementById('err-cat-nombre');
+  const errBanner = document.getElementById('categoria-error-banner');
+  const errText = document.getElementById('categoria-error-text');
+
+  errNombre?.classList.add('hidden');
+  errBanner?.classList.add('hidden');
+
+  const url = editingCategoriaId ? URLS.categoriaEditar(editingCategoriaId) : URLS.categoriaCrear;
+  const {ok, data} = await apiFetch(url, 'POST', {nombre, descripcion});
+
+  if (ok && data.success) {
+    showToast(data.message, 'success');
+    resetCategoriaForm();
+    await refreshCategorias();
+    return;
+  }
+  if (data.errors?.nombre && errNombre) {
+    errNombre.textContent = data.errors.nombre;
+    errNombre.classList.remove('hidden');
+    return;
+  }
+  if (errText) errText.textContent = data.error || 'Error al guardar la categoria.';
+  errBanner?.classList.remove('hidden');
+});
+
+document.getElementById('categorias-body')?.addEventListener('click', async (event) => {
+  const editBtn = event.target.closest('.btn-cat-edit');
+  const deleteBtn = event.target.closest('.btn-cat-delete');
+
+  if (editBtn) {
+    const id = editBtn.dataset.id;
+    const {ok, data} = await apiFetch(URLS.categoriaEditar(id), 'GET');
+    if (!ok) {
+      showToast('Error al cargar la categoria.', 'error');
+      return;
+    }
+    editingCategoriaId = id;
+    document.getElementById('cat-nombre').value = data.nombre || '';
+    document.getElementById('cat-descripcion').value = data.descripcion || '';
+  }
+
+  if (deleteBtn) {
+    const id = deleteBtn.dataset.id;
+    const {ok, data} = await apiFetch(URLS.categoriaEliminar(id), 'POST');
+    if (ok && data.success) {
+      showToast(data.message, 'success');
+      await refreshCategorias();
+    } else {
+      showToast(data.error || 'Error al eliminar la categoria.', 'error');
+    }
+  }
+});
+
 document.querySelectorAll('.btn-editar').forEach(btn => {
   btn.addEventListener('click', async () => {
     const id = btn.dataset.id;

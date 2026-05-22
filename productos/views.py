@@ -13,6 +13,8 @@ from urllib.parse import urlencode
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from rest_framework import filters, viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 from .models import Categoria, Producto
@@ -76,6 +78,17 @@ class ProductoViewSet(viewsets.ModelViewSet):
     @extend_schema(summary="Obtener detalle de producto", tags=['Productos'])
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
+
+    @action(detail=False, methods=['get'])
+    def buscar(self, request):
+        q = request.GET.get('q', '').strip()
+        queryset = self.get_queryset().filter(activo=True)
+        if q:
+            queryset = queryset.filter(
+                models.Q(nombre__icontains=q) | models.Q(codigo_barra__icontains=q)
+            )
+        serializer = ProductoListSerializer(queryset[:20], many=True, context=self.get_serializer_context())
+        return Response(serializer.data)
 
 
 # ─── Dashboard Template Views ─────────────────────────────────────────────────
@@ -315,5 +328,103 @@ class CategoriaListView(View):
     """Lista categorías en JSON (para selects dinámicos)."""
 
     def get(self, request):
-        cats = list(Categoria.objects.filter(activo=True).order_by('nombre').values('id', 'nombre'))
+        cats = list(Categoria.objects.filter(activo=True).order_by('nombre').values('id', 'nombre', 'descripcion'))
         return JsonResponse({'results': cats})
+
+
+@method_decorator(login_required, name='dispatch')
+class CategoriaCreateView(View):
+    """Crea una categoria desde el dashboard."""
+
+    def post(self, request):
+        if not get_role_permissions(getattr(request.user, 'rol', None))['can_edit']:
+            return JsonResponse({'error': 'Sin permisos para crear categorias.'}, status=403)
+
+        try:
+            data = json.loads(request.body)
+        except (json.JSONDecodeError, ValueError):
+            data = request.POST.dict()
+
+        nombre = data.get('nombre', '').strip()
+        descripcion = data.get('descripcion', '').strip()
+        errors = {}
+
+        if not nombre:
+            errors['nombre'] = 'El nombre es obligatorio.'
+        elif Categoria.objects.filter(nombre__iexact=nombre).exists():
+            errors['nombre'] = 'Ya existe una categoria con ese nombre.'
+
+        if errors:
+            return JsonResponse({'errors': errors}, status=400)
+
+        categoria = Categoria.objects.create(nombre=nombre, descripcion=descripcion)
+        return JsonResponse({
+            'success': True,
+            'id': categoria.id,
+            'nombre': categoria.nombre,
+            'descripcion': categoria.descripcion or '',
+            'message': f'Categoria "{categoria.nombre}" creada correctamente.',
+        }, status=201)
+
+
+@method_decorator(login_required, name='dispatch')
+class CategoriaUpdateView(View):
+    """Edita una categoria desde el dashboard."""
+
+    def get(self, request, pk):
+        categoria = get_object_or_404(Categoria, pk=pk)
+        return JsonResponse({
+            'id': categoria.id,
+            'nombre': categoria.nombre,
+            'descripcion': categoria.descripcion or '',
+            'activo': categoria.activo,
+        })
+
+    def post(self, request, pk):
+        if not get_role_permissions(getattr(request.user, 'rol', None))['can_edit']:
+            return JsonResponse({'error': 'Sin permisos para editar categorias.'}, status=403)
+
+        try:
+            data = json.loads(request.body)
+        except (json.JSONDecodeError, ValueError):
+            data = request.POST.dict()
+
+        categoria = get_object_or_404(Categoria, pk=pk)
+        nombre = data.get('nombre', '').strip()
+        descripcion = data.get('descripcion', '').strip()
+        errors = {}
+
+        if not nombre:
+            errors['nombre'] = 'El nombre es obligatorio.'
+        elif Categoria.objects.filter(nombre__iexact=nombre).exclude(pk=categoria.pk).exists():
+            errors['nombre'] = 'Ya existe una categoria con ese nombre.'
+
+        if errors:
+            return JsonResponse({'errors': errors}, status=400)
+
+        categoria.nombre = nombre
+        categoria.descripcion = descripcion
+        categoria.save(update_fields=['nombre', 'descripcion', 'updated_at'])
+        return JsonResponse({
+            'success': True,
+            'message': f'Categoria "{categoria.nombre}" actualizada correctamente.',
+        })
+
+
+@method_decorator(login_required, name='dispatch')
+class CategoriaDeleteView(View):
+    """Desactiva una categoria si no tiene productos activos."""
+
+    def post(self, request, pk):
+        if not get_role_permissions(getattr(request.user, 'rol', None))['can_delete']:
+            return JsonResponse({'error': 'Sin permisos para eliminar categorias.'}, status=403)
+
+        categoria = get_object_or_404(Categoria, pk=pk)
+        if categoria.productos.filter(activo=True).exists():
+            return JsonResponse({
+                'error': 'No se puede eliminar una categoria con productos activos.',
+            }, status=400)
+
+        categoria.activo = False
+        categoria.save(update_fields=['activo', 'updated_at'])
+        return JsonResponse({'success': True, 'message': f'Categoria "{categoria.nombre}" eliminada.'})
