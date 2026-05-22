@@ -15,47 +15,63 @@
   </div>
   {% endif %}
 
-  <section class="bg-white rounded-xl shadow-sm border border-border-subtle p-lg">
-    <div class="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-lg">
-      <div class="min-w-0">
-        <div class="flex flex-wrap items-center gap-sm">
-          <p class="text-caption-xs font-semibold uppercase text-primary">Comprobante de venta</p>
-          {% if venta.estado == "COMPLETADA" %}
-          <span class="inline-flex items-center gap-xs rounded-full bg-primary/10 px-sm py-xs text-xs font-semibold text-primary">
-            <span class="material-symbols-outlined text-[16px]" aria-hidden="true">check_circle</span>
-            Completada
-          </span>
-          {% elif venta.estado == "ANULADA" %}
-          <span class="inline-flex items-center gap-xs rounded-full bg-red-100 px-sm py-xs text-xs font-semibold text-error">
-            <span class="material-symbols-outlined text-[16px]" aria-hidden="true">cancel</span>
-            Anulada
-          </span>
-          {% else %}
-          <span class="inline-flex items-center gap-xs rounded-full bg-yellow-100 px-sm py-xs text-xs font-semibold text-yellow-700">
-            <span class="material-symbols-outlined text-[16px]" aria-hidden="true">pending</span>
-            {{ venta.get_estado_display }}
-          </span>
-          {% endif %}
+  <section class="bg-white rounded-xl shadow-sm border border-border-subtle overflow-hidden">
+    <div class="p-lg flex flex-col xl:flex-row xl:items-center xl:justify-between gap-lg">
+      <div class="min-w-0 flex items-start gap-md">
+        <div class="hidden sm:flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <span class="material-symbols-outlined text-[28px]" aria-hidden="true">receipt_long</span>
         </div>
-        <h1 class="mt-xs text-3xl font-bold text-text-primary">Venta #{{ venta.id }}</h1>
-        <p class="mt-xs text-sm text-text-secondary">Registrada el {{ venta.fecha|date:"d/m/Y" }} a las {{ venta.fecha|date:"H:i" }}</p>
+        <div class="min-w-0">
+          <div class="flex flex-wrap items-center gap-sm">
+            <p class="text-caption-xs font-semibold uppercase text-primary">Comprobante de venta</p>
+            {% if venta.estado == "COMPLETADA" %}
+            <span class="inline-flex items-center gap-xs rounded-full bg-primary/10 px-sm py-xs text-xs font-semibold text-primary">
+              <span class="material-symbols-outlined text-[16px]" aria-hidden="true">check_circle</span>
+              Completada
+            </span>
+            {% elif venta.estado == "ANULADA" %}
+            <span class="inline-flex items-center gap-xs rounded-full bg-red-100 px-sm py-xs text-xs font-semibold text-error">
+              <span class="material-symbols-outlined text-[16px]" aria-hidden="true">cancel</span>
+              Anulada
+            </span>
+            {% else %}
+            <span class="inline-flex items-center gap-xs rounded-full bg-yellow-100 px-sm py-xs text-xs font-semibold text-yellow-700">
+              <span class="material-symbols-outlined text-[16px]" aria-hidden="true">pending</span>
+              {{ venta.get_estado_display }}
+            </span>
+            {% endif %}
+          </div>
+          <h1 class="mt-xs text-2xl sm:text-3xl font-bold text-text-primary">Venta #{{ venta.id }}</h1>
+          <p class="mt-xs text-sm text-text-secondary">{{ venta.fecha|date:"d/m/Y" }} · {{ venta.fecha|date:"H:i" }} · {{ venta.caja.nombre }}</p>
+        </div>
       </div>
 
-      <div class="flex flex-wrap gap-sm">
-        <a href="{% url 'ventas:nueva_venta' %}" class="inline-flex items-center justify-center gap-xs rounded-lg bg-primary px-md py-sm text-sm font-semibold text-white hover:bg-primary-hover focus:ring-4 focus:ring-primary/20 transition-colors">
-          <span class="material-symbols-outlined text-[18px]" aria-hidden="true">add</span>
-          Nueva venta
-        </a>
-        <a href="{% url 'ventas:dashboard' %}" class="inline-flex items-center justify-center gap-xs rounded-lg border border-border-subtle px-md py-sm text-sm font-medium text-text-secondary hover:bg-slate-50 transition-colors">
-          <span class="material-symbols-outlined text-[18px]" aria-hidden="true">receipt_long</span>
-          Ver ventas
-        </a>
-        {% if venta.estado != "ANULADA" %}
-        <button id="open-cancel-modal" type="button" class="inline-flex items-center justify-center gap-xs rounded-lg bg-error px-md py-sm text-sm font-semibold text-white hover:bg-red-700 focus:ring-4 focus:ring-red-200 transition-colors">
-          <span class="material-symbols-outlined text-[18px]" aria-hidden="true">cancel</span>
-          Anular venta
-        </button>
-        {% endif %}
+      <div class="flex flex-col sm:items-end gap-md">
+        <div class="rounded-lg bg-surface-container px-lg py-md text-left sm:text-right">
+          <p class="text-caption-xs font-medium uppercase text-text-secondary">Total cobrado</p>
+          <p class="mt-xs font-mono text-3xl font-bold text-text-primary">S/. {{ venta.total }}</p>
+          <p class="mt-xs text-caption-xs text-text-secondary">{{ venta.get_metodo_pago_display }} · IGV incluido</p>
+        </div>
+        <div class="flex flex-wrap justify-start sm:justify-end gap-sm">
+          <button type="button" id="print-sale" class="inline-flex items-center justify-center gap-xs rounded-lg border border-border-subtle px-md py-sm text-sm font-medium text-text-secondary hover:bg-slate-50 transition-colors">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">print</span>
+            Imprimir
+          </button>
+          <a href="{% url 'ventas:nueva_venta' %}" class="inline-flex items-center justify-center gap-xs rounded-lg bg-primary px-md py-sm text-sm font-semibold text-white hover:bg-primary-hover focus:ring-4 focus:ring-primary/20 transition-colors">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">add</span>
+            Nueva venta
+          </a>
+          <a href="{% url 'ventas:dashboard' %}" class="inline-flex items-center justify-center gap-xs rounded-lg border border-border-subtle px-md py-sm text-sm font-medium text-text-secondary hover:bg-slate-50 transition-colors">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_back</span>
+            Volver
+          </a>
+          {% if venta.estado != "ANULADA" %}
+          <button id="open-cancel-modal" type="button" class="inline-flex items-center justify-center gap-xs rounded-lg border border-error px-md py-sm text-sm font-semibold text-error hover:bg-red-50 focus:ring-4 focus:ring-red-100 transition-colors">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">cancel</span>
+            Anular
+          </button>
+          {% endif %}
+        </div>
       </div>
     </div>
   </section>
@@ -63,39 +79,63 @@
   <section class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr),360px] gap-lg items-start">
     <div class="flex flex-col gap-lg">
       <article class="bg-white rounded-xl shadow-sm border border-border-subtle p-lg">
-        <div class="flex items-center gap-sm border-b border-border-subtle pb-md">
-          <span class="material-symbols-outlined text-primary" aria-hidden="true">description</span>
-          <h2 class="font-semibold text-text-primary">Datos de la factura</h2>
+        <div class="flex items-center justify-between gap-md border-b border-border-subtle pb-md">
+          <div class="flex items-center gap-sm">
+            <span class="material-symbols-outlined text-primary" aria-hidden="true">badge</span>
+            <h2 class="font-semibold text-text-primary">Datos de la venta</h2>
+          </div>
+          <span class="text-caption-xs text-text-secondary">Cliente general</span>
         </div>
 
-        <dl class="mt-md grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-md">
-          <div class="rounded-lg bg-slate-50 px-md py-sm">
-            <dt class="text-caption-xs text-text-secondary">Folio / ID</dt>
+        <dl class="mt-md grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-sm">
+          <div class="rounded-lg border border-border-subtle px-md py-sm">
+            <dt class="flex items-center gap-xs text-caption-xs text-text-secondary">
+              <span class="material-symbols-outlined text-[16px]" aria-hidden="true">tag</span>
+              Numero
+            </dt>
             <dd class="mt-xs font-mono font-semibold text-text-primary">#{{ venta.id }}</dd>
           </div>
-          <div class="rounded-lg bg-slate-50 px-md py-sm">
-            <dt class="text-caption-xs text-text-secondary">Fecha</dt>
+          <div class="rounded-lg border border-border-subtle px-md py-sm">
+            <dt class="flex items-center gap-xs text-caption-xs text-text-secondary">
+              <span class="material-symbols-outlined text-[16px]" aria-hidden="true">calendar_today</span>
+              Fecha y hora
+            </dt>
             <dd class="mt-xs font-semibold text-text-primary">{{ venta.fecha|date:"d/m/Y H:i" }}</dd>
           </div>
-          <div class="rounded-lg bg-slate-50 px-md py-sm">
-            <dt class="text-caption-xs text-text-secondary">Cliente</dt>
-            <dd class="mt-xs font-semibold text-text-primary">Cliente general</dd>
-          </div>
-          <div class="rounded-lg bg-slate-50 px-md py-sm">
-            <dt class="text-caption-xs text-text-secondary">Metodo de pago</dt>
+          <div class="rounded-lg border border-border-subtle px-md py-sm">
+            <dt class="flex items-center gap-xs text-caption-xs text-text-secondary">
+              <span class="material-symbols-outlined text-[16px]" aria-hidden="true">payments</span>
+              Pago
+            </dt>
             <dd class="mt-xs font-semibold text-text-primary">{{ venta.get_metodo_pago_display }}</dd>
           </div>
-          <div class="rounded-lg bg-slate-50 px-md py-sm">
-            <dt class="text-caption-xs text-text-secondary">Cajero</dt>
+          <div class="rounded-lg border border-border-subtle px-md py-sm">
+            <dt class="flex items-center gap-xs text-caption-xs text-text-secondary">
+              <span class="material-symbols-outlined text-[16px]" aria-hidden="true">person</span>
+              Cajero
+            </dt>
             <dd class="mt-xs font-semibold text-text-primary">{{ venta.cajero.username }}</dd>
           </div>
-          <div class="rounded-lg bg-slate-50 px-md py-sm">
-            <dt class="text-caption-xs text-text-secondary">Caja</dt>
+          <div class="rounded-lg border border-border-subtle px-md py-sm">
+            <dt class="flex items-center gap-xs text-caption-xs text-text-secondary">
+              <span class="material-symbols-outlined text-[16px]" aria-hidden="true">point_of_sale</span>
+              Caja
+            </dt>
             <dd class="mt-xs font-semibold text-text-primary">{{ venta.caja.nombre }}</dd>
           </div>
+          <div class="rounded-lg border border-border-subtle px-md py-sm">
+            <dt class="flex items-center gap-xs text-caption-xs text-text-secondary">
+              <span class="material-symbols-outlined text-[16px]" aria-hidden="true">inventory_2</span>
+              Items
+            </dt>
+            <dd class="mt-xs font-semibold text-text-primary">{{ venta.detalles.count }} producto(s)</dd>
+          </div>
           {% if venta.estado == "ANULADA" %}
-          <div class="rounded-lg bg-red-50 px-md py-sm sm:col-span-2">
-            <dt class="text-caption-xs text-error">Anulacion</dt>
+          <div class="rounded-lg bg-red-50 px-md py-sm sm:col-span-2 xl:col-span-3">
+            <dt class="flex items-center gap-xs text-caption-xs text-error">
+              <span class="material-symbols-outlined text-[16px]" aria-hidden="true">report</span>
+              Anulacion
+            </dt>
             <dd class="mt-xs text-sm font-medium text-text-primary">
               {{ venta.fecha_anulacion|date:"d/m/Y H:i" }} por {{ venta.anulado_por.username|default:"-" }}
             </dd>
@@ -106,12 +146,18 @@
       </article>
 
       <article class="bg-white rounded-xl shadow-sm border border-border-subtle overflow-hidden">
-        <div class="px-lg py-md border-b border-border-subtle flex items-center gap-sm">
-          <span class="material-symbols-outlined text-primary" aria-hidden="true">shopping_cart</span>
-          <div>
-            <h2 class="font-semibold text-text-primary">Productos vendidos</h2>
-            <p class="text-caption-xs text-text-secondary">Cantidades, precios unitarios e importes</p>
+        <div class="px-lg py-md border-b border-border-subtle flex flex-col sm:flex-row sm:items-center sm:justify-between gap-sm">
+          <div class="flex items-center gap-sm">
+            <span class="material-symbols-outlined text-primary" aria-hidden="true">shopping_cart</span>
+            <div>
+              <h2 class="font-semibold text-text-primary">Productos vendidos</h2>
+              <p class="text-caption-xs text-text-secondary">Precios finales con IGV incluido</p>
+            </div>
           </div>
+          <span class="inline-flex items-center gap-xs rounded-full bg-surface-container px-sm py-xs text-caption-xs font-medium text-text-secondary">
+            <span class="material-symbols-outlined text-[16px]" aria-hidden="true">receipt</span>
+            {{ venta.detalles.count }} linea(s)
+          </span>
         </div>
 
         <div class="overflow-x-auto">
@@ -130,11 +176,11 @@
               <tr class="hover:bg-slate-50 transition-colors">
                 <td class="px-lg py-sm">
                   <p class="font-semibold text-text-primary">{{ detalle.producto.nombre }}</p>
-                  <p class="text-caption-xs text-text-secondary">{{ detalle.producto.codigo_barra|default:"Sin codigo" }}</p>
+                  <p class="text-caption-xs text-text-secondary">{{ detalle.producto.codigo_barra|default:"Sin codigo" }} · {{ detalle.producto.get_unidad_display }}</p>
                 </td>
                 <td class="px-lg py-sm text-right font-mono text-text-primary">{{ detalle.cantidad }}</td>
                 <td class="px-lg py-sm text-right font-mono text-text-primary">S/. {{ detalle.precio_unitario }}</td>
-                <td class="px-lg py-sm text-right font-mono text-text-secondary">S/. {{ detalle.descuento_linea }}</td>
+                <td class="px-lg py-sm text-right font-mono {% if detalle.descuento_linea > 0 %}text-error{% else %}text-text-secondary{% endif %}">S/. {{ detalle.descuento_linea }}</td>
                 <td class="px-lg py-sm text-right font-mono font-semibold text-text-primary">S/. {{ detalle.subtotal }}</td>
               </tr>
               {% empty %}
@@ -149,27 +195,44 @@
     </div>
 
     <aside class="bg-white rounded-xl shadow-sm border border-border-subtle p-lg flex flex-col gap-md xl:sticky xl:top-6">
-      <div class="flex items-center gap-sm border-b border-border-subtle pb-md">
-        <span class="material-symbols-outlined text-primary" aria-hidden="true">calculate</span>
-        <h2 class="font-semibold text-text-primary">Resumen de totales</h2>
+      <div class="border-b border-border-subtle pb-md">
+        <div class="flex items-center gap-sm">
+          <span class="material-symbols-outlined text-primary" aria-hidden="true">calculate</span>
+          <h2 class="font-semibold text-text-primary">Resumen de pago</h2>
+        </div>
+        <div class="mt-md rounded-lg bg-primary/10 px-md py-sm">
+          <p class="text-caption-xs font-medium uppercase text-primary">Importe final</p>
+          <p class="mt-xs font-mono text-3xl font-bold text-text-primary">S/. {{ venta.total }}</p>
+        </div>
       </div>
 
-      <div class="flex flex-col gap-sm">
-        <div class="flex justify-between text-sm text-text-secondary">
+      <div class="flex flex-col gap-sm rounded-lg border border-border-subtle p-md">
+        <div class="flex items-center justify-between gap-md text-sm text-text-secondary">
           <span>Subtotal sin IGV</span>
           <span class="font-mono text-text-primary">S/. {{ venta.subtotal }}</span>
         </div>
-        <div class="flex justify-between text-sm text-text-secondary">
+        <div class="flex items-center justify-between gap-md text-sm text-text-secondary">
           <span>IGV incluido 18%</span>
           <span class="font-mono text-text-primary">S/. {{ venta.igv }}</span>
         </div>
-        <div class="flex justify-between text-sm text-text-secondary">
+        <div class="flex items-center justify-between gap-md text-sm text-text-secondary">
           <span>Descuento</span>
           <span class="font-mono text-text-primary">S/. {{ venta.descuento }}</span>
         </div>
-        <div class="flex justify-between border-t border-outline-variant pt-md text-2xl font-bold text-text-primary">
-          <span>Total</span>
+        <div class="flex items-center justify-between gap-md border-t border-outline-variant pt-md text-lg font-bold text-text-primary">
+          <span>Total pagado</span>
           <span class="font-mono">S/. {{ venta.total }}</span>
+        </div>
+      </div>
+
+      <div class="rounded-lg bg-slate-50 px-md py-sm text-sm">
+        <div class="flex items-center justify-between gap-md">
+          <span class="text-text-secondary">Metodo</span>
+          <span class="font-semibold text-text-primary">{{ venta.get_metodo_pago_display }}</span>
+        </div>
+        <div class="mt-xs flex items-center justify-between gap-md">
+          <span class="text-text-secondary">Estado</span>
+          <span class="font-semibold {% if venta.estado == 'ANULADA' %}text-error{% else %}text-primary{% endif %}">{{ venta.get_estado_display }}</span>
         </div>
       </div>
 
@@ -203,7 +266,7 @@
     <form method="post" action="{% url 'ventas:anular_venta' venta.id %}" class="p-lg flex flex-col gap-md">
       {% csrf_token %}
       <div class="rounded-lg bg-red-50 px-md py-sm text-sm text-error">
-        ¿Estas seguro de que deseas anular esta venta? Esta operacion no debe usarse por accidente.
+        Estas seguro de que deseas anular esta venta? Esta operacion no debe usarse por accidente.
       </div>
       <div>
         <label for="motivo" class="text-caption-xs font-medium text-text-secondary">Motivo de anulacion</label>
@@ -226,6 +289,9 @@
 {% endblock %}
 
 {% block extra_js %}
+<script>
+  document.getElementById("print-sale")?.addEventListener("click", () => window.print());
+</script>
 {% if venta.estado != "ANULADA" %}
 <script>
   const modal = document.getElementById("cancel-modal");
