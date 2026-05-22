@@ -487,10 +487,14 @@ const CSRF = '{{ csrf_token }}';
 const URLS = {
   crear:    '{% url "productos:producto_crear" %}',
   editar:   (id) => `/dashboard/inventario/${id}/editar/`,
+  {% if can_delete %}
   eliminar: (id) => `/dashboard/inventario/${id}/eliminar/`,
+  {% endif %}
   categoriaCrear: '{% url "productos:categoria_crear" %}',
   categoriaEditar: (id) => `/dashboard/categorias/${id}/editar/`,
+  {% if can_delete %}
   categoriaEliminar: (id) => `/dashboard/categorias/${id}/eliminar/`,
+  {% endif %}
 };
 let CATEGORIAS = {{ categories_json|safe }};
 const CAN_EDIT   = {{ can_edit|yesno:"true,false" }};
@@ -600,9 +604,11 @@ function renderCategorias() {
         <button type="button" class="btn-cat-edit p-xs rounded hover:bg-slate-100 text-text-secondary transition-colors" data-id="${c.id}" title="Editar">
           <span class="material-symbols-outlined text-[18px]">edit</span>
         </button>
+        {% if can_delete %}
         <button type="button" class="btn-cat-delete p-xs rounded hover:bg-red-50 text-error transition-colors" data-id="${c.id}" title="Eliminar">
           <span class="material-symbols-outlined text-[18px]">delete</span>
         </button>
+        {% endif %}
       </td>`;
     body.appendChild(tr);
   });
@@ -718,7 +724,9 @@ document.getElementById('btn-guardar-categoria')?.addEventListener('click', asyn
 
 document.getElementById('categorias-body')?.addEventListener('click', async (event) => {
   const editBtn = event.target.closest('.btn-cat-edit');
+  {% if can_delete %}
   const deleteBtn = event.target.closest('.btn-cat-delete');
+  {% endif %}
 
   if (editBtn) {
     const id = editBtn.dataset.id;
@@ -732,6 +740,7 @@ document.getElementById('categorias-body')?.addEventListener('click', async (eve
     document.getElementById('cat-descripcion').value = data.descripcion || '';
   }
 
+  {% if can_delete %}
   if (deleteBtn) {
     const id = deleteBtn.dataset.id;
     const {ok, data} = await apiFetch(URLS.categoriaEliminar(id), 'POST');
@@ -742,6 +751,7 @@ document.getElementById('categorias-body')?.addEventListener('click', async (eve
       showToast(data.error || 'Error al eliminar la categoria.', 'error');
     }
   }
+  {% endif %}
 });
 
 document.querySelectorAll('.btn-editar').forEach(btn => {
@@ -805,6 +815,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal()
 document.getElementById('f-precio')?.addEventListener('input', updateMargen);
 document.getElementById('f-costo')?.addEventListener('input', updateMargen);
 
+{% if can_delete %}
 /* ── Modal Eliminar ──────────────────────────────────────── */
 const modalEliminar = document.getElementById('modal-eliminar');
 let deleteId = null;
@@ -843,5 +854,6 @@ document.getElementById('btn-confirmar-eliminar')?.addEventListener('click', asy
     deleteId = null;
   }
 });
+{% endif %}
 </script>
 {% endblock %}

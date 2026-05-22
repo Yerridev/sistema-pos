@@ -36,3 +36,38 @@ def calculate_stats_from_qs(queryset):
         'inventory_value': valor,
         'top_category':    top_category,
     }
+
+
+def calculate_stats(productos_data):
+    """
+    Calcula estadisticas de inventario desde un payload con count/results.
+    Mantiene compatibilidad con pruebas y consumidores que no usan QuerySet.
+    """
+    productos = productos_data.get('results', [])
+    total = productos_data.get('count', len(productos))
+    low_stock_count = 0
+    inventory_value = Decimal('0')
+    categorias = []
+
+    for producto in productos:
+        precio = Decimal(str(producto.get('precio_venta', '0')))
+        stock_actual = int(producto.get('stock_actual', 0))
+        stock_minimo = int(producto.get('stock_minimo', 0))
+
+        if stock_actual < stock_minimo:
+            low_stock_count += 1
+
+        inventory_value += precio * stock_actual
+        categoria = producto.get('categoria_nombre')
+        if categoria:
+            categorias.append(categoria)
+
+    cats = Counter(categorias)
+    top_category = cats.most_common(1)[0][0] if cats else None
+
+    return {
+        'total': total,
+        'low_stock_count': low_stock_count,
+        'inventory_value': inventory_value,
+        'top_category': top_category,
+    }
