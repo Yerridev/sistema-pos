@@ -17,6 +17,9 @@
         {% url 'ventas:dashboard' as url_ventas %}
         {% url 'ventas:caja_dashboard' as url_caja %}
         {% url 'ventas:nueva_venta' as url_nueva_venta %}
+        {% url 'usuarios:list' as url_usuarios %}
+        {% url 'reportes:dashboard' as url_reportes %}
+        {% url 'compras:dashboard' as url_compras %}
 
         <a class="flex items-center gap-md p-md rounded-lg transition-transform hover:translate-x-1 font-inter text-sm font-semibold
                   {% if request.path|slice:':17' == '/dashboard/ventas' %}bg-success text-white shadow-[0_0_10px_rgba(37,211,102,0.4)]{% else %}text-slate-600 hover:bg-slate-50{% endif %}"
@@ -42,8 +45,8 @@
 
         {% if user.rol == 'admin' %}
         <a class="flex items-center gap-md p-md rounded-lg transition-transform hover:translate-x-1 font-inter text-sm font-semibold
-                  text-slate-600 hover:bg-slate-50"
-           href="#">
+                  {% if request.path|slice:':18' == '/dashboard/compras' %}bg-success text-white shadow-[0_0_10px_rgba(37,211,102,0.4)]{% else %}text-slate-600 hover:bg-slate-50{% endif %}"
+           href="{{ url_compras }}">
             <span class="material-symbols-outlined" data-icon="local_shipping">local_shipping</span>
             Compras
         </a>
@@ -51,10 +54,19 @@
 
         {% if user.rol == 'admin' %}
         <a class="flex items-center gap-md p-md rounded-lg transition-transform hover:translate-x-1 font-inter text-sm font-semibold
-                  text-slate-600 hover:bg-slate-50"
-           href="#">
+                  {% if request.path|slice:':19' == '/dashboard/reportes' %}bg-success text-white shadow-[0_0_10px_rgba(37,211,102,0.4)]{% else %}text-slate-600 hover:bg-slate-50{% endif %}"
+           href="{{ url_reportes }}">
             <span class="material-symbols-outlined" data-icon="bar_chart">bar_chart</span>
             Reportes
+        </a>
+        {% endif %}
+
+        {% if user.rol == 'admin' %}
+        <a class="flex items-center gap-md p-md rounded-lg transition-transform hover:translate-x-1 font-inter text-sm font-semibold
+                  {% if request.path|slice:':19' == '/dashboard/usuarios' %}bg-success text-white shadow-[0_0_10px_rgba(37,211,102,0.4)]{% else %}text-slate-600 hover:bg-slate-50{% endif %}"
+           href="{{ url_usuarios }}">
+            <span class="material-symbols-outlined" data-icon="group">group</span>
+            Usuarios
         </a>
         {% endif %}
     </nav>
