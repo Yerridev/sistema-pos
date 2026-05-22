@@ -73,10 +73,6 @@ class CajaViewSet(viewsets.ModelViewSet):
 
         return Response(self._serialize_response(caja), status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['post'], url_path='apertura')
-    def apertura(self, request, pk=None):
-        return self.abrir(request, pk=pk)
-
     @action(detail=True, methods=['post'])
     def cerrar(self, request, pk=None):
         caja = self.get_object()
@@ -92,7 +88,3 @@ class CajaViewSet(viewsets.ModelViewSet):
         caja.save(update_fields=['saldo_final', 'fecha_cierre', 'estado'])
 
         return Response(self._serialize_response(caja), status=status.HTTP_200_OK)
-
-    @action(detail=True, methods=['post'], url_path='cierre')
-    def cierre(self, request, pk=None):
-        return self.cerrar(request, pk=pk)
