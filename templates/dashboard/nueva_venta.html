@@ -135,11 +135,11 @@
 
         <div class="rounded-lg bg-surface-container px-md py-sm flex flex-col gap-xs">
           <div class="flex justify-between text-sm text-text-secondary">
-            <span>Subtotal</span>
+            <span>Subtotal sin IGV</span>
             <span id="subtotal-label" class="font-mono">S/. 0.00</span>
           </div>
           <div class="flex justify-between text-sm text-text-secondary">
-            <span>IGV 18%</span>
+            <span>IGV incluido 18%</span>
             <span id="igv-label" class="font-mono">S/. 0.00</span>
           </div>
           <div class="flex justify-between text-sm text-text-secondary">
@@ -336,10 +336,11 @@
       `).join("");
     }
 
-    const subtotal = items.reduce((sum, item) => sum + Number(item.precio_venta) * item.cantidad, 0);
+    const importe = items.reduce((sum, item) => sum + Number(item.precio_venta) * item.cantidad, 0);
     const discount = Math.max(Number(discountInput.value || 0), 0);
-    const igv = subtotal * 0.18;
-    const total = Math.max(subtotal + igv - discount, 0);
+    const total = Math.max(importe - discount, 0);
+    const subtotal = total / 1.18;
+    const igv = total - subtotal;
     const totalUnits = items.reduce((sum, item) => sum + item.cantidad, 0);
 
     subtotalLabel.textContent = money(subtotal);
