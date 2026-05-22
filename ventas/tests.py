@@ -1,7 +1,13 @@
 ﻿from types import SimpleNamespace
 
-from django.test import SimpleTestCase
+from decimal import Decimal
 
+from django.contrib.auth import get_user_model
+from django.test import SimpleTestCase, TestCase
+
+from caja.models import Caja
+from productos.models import Categoria, Producto
+from ventas.models import DetalleVenta, Venta
 from ventas.permissions import CanAccessVentaObject, CanAnularVenta, IsCajeroOrAdmin
 from ventas.serializers import VentaCreateSerializer
 
@@ -60,3 +66,30 @@ class VentaCreateSerializerTests(SimpleTestCase):
 
         self.assertFalse(serializer.is_valid())
         self.assertIn('caja_id', serializer.errors)
+
+
+class VentaTotalesPeruTests(TestCase):
+    def test_calcular_totales_desglosa_igv_incluido_en_precio(self):
+        user = get_user_model().objects.create_user(username='cajero', password='test123', rol='cajero')
+        caja = Caja.objects.create(nombre='Caja 1', cajero=user, saldo_inicial=Decimal('0.00'))
+        categoria = Categoria.objects.create(nombre='Bebidas')
+        producto = Producto.objects.create(
+            nombre='Gaseosa',
+            categoria=categoria,
+            precio_venta=Decimal('118.00'),
+            costo=Decimal('80.00'),
+            stock_actual=10,
+        )
+        venta = Venta.objects.create(cajero=user, caja=caja, metodo_pago='EFECTIVO')
+        DetalleVenta.objects.create(
+            venta=venta,
+            producto=producto,
+            cantidad=1,
+            precio_unitario=producto.precio_venta,
+        )
+
+        venta.calcular_totales()
+
+        self.assertEqual(venta.subtotal, Decimal('100.00'))
+        self.assertEqual(venta.igv, Decimal('18.00'))
+        self.assertEqual(venta.total, Decimal('118.00'))

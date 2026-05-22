@@ -1,9 +1,17 @@
 from django.db import models
 from django.conf import settings
 from django.db.models import Sum
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from productos.models import Producto
 from caja.models import Caja
+
+
+MONEY = Decimal('0.01')
+IGV_FACTOR = Decimal('1.18')
+
+
+def money(value):
+    return Decimal(value).quantize(MONEY, rounding=ROUND_HALF_UP)
 
 
 class Venta(models.Model):
@@ -37,11 +45,14 @@ class Venta(models.Model):
         return f"Venta #{self.id} - S/{self.total} ({self.get_estado_display()})"
 
     def calcular_totales(self):
-        subtotal = self.detalles.aggregate(total=Sum('subtotal'))['total'] or Decimal('0.00')
-        self.subtotal = subtotal
-        self.igv = subtotal * Decimal('0.18')
-        self.total = subtotal + self.igv - self.descuento
-        self.save()
+        importe = self.detalles.aggregate(total=Sum('subtotal'))['total'] or Decimal('0.00')
+        total = max(importe - self.descuento, Decimal('0.00'))
+        subtotal = total / IGV_FACTOR
+
+        self.total = money(total)
+        self.subtotal = money(subtotal)
+        self.igv = money(self.total - self.subtotal)
+        self.save(update_fields=['subtotal', 'igv', 'total'])
 
     def anular(self, motivo, usuario):
         self.estado = 'ANULADA'
@@ -67,5 +78,5 @@ class DetalleVenta(models.Model):
         return f"{self.producto.nombre} x{self.cantidad}"
 
     def save(self, *args, **kwargs):
-        self.subtotal = (self.precio_unitario * self.cantidad) - self.descuento_linea
+        self.subtotal = money((self.precio_unitario * self.cantidad) - self.descuento_linea)
         super().save(*args, **kwargs)
