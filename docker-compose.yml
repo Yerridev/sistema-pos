@@ -21,7 +21,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DEBUG=${DEBUG}
+      - DJANGO_DEBUG=${DJANGO_DEBUG}
       - SECRET_KEY=${SECRET_KEY}
       - DB_NAME=${DB_NAME}
       - DB_USER=${DB_USER}

@@ -80,7 +80,9 @@
           <tbody class="divide-y divide-border-subtle">
             {% for venta in ventas %}
             <tr class="hover:bg-slate-50 transition-colors">
-              <td class="px-lg py-sm font-mono text-xs text-text-secondary">#{{ venta.id }}</td>
+              <td class="px-lg py-sm font-mono text-xs">
+                <a href="{% url 'ventas:detalle_venta' venta.id %}" class="text-primary hover:underline">#{{ venta.id }}</a>
+              </td>
               <td class="px-lg py-sm text-text-primary">{{ venta.fecha|date:"d/m/Y H:i" }}</td>
               <td class="px-lg py-sm text-text-primary">{{ venta.cajero.username }}</td>
               <td class="px-lg py-sm text-text-secondary">{{ venta.caja.nombre }}</td>
