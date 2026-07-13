@@ -93,3 +93,259 @@ class VentaTotalesPeruTests(TestCase):
         self.assertEqual(venta.subtotal, Decimal('100.00'))
         self.assertEqual(venta.igv, Decimal('18.00'))
         self.assertEqual(venta.total, Decimal('118.00'))
+
+
+# ── Golden Tests: comportamiento actual antes del refactor ─────────────────
+# Estos tests capturan el comportamiento EXISTENTE de creación y anulación
+# de ventas para que el refactor a VentaService no rompa nada.
+
+
+class VentaCreateGoldenTests(TestCase):
+    """Golden tests del flujo de creación de venta vía API (ViewSet)."""
+
+    def setUp(self):
+        User = get_user_model()
+        self.cajero = User.objects.create_user(
+            username='cajero_golden', password='test123', rol='cajero',
+        )
+        self.caja = Caja.objects.create(
+            nombre='Caja Golden', cajero=self.cajero, saldo_inicial=Decimal('100.00'),
+            estado='ABIERTA',
+        )
+        self.categoria = Categoria.objects.create(nombre='Abarrotes Golden')
+        self.producto = Producto.objects.create(
+            nombre='Arroz 1kg',
+            categoria=self.categoria,
+            precio_venta=Decimal('11.80'),
+            costo=Decimal('7.00'),
+            stock_actual=20,
+        )
+        self.client.login(username='cajero_golden', password='test123')
+
+    def test_venta_api_crea_venta_y_decrementa_stock(self):
+        """POST /api/ventas/ crea venta, DetalleVenta, decrementa stock."""
+        from rest_framework.test import APIClient
+
+        api = APIClient()
+        api.force_authenticate(user=self.cajero)
+
+        stock_antes = self.producto.stock_actual
+        response = api.post('/api/ventas/', {
+            'caja_id': self.caja.id,
+            'metodo_pago': 'EFECTIVO',
+            'descuento': '0.00',
+            'detalles': [{
+                'producto': self.producto.id,
+                'cantidad': 3,
+                'precio_unitario': str(self.producto.precio_venta),
+            }],
+        }, format='json')
+
+        self.assertEqual(response.status_code, 201)
+        self.producto.refresh_from_db()
+        self.assertEqual(self.producto.stock_actual, stock_antes - 3)
+
+        venta = Venta.objects.get(id=response.data['id'])
+        self.assertEqual(venta.estado, 'COMPLETADA')
+        self.assertEqual(venta.cajero, self.cajero)
+        self.assertEqual(venta.caja, self.caja)
+        self.assertEqual(venta.detalles.count(), 1)
+
+    def test_venta_api_crea_movimiento_caja_ingreso(self):
+        """La venta crea un MovimientoCaja de tipo INGRESO por el total."""
+        from rest_framework.test import APIClient
+
+        api = APIClient()
+        api.force_authenticate(user=self.cajero)
+
+        movimientos_antes = self.caja.movimientos.count()
+        api.post('/api/ventas/', {
+            'caja_id': self.caja.id,
+            'metodo_pago': 'EFECTIVO',
+            'descuento': '0.00',
+            'detalles': [{
+                'producto': self.producto.id,
+                'cantidad': 1,
+                'precio_unitario': str(self.producto.precio_venta),
+            }],
+        }, format='json')
+
+        self.caja.refresh_from_db()
+        self.assertEqual(self.caja.movimientos.count(), movimientos_antes + 1)
+        movimiento = self.caja.movimientos.latest('fecha')
+        self.assertEqual(movimiento.tipo, 'INGRESO')
+        self.assertEqual(movimiento.usuario, self.cajero)
+
+    def test_venta_api_calcula_totales_con_igv(self):
+        """Los totales se calculan con IGV incluido (factor 1.18)."""
+        from rest_framework.test import APIClient
+
+        api = APIClient()
+        api.force_authenticate(user=self.cajero)
+
+        # 3 unidades × S/. 11.80 = S/. 35.40 (total con IGV)
+        # subtotal = 35.40 / 1.18 = 30.00, igv = 5.40
+        response = api.post('/api/ventas/', {
+            'caja_id': self.caja.id,
+            'metodo_pago': 'EFECTIVO',
+            'descuento': '0.00',
+            'detalles': [{
+                'producto': self.producto.id,
+                'cantidad': 3,
+                'precio_unitario': str(self.producto.precio_venta),
+            }],
+        }, format='json')
+
+        venta = Venta.objects.get(id=response.data['id'])
+        self.assertEqual(venta.total, Decimal('35.40'))
+        self.assertEqual(venta.subtotal, Decimal('30.00'))
+        self.assertEqual(venta.igv, Decimal('5.40'))
+
+    def test_venta_api_rechaza_stock_insuficiente(self):
+        """Stock insuficiente retorna 400 y no crea venta ni decrementa."""
+        from rest_framework.test import APIClient
+
+        api = APIClient()
+        api.force_authenticate(user=self.cajero)
+
+        stock_antes = self.producto.stock_actual
+        response = api.post('/api/ventas/', {
+            'caja_id': self.caja.id,
+            'metodo_pago': 'EFECTIVO',
+            'descuento': '0.00',
+            'detalles': [{
+                'producto': self.producto.id,
+                'cantidad': 999,
+                'precio_unitario': str(self.producto.precio_venta),
+            }],
+        }, format='json')
+
+        self.assertEqual(response.status_code, 400)
+        self.producto.refresh_from_db()
+        self.assertEqual(self.producto.stock_actual, stock_antes)
+        self.assertEqual(Venta.objects.filter(cajero=self.cajero).count(), 0)
+
+    def test_venta_api_rechaza_caja_cerrada(self):
+        """Caja CERRADA retorna 400."""
+        from rest_framework.test import APIClient
+
+        api = APIClient()
+        api.force_authenticate(user=self.cajero)
+        self.caja.estado = 'CERRADA'
+        self.caja.save()
+
+        response = api.post('/api/ventas/', {
+            'caja_id': self.caja.id,
+            'metodo_pago': 'EFECTIVO',
+            'descuento': '0.00',
+            'detalles': [{
+                'producto': self.producto.id,
+                'cantidad': 1,
+                'precio_unitario': str(self.producto.precio_venta),
+            }],
+        }, format='json')
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_venta_dashboard_crea_venta_y_decrementa_stock(self):
+        """POST /dashboard/ventas/nueva/ crea venta via dashboard y decrementa stock."""
+        import json
+
+        stock_antes = self.producto.stock_actual
+        response = self.client.post('/dashboard/ventas/nueva/', {
+            'caja': self.caja.id,
+            'metodo_pago': 'EFECTIVO',
+            'descuento': '0.00',
+            'cart_items': json.dumps([
+                {'producto_id': self.producto.id, 'cantidad': 2},
+            ]),
+        })
+
+        self.assertIn(response.status_code, (302, 200))
+        self.producto.refresh_from_db()
+        self.assertEqual(self.producto.stock_actual, stock_antes - 2)
+
+
+class VentaAnularGoldenTests(TestCase):
+    """Golden tests del flujo de anulación de venta vía API."""
+
+    def setUp(self):
+        User = get_user_model()
+        self.cajero = User.objects.create_user(
+            username='cajero_anular', password='test123', rol='cajero',
+        )
+        self.caja = Caja.objects.create(
+            nombre='Caja Anular', cajero=self.cajero, saldo_inicial=Decimal('0.00'),
+            estado='ABIERTA',
+        )
+        self.categoria = Categoria.objects.create(nombre='Anular Cat')
+        self.producto = Producto.objects.create(
+            nombre='Producto Anular',
+            categoria=self.categoria,
+            precio_venta=Decimal('11.80'),
+            costo=Decimal('5.00'),
+            stock_actual=10,
+        )
+        # Crear venta inicial
+        self.venta = Venta.objects.create(
+            cajero=self.cajero, caja=self.caja, metodo_pago='EFECTIVO',
+        )
+        DetalleVenta.objects.create(
+            venta=self.venta, producto=self.producto,
+            cantidad=4, precio_unitario=self.producto.precio_venta,
+        )
+        self.venta.calcular_totales()
+        self.producto.stock_actual -= 4
+        self.producto.save()
+
+    def test_anular_api_cambia_estado_y_restaura_stock(self):
+        """POST /api/ventas/{id}/anular/ anula y restaura stock."""
+        from rest_framework.test import APIClient
+
+        api = APIClient()
+        api.force_authenticate(user=self.cajero)
+
+        stock_antes = self.producto.stock_actual
+        response = api.post(f'/api/ventas/{self.venta.id}/anular/', {
+            'motivo': 'Error de registro',
+        }, format='json')
+
+        self.assertEqual(response.status_code, 200)
+        self.venta.refresh_from_db()
+        self.assertEqual(self.venta.estado, 'ANULADA')
+        self.assertEqual(self.venta.motivo_anulacion, 'Error de registro')
+        self.producto.refresh_from_db()
+        self.assertEqual(self.producto.stock_actual, stock_antes + 4)
+
+    def test_anular_api_crea_movimiento_egreso(self):
+        """La anulación crea un MovimientoCaja de tipo EGRESO."""
+        from rest_framework.test import APIClient
+
+        api = APIClient()
+        api.force_authenticate(user=self.cajero)
+
+        movimientos_antes = self.caja.movimientos.count()
+        api.post(f'/api/ventas/{self.venta.id}/anular/', {
+            'motivo': 'Test egreso',
+        }, format='json')
+
+        self.assertEqual(self.caja.movimientos.count(), movimientos_antes + 1)
+        movimiento = self.caja.movimientos.latest('fecha')
+        self.assertEqual(movimiento.tipo, 'EGRESO')
+
+    def test_anular_api_rechaza_venta_ya_anulada(self):
+        """Anular una venta ya anulada retorna 400."""
+        from rest_framework.test import APIClient
+
+        api = APIClient()
+        api.force_authenticate(user=self.cajero)
+
+        api.post(f'/api/ventas/{self.venta.id}/anular/', {
+            'motivo': 'Primera anulación',
+        }, format='json')
+
+        response = api.post(f'/api/ventas/{self.venta.id}/anular/', {
+            'motivo': 'Segunda anulación',
+        }, format='json')
+
+        self.assertEqual(response.status_code, 400)
