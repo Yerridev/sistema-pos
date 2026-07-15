@@ -1,10 +1,20 @@
 <!DOCTYPE html>
 {% load static %}
-<html class="light" lang="es-pe">
+<html lang="es-pe">
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>{% block title %}Cobrate POS{% endblock %}</title>
+    <!-- Theme init: se ejecuta antes del render para evitar flash de tema incorrecto -->
+    <script>
+        (function () {
+            var saved = localStorage.getItem('cobrate-theme');
+            var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            var isDark = saved ? saved === 'dark' : prefersDark;
+            document.documentElement.classList.toggle('dark', isDark);
+            document.documentElement.classList.toggle('light', !isDark);
+        })();
+    </script>
     
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -96,7 +106,22 @@
     
     {% block extra_css %}{% endblock %}
 </head>
-<body class="bg-background-base font-body-main text-on-surface min-h-screen flex">
+<body class="bg-background-base dark:bg-[#15171C] font-body-main text-on-surface dark:text-[#E8E9EC] min-h-screen flex transition-colors">
+    <script>
+        function toggleTheme() {
+            var isDark = document.documentElement.classList.toggle('dark');
+            document.documentElement.classList.toggle('light', !isDark);
+            localStorage.setItem('cobrate-theme', isDark ? 'dark' : 'light');
+            syncThemeIcon();
+        }
+        function syncThemeIcon() {
+            var isDark = document.documentElement.classList.contains('dark');
+            document.querySelectorAll('[data-theme-icon]').forEach(function (el) {
+                el.textContent = isDark ? 'light_mode' : 'dark_mode';
+            });
+        }
+        document.addEventListener('DOMContentLoaded', syncThemeIcon);
+    </script>
     <!-- Sidebar -->
     {% include "components/sidebar.html" %}
     

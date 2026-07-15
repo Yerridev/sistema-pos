@@ -8,7 +8,7 @@
   {% if messages %}
   <div class="flex flex-col gap-sm" role="status" aria-live="polite">
     {% for message in messages %}
-    <div class="rounded-lg px-md py-sm text-sm {% if message.tags == 'success' %}bg-primary/10 text-primary{% else %}bg-red-50 text-error{% endif %}">
+    <div class="rounded-lg px-md py-sm text-sm {% if message.tags == 'success' %}bg-primary/10 text-primary{% else %}bg-red-50 dark:bg-red-500/10 text-error{% endif %}">
       {{ message }}
     </div>
     {% endfor %}
@@ -20,14 +20,14 @@
     <input id="cart-items" name="cart_items" type="hidden" value="[]">
 
     <section class="flex flex-col gap-lg">
-      <article class="bg-white rounded-xl shadow-sm border border-border-subtle p-lg">
+      <article class="bg-white dark:bg-[#1E2128] rounded-xl shadow-sm border border-border-subtle dark:border-white/10 p-lg">
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-md">
           <div>
             <p class="text-caption-xs font-semibold uppercase text-primary">Paso 1</p>
-            <h1 class="text-2xl font-bold text-text-primary mt-xs">Buscar y agregar productos</h1>
+            <h1 class="text-2xl font-bold text-text-primary dark:text-[#E8E9EC] mt-xs">Buscar y agregar productos</h1>
             <p class="text-sm text-text-secondary mt-xs">Escanea un codigo de barras o escribe parte del nombre.</p>
           </div>
-          <a href="{% url 'ventas:dashboard' %}" class="inline-flex items-center justify-center gap-xs px-md py-sm rounded-lg border border-border-subtle text-text-secondary hover:bg-slate-50 text-sm transition-colors">
+          <a href="{% url 'ventas:dashboard' %}" class="inline-flex items-center justify-center gap-xs px-md py-sm rounded-lg border border-border-subtle dark:border-white/10 text-text-secondary hover:bg-slate-50 dark:hover:bg-white/5 text-sm transition-colors">
             <span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_back</span>
             Volver a ventas
           </a>
@@ -41,11 +41,13 @@
               <input id="product-search" type="search" autocomplete="off" inputmode="search"
                      placeholder="Escanea codigo de barras o busca por nombre"
                      aria-describedby="search-hint"
-                     class="w-full rounded-lg border-2 border-border-subtle bg-white pl-14 pr-md py-md text-lg text-text-primary placeholder:text-text-secondary focus:ring-4 focus:ring-primary/15 focus:border-primary outline-none">
+                     class="w-full rounded-lg border-2 border-border-subtle dark:border-white/10 bg-white dark:bg-[#15171C] pl-14 pr-md py-md text-lg text-text-primary dark:text-[#E8E9EC] placeholder:text-text-secondary focus:ring-4 focus:ring-primary/15 focus:border-primary outline-none">
             </div>
-            <p id="search-hint" class="text-sm text-text-secondary mt-sm" role="status" aria-live="polite">
-              Con lector de barras: apunta al campo y escanea. Si el codigo coincide, se agrega con Enter.
-            </p>
+            <!-- Banner de estado de escaneo: refuerzo visual con icono + color, ademas del texto -->
+            <div id="scan-banner" class="mt-sm flex items-center gap-xs rounded-lg px-md py-sm text-sm font-medium bg-slate-50 dark:bg-white/5 text-text-secondary transition-colors" role="status" aria-live="polite">
+              <span id="scan-banner-icon" class="material-symbols-outlined text-[20px]" aria-hidden="true">info</span>
+              <p id="search-hint">Con lector de barras: apunta al campo y escanea. Si el codigo coincide, se agrega con Enter.</p>
+            </div>
           </div>
           <button id="search-button" type="button" class="inline-flex min-h-[56px] items-center justify-center gap-xs rounded-lg bg-primary px-md py-sm text-base font-semibold text-white hover:bg-primary-hover focus:ring-4 focus:ring-primary/20 transition-colors">
             <span class="material-symbols-outlined text-[22px]" aria-hidden="true">search</span>
@@ -54,15 +56,15 @@
         </div>
       </article>
 
-      <article class="bg-white rounded-xl shadow-sm border border-border-subtle overflow-hidden">
-        <div class="px-lg py-md border-b border-border-subtle flex flex-col sm:flex-row sm:items-center sm:justify-between gap-sm">
+      <article class="bg-white dark:bg-[#1E2128] rounded-xl shadow-sm border border-border-subtle dark:border-white/10 overflow-hidden">
+        <div class="px-lg py-md border-b border-border-subtle dark:border-white/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-sm">
           <div>
             <p class="text-caption-xs font-semibold uppercase text-primary">Paso 2</p>
-            <h2 class="font-semibold text-text-primary">Resultados disponibles</h2>
+            <h2 class="font-semibold text-text-primary dark:text-[#E8E9EC]">Resultados disponibles</h2>
           </div>
           <span id="results-count" class="text-sm text-text-secondary">Sin busqueda activa</span>
         </div>
-        <div id="search-results" class="divide-y divide-border-subtle" aria-live="polite">
+        <div id="search-results" class="divide-y divide-border-subtle dark:divide-white/10" aria-live="polite">
           <div class="px-lg py-xxl text-center">
             <span class="material-symbols-outlined text-[40px] text-text-secondary" aria-hidden="true">manage_search</span>
             <p class="text-sm text-text-secondary mt-sm">Busca un producto para agregarlo al carrito.</p>
@@ -71,14 +73,14 @@
       </article>
     </section>
 
-    <aside class="bg-white rounded-xl shadow-sm border border-border-subtle overflow-hidden xl:sticky xl:top-6">
-      <div class="px-lg py-md border-b border-border-subtle flex items-start justify-between gap-sm">
+    <aside class="bg-white dark:bg-[#1E2128] rounded-xl shadow-sm border border-border-subtle dark:border-white/10 overflow-hidden xl:sticky xl:top-6">
+      <div class="px-lg py-md border-b border-border-subtle dark:border-white/10 flex items-start justify-between gap-sm">
         <div>
           <p class="text-caption-xs font-semibold uppercase text-primary">Paso 3</p>
-          <h2 class="font-semibold text-text-primary">Carrito y pago</h2>
+          <h2 class="font-semibold text-text-primary dark:text-[#E8E9EC]">Carrito y pago</h2>
           <p id="cart-count" class="text-caption-xs text-text-secondary mt-xs">0 productos agregados</p>
         </div>
-        <button id="clear-cart" type="button" class="inline-flex items-center justify-center rounded-lg border border-border-subtle p-sm text-text-secondary hover:bg-slate-50 disabled:opacity-40" disabled aria-label="Vaciar carrito">
+        <button id="clear-cart" type="button" class="inline-flex items-center justify-center rounded-lg border border-border-subtle dark:border-white/10 p-sm text-text-secondary hover:bg-slate-50 dark:hover:bg-white/5 disabled:opacity-40" disabled aria-label="Vaciar carrito">
           <span class="material-symbols-outlined text-[20px]" aria-hidden="true">delete_sweep</span>
         </button>
       </div>
@@ -88,15 +90,15 @@
           <legend class="text-caption-xs font-medium text-text-secondary">Caja abierta</legend>
           <div class="mt-xs flex flex-col gap-sm">
             {% for caja in cajas_abiertas %}
-            <label class="rounded-lg border-2 border-border-subtle px-md py-sm flex items-start gap-sm cursor-pointer hover:bg-slate-50 has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-colors">
+            <label class="rounded-lg border-2 border-border-subtle dark:border-white/10 px-md py-sm flex items-start gap-sm cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-colors">
               <input type="radio" name="caja" value="{{ caja.id }}" class="mt-1 accent-primary" {% if forloop.first %}checked{% endif %}>
               <span class="min-w-0">
-                <span class="block font-semibold text-text-primary">{{ caja.nombre }}</span>
+                <span class="block font-semibold text-text-primary dark:text-[#E8E9EC]">{{ caja.nombre }}</span>
                 <span class="block text-sm text-text-secondary truncate">{{ caja.cajero.username }} - Saldo S/. {{ caja.saldo_actual }}</span>
               </span>
             </label>
             {% empty %}
-            <div class="text-sm text-error bg-red-50 rounded-lg px-md py-sm">
+            <div class="text-sm text-error bg-red-50 dark:bg-red-500/10 rounded-lg px-md py-sm">
               No hay cajas abiertas. Abre una caja antes de vender.
             </div>
             {% endfor %}
@@ -107,8 +109,8 @@
           <legend class="text-caption-xs font-medium text-text-secondary">Metodo de pago</legend>
           <div class="mt-xs grid grid-cols-1 sm:grid-cols-3 xl:grid-cols-1 gap-sm">
             {% for value, label in metodos_pago %}
-            <label class="rounded-lg border-2 border-border-subtle px-md py-sm text-sm font-medium text-text-primary cursor-pointer hover:bg-slate-50 has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-colors">
-              <input type="radio" name="metodo_pago" value="{{ value }}" class="sr-only" {% if value == 'EFECTIVO' %}checked{% endif %}>
+            <label class="rounded-lg border-2 border-border-subtle dark:border-white/10 px-md py-sm text-sm font-medium text-text-primary dark:text-[#E8E9EC] cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 has-[:checked]:border-primary has-[:checked]:bg-primary/5 transition-colors">
+              <input type="radio" name="metodo_pago" value="{{ value }}" class="sr-only metodo-pago-input" {% if value == 'EFECTIVO' %}checked{% endif %}>
               <span class="flex items-center gap-xs">
                 <span class="material-symbols-outlined text-[18px] text-primary" aria-hidden="true">{% if value == 'EFECTIVO' %}payments{% elif value == 'TARJETA' %}credit_card{% else %}account_balance{% endif %}</span>
                 {{ label }}
@@ -118,22 +120,38 @@
           </div>
         </fieldset>
 
+        <!-- Efectivo recibido + vuelto: solo visible cuando el metodo de pago es EFECTIVO -->
+        <div id="efectivo-wrapper" class="flex flex-col gap-sm rounded-lg border border-border-subtle dark:border-white/10 p-md bg-surface-container dark:bg-white/5">
+          <div>
+            <label class="text-caption-xs font-medium text-text-secondary" for="efectivo-recibido">Efectivo recibido</label>
+            <div class="relative mt-xs">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-text-secondary">S/.</span>
+              <input id="efectivo-recibido" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00"
+                     class="w-full rounded-lg border border-border-subtle dark:border-white/10 dark:bg-[#15171C] pl-10 pr-md py-sm text-lg font-mono text-text-primary dark:text-[#E8E9EC] focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+            </div>
+          </div>
+          <div class="flex items-center justify-between pt-xs border-t border-outline-variant dark:border-white/10">
+            <span id="vuelto-caption" class="text-sm font-semibold text-text-secondary">Vuelto</span>
+            <span id="vuelto-label" class="font-display-total text-display-total text-text-primary dark:text-[#E8E9EC]">S/. 0.00</span>
+          </div>
+        </div>
+
         <div>
           <label class="text-caption-xs font-medium text-text-secondary" for="descuento">Descuento general</label>
           <div class="relative mt-xs">
             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-text-secondary">S/.</span>
             <input id="descuento" name="descuento" type="number" min="0" step="0.01" value="0.00"
-                   class="w-full rounded-lg border border-border-subtle pl-10 pr-md py-sm text-sm font-mono focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+                   class="w-full rounded-lg border border-border-subtle dark:border-white/10 dark:bg-[#15171C] pl-10 pr-md py-sm text-sm font-mono text-text-primary dark:text-[#E8E9EC] focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
           </div>
         </div>
 
-        <div class="border border-border-subtle rounded-lg overflow-hidden">
-          <div id="cart-lines" class="divide-y divide-border-subtle max-h-[340px] overflow-y-auto" aria-live="polite">
+        <div class="border border-border-subtle dark:border-white/10 rounded-lg overflow-hidden">
+          <div id="cart-lines" class="divide-y divide-border-subtle dark:divide-white/10 max-h-[340px] overflow-y-auto" aria-live="polite">
             <div class="px-md py-lg text-center text-sm text-text-secondary">El carrito esta vacio.</div>
           </div>
         </div>
 
-        <div class="rounded-lg bg-surface-container px-md py-sm flex flex-col gap-xs">
+        <div class="rounded-lg bg-surface-container dark:bg-white/5 px-md py-sm flex flex-col gap-xs">
           <div class="flex justify-between text-sm text-text-secondary">
             <span>Subtotal sin IGV</span>
             <span id="subtotal-label" class="font-mono">S/. 0.00</span>
@@ -146,7 +164,7 @@
             <span>Descuento</span>
             <span id="discount-label" class="font-mono">S/. 0.00</span>
           </div>
-          <div class="flex justify-between text-2xl font-bold text-text-primary pt-sm border-t border-outline-variant">
+          <div class="flex justify-between text-2xl font-bold text-text-primary dark:text-[#E8E9EC] pt-sm border-t border-outline-variant dark:border-white/10">
             <span>Total</span>
             <span id="total-label" class="font-mono">S/. 0.00</span>
           </div>
@@ -155,9 +173,10 @@
         <button id="confirm-button" type="submit"
                 class="inline-flex min-h-[52px] items-center justify-center gap-xs rounded-lg bg-primary px-lg py-sm text-base font-semibold text-white hover:bg-primary-hover focus:ring-4 focus:ring-primary/20 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 disabled>
-          <span class="material-symbols-outlined text-[22px]" aria-hidden="true">point_of_sale</span>
-          Confirmar venta
+          <span id="confirm-icon" class="material-symbols-outlined text-[22px]" aria-hidden="true">point_of_sale</span>
+          <span id="confirm-label">Confirmar venta (F9)</span>
         </button>
+        <p class="text-caption-xs text-text-secondary text-center">Atajos: <span class="font-semibold">F2</span> buscar, <span class="font-semibold">F9</span> confirmar venta, <span class="font-semibold">Esc</span> limpiar busqueda.</p>
       </div>
     </aside>
   </form>
@@ -172,18 +191,29 @@
   const searchButton = document.getElementById("search-button");
   const searchResults = document.getElementById("search-results");
   const searchHint = document.getElementById("search-hint");
+  const scanBanner = document.getElementById("scan-banner");
+  const scanBannerIcon = document.getElementById("scan-banner-icon");
   const resultsCount = document.getElementById("results-count");
   const cartLines = document.getElementById("cart-lines");
   const cartItemsInput = document.getElementById("cart-items");
   const discountInput = document.getElementById("descuento");
   const discountLabel = document.getElementById("discount-label");
   const confirmButton = document.getElementById("confirm-button");
+  const confirmIcon = document.getElementById("confirm-icon");
+  const confirmLabel = document.getElementById("confirm-label");
   const clearCartButton = document.getElementById("clear-cart");
   const cartCount = document.getElementById("cart-count");
   const subtotalLabel = document.getElementById("subtotal-label");
   const igvLabel = document.getElementById("igv-label");
   const totalLabel = document.getElementById("total-label");
+  const efectivoWrapper = document.getElementById("efectivo-wrapper");
+  const efectivoInput = document.getElementById("efectivo-recibido");
+  const vueltoLabel = document.getElementById("vuelto-label");
+  const vueltoCaption = document.getElementById("vuelto-caption");
+  const saleForm = document.getElementById("sale-form");
   let lastResults = new Map();
+  let currentTotal = 0;
+  let scanBannerTimeout = null;
 
   function escapeHtml(value) {
     return String(value ?? "").replace(/[&<>"']/g, char => ({
@@ -197,6 +227,33 @@
 
   function money(value) {
     return `S/. ${Number(value).toFixed(2)}`;
+  }
+
+  function isEfectivoSelected() {
+    const checked = document.querySelector('input[name="metodo_pago"]:checked');
+    return !checked || checked.value === "EFECTIVO";
+  }
+
+  // Refuerzo visual del estado de busqueda/escaneo: color + icono, no solo texto.
+  // type: 'neutral' | 'success' | 'warning' | 'error'
+  function setScanStatus(type, message) {
+    const styles = {
+      neutral: { classes: "bg-slate-50 dark:bg-white/5 text-text-secondary", icon: "info" },
+      success: { classes: "bg-success/10 text-success", icon: "check_circle" },
+      warning: { classes: "bg-amber-50 dark:bg-amber-500/10 text-warning", icon: "priority_high" },
+      error: { classes: "bg-red-50 dark:bg-red-500/10 text-error", icon: "error" },
+    };
+    const style = styles[type] || styles.neutral;
+    scanBanner.className = `mt-sm flex items-center gap-xs rounded-lg px-md py-sm text-sm font-medium transition-colors ${style.classes}`;
+    scanBannerIcon.textContent = style.icon;
+    searchHint.textContent = message;
+
+    if (scanBannerTimeout) clearTimeout(scanBannerTimeout);
+    if (type === "success") {
+      scanBannerTimeout = setTimeout(() => {
+        setScanStatus("neutral", "Listo para el siguiente escaneo o busqueda.");
+      }, 2500);
+    }
   }
 
   function emptyResults(message, icon = "manage_search") {
@@ -218,14 +275,14 @@
     }
 
     searchResults.innerHTML = products.map(product => `
-      <div class="px-lg py-md flex flex-col md:flex-row md:items-center md:justify-between gap-md hover:bg-slate-50 transition-colors">
+      <div class="px-lg py-md flex flex-col md:flex-row md:items-center md:justify-between gap-md hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
         <div class="min-w-0">
-          <p class="font-semibold text-text-primary truncate">${escapeHtml(product.nombre)}</p>
+          <p class="font-semibold text-text-primary dark:text-[#E8E9EC] truncate">${escapeHtml(product.nombre)}</p>
           <p class="text-sm text-text-secondary">${escapeHtml(product.codigo_barra || "Sin codigo")} - ${escapeHtml(product.categoria)}</p>
           <p class="text-caption-xs text-text-secondary mt-xs">Stock disponible: ${product.stock_actual} ${escapeHtml(product.unidad)}</p>
         </div>
         <div class="flex items-center justify-between md:justify-end gap-md">
-          <span class="font-mono text-lg font-bold text-text-primary">${money(product.precio_venta)}</span>
+          <span class="font-mono text-lg font-bold text-text-primary dark:text-[#E8E9EC]">${money(product.precio_venta)}</span>
           <button type="button" class="add-product inline-flex min-h-[44px] items-center gap-xs rounded-lg bg-primary px-md py-sm text-sm font-semibold text-white hover:bg-primary-hover focus:ring-4 focus:ring-primary/20 transition-colors"
                   data-id="${product.id}">
             <span class="material-symbols-outlined text-[18px]" aria-hidden="true">add_shopping_cart</span>
@@ -242,11 +299,12 @@
       lastResults = new Map();
       resultsCount.textContent = "Sin busqueda activa";
       emptyResults("Busca un producto para agregarlo al carrito.");
+      setScanStatus("neutral", "Con lector de barras: apunta al campo y escanea. Si el codigo coincide, se agrega con Enter.");
       return;
     }
 
     searchButton.disabled = true;
-    searchHint.textContent = "Buscando producto...";
+    setScanStatus("neutral", "Buscando producto...");
     try {
       const response = await fetch(`${searchUrl}?q=${encodeURIComponent(query)}`, {
         headers: {"X-Requested-With": "XMLHttpRequest"},
@@ -259,18 +317,22 @@
         lastResults = new Map();
         resultsCount.textContent = "Agregado por codigo";
         emptyResults("Producto agregado. Puedes escanear el siguiente.", "task_alt");
-        searchHint.textContent = `${data.results[0].nombre} agregado al carrito.`;
+        setScanStatus("success", `${data.results[0].nombre} agregado al carrito.`);
         searchInput.focus();
         return;
       }
 
       renderResults(data.results);
-      searchHint.textContent = data.match_type === "barcode"
-        ? "Codigo encontrado. Presiona Agregar o Enter para sumar otra unidad."
-        : "Selecciona un resultado para agregarlo al carrito.";
+      if (!data.results.length) {
+        setScanStatus("warning", "No se encontro ningun producto con ese codigo o nombre.");
+      } else {
+        setScanStatus("neutral", data.match_type === "barcode"
+          ? "Codigo encontrado. Presiona Agregar o Enter para sumar otra unidad."
+          : "Selecciona un resultado para agregarlo al carrito.");
+      }
     } catch (error) {
       emptyResults("No se pudo realizar la busqueda. Intenta nuevamente.", "error");
-      searchHint.textContent = "Error de busqueda.";
+      setScanStatus("error", "Error de busqueda. Revisa tu conexion e intenta de nuevo.");
     } finally {
       searchButton.disabled = false;
     }
@@ -282,13 +344,13 @@
     if (current) {
       if (current.cantidad < current.stock_actual) {
         current.cantidad += 1;
-        searchHint.textContent = `${current.nombre}: cantidad ${current.cantidad}.`;
+        setScanStatus("success", `${current.nombre}: cantidad ${current.cantidad}.`);
       } else {
-        searchHint.textContent = `${current.nombre} ya alcanzo el stock disponible.`;
+        setScanStatus("warning", `${current.nombre} ya alcanzo el stock disponible.`);
       }
     } else {
       cart.set(id, {...product, cantidad: 1});
-      searchHint.textContent = `${product.nombre} agregado al carrito.`;
+      setScanStatus("success", `${product.nombre} agregado al carrito.`);
     }
     renderCart();
   }
@@ -300,6 +362,37 @@
     renderCart();
   }
 
+  function updateEfectivoUI() {
+    const efectivoActivo = isEfectivoSelected();
+    efectivoWrapper.classList.toggle("hidden", !efectivoActivo);
+    if (!efectivoActivo) return;
+
+    const recibido = Number(efectivoInput.value || 0);
+    const vuelto = recibido - currentTotal;
+
+    if (!efectivoInput.value || recibido < currentTotal) {
+      vueltoLabel.textContent = money(Math.max(vuelto, 0));
+      vueltoLabel.classList.remove("text-text-primary", "dark:text-[#E8E9EC]");
+      vueltoLabel.classList.add("text-error");
+      vueltoCaption.textContent = recibido > 0 ? "Falta efectivo" : "Vuelto";
+    } else {
+      vueltoLabel.textContent = money(vuelto);
+      vueltoLabel.classList.remove("text-error");
+      vueltoLabel.classList.add("text-text-primary", "dark:text-[#E8E9EC]");
+      vueltoCaption.textContent = "Vuelto";
+    }
+  }
+
+  function canConfirm(itemsCount) {
+    const hasCaja = Boolean(document.querySelector('input[name="caja"]:checked'));
+    if (itemsCount === 0 || !hasCaja) return false;
+    if (isEfectivoSelected()) {
+      const recibido = Number(efectivoInput.value || 0);
+      return recibido >= currentTotal;
+    }
+    return true;
+  }
+
   function renderCart() {
     const items = Array.from(cart.values());
     if (!items.length) {
@@ -309,26 +402,26 @@
         <div class="px-md py-sm flex flex-col gap-sm">
           <div class="flex items-start justify-between gap-sm">
             <div class="min-w-0">
-              <p class="text-sm font-semibold text-text-primary truncate">${escapeHtml(item.nombre)}</p>
+              <p class="text-sm font-semibold text-text-primary dark:text-[#E8E9EC] truncate">${escapeHtml(item.nombre)}</p>
               <p class="text-caption-xs text-text-secondary">${escapeHtml(item.codigo_barra || "Sin codigo")} - Stock ${item.stock_actual}</p>
             </div>
-            <button type="button" class="remove-product rounded-lg p-xs text-text-secondary hover:bg-red-50 hover:text-error" data-id="${item.id}" aria-label="Quitar ${escapeHtml(item.nombre)}">
+            <button type="button" class="remove-product rounded-lg p-xs min-h-[44px] min-w-[44px] flex items-center justify-center text-text-secondary hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-error" data-id="${item.id}" aria-label="Quitar ${escapeHtml(item.nombre)}">
               <span class="material-symbols-outlined text-[20px]" aria-hidden="true">close</span>
             </button>
           </div>
           <div class="flex items-center justify-between gap-sm">
-            <div class="inline-flex items-center rounded-lg border border-border-subtle overflow-hidden">
-              <button type="button" class="qty-minus px-sm py-xs text-text-secondary hover:bg-slate-50" data-id="${item.id}" aria-label="Restar unidad">
-                <span class="material-symbols-outlined text-[18px]" aria-hidden="true">remove</span>
+            <div class="inline-flex items-center rounded-lg border border-border-subtle dark:border-white/10 overflow-hidden">
+              <button type="button" class="qty-minus min-h-[44px] min-w-[44px] flex items-center justify-center text-text-secondary hover:bg-slate-50 dark:hover:bg-white/5" data-id="${item.id}" aria-label="Restar unidad">
+                <span class="material-symbols-outlined text-[20px]" aria-hidden="true">remove</span>
               </button>
               <input type="number" min="1" max="${item.stock_actual}" value="${item.cantidad}" data-id="${item.id}" aria-label="Cantidad de ${escapeHtml(item.nombre)}"
-                     class="cart-qty w-16 border-0 px-xs py-xs text-sm font-mono text-center focus:ring-0">
-              <button type="button" class="qty-plus px-sm py-xs text-text-secondary hover:bg-slate-50" data-id="${item.id}" aria-label="Sumar unidad">
-                <span class="material-symbols-outlined text-[18px]" aria-hidden="true">add</span>
+                     class="cart-qty w-14 min-h-[44px] border-0 px-xs py-xs text-base font-mono text-center focus:ring-0 dark:bg-[#15171C] dark:text-[#E8E9EC]">
+              <button type="button" class="qty-plus min-h-[44px] min-w-[44px] flex items-center justify-center text-text-secondary hover:bg-slate-50 dark:hover:bg-white/5" data-id="${item.id}" aria-label="Sumar unidad">
+                <span class="material-symbols-outlined text-[20px]" aria-hidden="true">add</span>
               </button>
             </div>
             <div class="text-right">
-              <p class="font-mono text-sm font-bold text-text-primary">${money(Number(item.precio_venta) * item.cantidad)}</p>
+              <p class="font-mono text-sm font-bold text-text-primary dark:text-[#E8E9EC]">${money(Number(item.precio_venta) * item.cantidad)}</p>
               <p class="text-caption-xs text-text-secondary">${money(item.precio_venta)} c/u</p>
             </div>
           </div>
@@ -342,6 +435,7 @@
     const subtotal = total / 1.18;
     const igv = total - subtotal;
     const totalUnits = items.reduce((sum, item) => sum + item.cantidad, 0);
+    currentTotal = total;
 
     subtotalLabel.textContent = money(subtotal);
     igvLabel.textContent = money(igv);
@@ -353,8 +447,8 @@
       cantidad: item.cantidad,
     })));
 
-    const hasCaja = Boolean(document.querySelector('input[name="caja"]:checked'));
-    confirmButton.disabled = items.length === 0 || !hasCaja;
+    updateEfectivoUI();
+    confirmButton.disabled = !canConfirm(items.length);
     clearCartButton.disabled = items.length === 0;
   }
 
@@ -396,12 +490,53 @@
     searchInput.focus();
   });
   discountInput.addEventListener("input", renderCart);
+  efectivoInput.addEventListener("input", () => {
+    updateEfectivoUI();
+    confirmButton.disabled = !canConfirm(cart.size);
+  });
   document.querySelectorAll('input[name="caja"]').forEach(input => input.addEventListener("change", renderCart));
-  document.getElementById("sale-form").addEventListener("submit", event => {
+  document.querySelectorAll('.metodo-pago-input').forEach(input => input.addEventListener("change", renderCart));
+
+  saleForm.addEventListener("submit", event => {
     if (!cart.size) {
       event.preventDefault();
-      searchHint.textContent = "Agrega productos al carrito antes de confirmar.";
+      setScanStatus("error", "Agrega productos al carrito antes de confirmar.");
       searchInput.focus();
+      return;
+    }
+    if (!canConfirm(cart.size)) {
+      event.preventDefault();
+      setScanStatus("error", "Verifica el efectivo recibido: debe cubrir el total de la venta.");
+      efectivoInput.focus();
+      return;
+    }
+    // Estado de carga: evita doble clic mientras se procesa la venta en el servidor.
+    confirmButton.disabled = true;
+    confirmIcon.textContent = "progress_activity";
+    confirmIcon.classList.add("animate-spin");
+    confirmLabel.textContent = "Procesando venta...";
+  });
+
+  // Atajos de teclado: F2 enfoca el buscador, F9 confirma la venta, Esc limpia la busqueda.
+  document.addEventListener("keydown", event => {
+    if (event.key === "F2") {
+      event.preventDefault();
+      searchInput.focus();
+      searchInput.select();
+      return;
+    }
+    if (event.key === "F9") {
+      event.preventDefault();
+      if (!confirmButton.disabled) saleForm.requestSubmit(confirmButton);
+      return;
+    }
+    if (event.key === "Escape") {
+      if (document.activeElement === searchInput || searchInput.value) {
+        event.preventDefault();
+        searchInput.value = "";
+        searchProducts(false);
+        searchInput.focus();
+      }
     }
   });
 

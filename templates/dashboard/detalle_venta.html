@@ -59,7 +59,7 @@
           </button>
           <a href="{% url 'ventas:nueva_venta' %}" class="inline-flex items-center justify-center gap-xs rounded-lg bg-primary px-md py-sm text-sm font-semibold text-white hover:bg-primary-hover focus:ring-4 focus:ring-primary/20 transition-colors">
             <span class="material-symbols-outlined text-[18px]" aria-hidden="true">add</span>
-            Nueva venta
+            Nueva venta (F9)
           </a>
           <a href="{% url 'ventas:dashboard' %}" class="inline-flex items-center justify-center gap-xs rounded-lg border border-border-subtle px-md py-sm text-sm font-medium text-text-secondary hover:bg-slate-50 transition-colors">
             <span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_back</span>
@@ -291,6 +291,13 @@
 {% block extra_js %}
 <script>
   document.getElementById("print-sale")?.addEventListener("click", () => window.print());
+  // Continuar vendiendo sin soltar el teclado: F9 salta directo a Nueva Venta.
+  document.addEventListener("keydown", event => {
+    if (event.key === "F9") {
+      event.preventDefault();
+      window.location.href = "{% url 'ventas:nueva_venta' %}";
+    }
+  });
 </script>
 {% if venta.estado != "ANULADA" %}
 <script>

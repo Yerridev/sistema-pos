@@ -84,6 +84,7 @@ class VentaDashboardView(View):
             "stats": _venta_resumen(queryset),
             "top_productos": _top_productos(queryset),
             "estados": Venta.ESTADO_CHOICES,
+            "page_title": "Ventas",
         }
         return render(request, "dashboard/ventas.html", context)
 
@@ -133,6 +134,7 @@ class NuevaVentaView(View):
         context = {
             "cajas_abiertas": cajas,
             "metodos_pago": Venta.METODO_PAGO_CHOICES,
+            "page_title": "Nueva Venta",
         }
         return render(request, "dashboard/nueva_venta.html", context)
 
@@ -213,7 +215,7 @@ class VentaDetalleDashboardView(View):
             messages.error(request, "No puedes ver el detalle de una venta de otro cajero.")
             return redirect("ventas:dashboard")
 
-        return render(request, "dashboard/detalle_venta.html", {"venta": venta})
+        return render(request, "dashboard/detalle_venta.html", {"venta": venta, "page_title": f"Venta #{venta.id}"})
 
 
 @login_required
@@ -255,6 +257,7 @@ class CajaDashboardView(View):
             "caja_actual": caja_actual,
             "movimientos": movimientos,
             "historial": historial,
+            "page_title": "Caja",
         }
         return render(request, "dashboard/caja.html", context)
 
