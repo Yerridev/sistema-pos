@@ -4,6 +4,8 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 
 from compras.models import Compra, DetalleCompra, Proveedor
+from compras.services import CompraService
+from core.exceptions import ReglaNegocioViolada
 from productos.models import Categoria, Producto
 
 
@@ -93,3 +95,116 @@ class CompraRegistrarGoldenTests(TestCase):
         }, format='json')
 
         self.assertEqual(response.status_code, 400)
+
+
+# ── Tests: CompraService ----------------------------------------------------
+
+
+class CompraServiceTests(TestCase):
+    """Tests unitarios del servicio de registro de compras."""
+
+    def setUp(self):
+        self.proveedor = Proveedor.objects.create(
+            nombre='Proveedor Service', ruc='98765432109', contacto='Luis',
+        )
+        self.categoria = Categoria.objects.create(nombre='Service Cat')
+        self.producto = Producto.objects.create(
+            nombre='Producto Service',
+            categoria=self.categoria,
+            precio_venta=Decimal('25.00'),
+            costo=Decimal('10.00'),
+            stock_actual=15,
+        )
+
+    def test_registrar_crea_compra_con_total_correcto(self):
+        """El service crea la compra y calcula el total por los detalles."""
+        compra = CompraService.registrar(
+            self.proveedor,
+            [{
+                'producto': self.producto,
+                'cantidad': 10,
+                'costo_unitario': Decimal('5.00'),
+            }],
+        )
+
+        self.assertEqual(compra.proveedor, self.proveedor)
+        self.assertEqual(compra.total, Decimal('50.00'))
+        self.assertEqual(compra.estado, 'REGISTRADA')
+        self.assertEqual(compra.detalles.count(), 1)
+        self.assertEqual(compra.detalles.first().subtotal, Decimal('50.00'))
+
+    def test_registrar_incrementa_stock(self):
+        """El service incrementa el stock_actual del producto."""
+        stock_antes = self.producto.stock_actual
+
+        CompraService.registrar(
+            self.proveedor,
+            [{
+                'producto': self.producto,
+                'cantidad': 20,
+                'costo_unitario': Decimal('6.00'),
+            }],
+        )
+
+        self.producto.refresh_from_db()
+        self.assertEqual(self.producto.stock_actual, stock_antes + 20)
+
+    def test_registrar_actualiza_costo(self):
+        """El service actualiza producto.costo con el costo_unitario del detalle."""
+        CompraService.registrar(
+            self.proveedor,
+            [{
+                'producto': self.producto,
+                'cantidad': 5,
+                'costo_unitario': Decimal('7.50'),
+            }],
+        )
+
+        self.producto.refresh_from_db()
+        self.assertEqual(self.producto.costo, Decimal('7.50'))
+
+    def test_registrar_cantidad_invalida_lanza_regla_negocio(self):
+        """Cantidad menor o igual a cero lanza ReglaNegocioViolada."""
+        with self.assertRaises(ReglaNegocioViolada):
+            CompraService.registrar(
+                self.proveedor,
+                [{
+                    'producto': self.producto,
+                    'cantidad': 0,
+                    'costo_unitario': Decimal('5.00'),
+                }],
+            )
+
+    def test_registrar_multiples_detalles(self):
+        """Varios detalles crean todas las filas y actualizan cada stock."""
+        producto2 = Producto.objects.create(
+            nombre='Producto Service 2',
+            categoria=self.categoria,
+            precio_venta=Decimal('30.00'),
+            costo=Decimal('8.00'),
+            stock_actual=10,
+        )
+
+        compra = CompraService.registrar(
+            self.proveedor,
+            [
+                {
+                    'producto': self.producto,
+                    'cantidad': 5,
+                    'costo_unitario': Decimal('2.00'),
+                },
+                {
+                    'producto': producto2,
+                    'cantidad': 3,
+                    'costo_unitario': Decimal('10.00'),
+                },
+            ],
+        )
+
+        self.assertEqual(Compra.objects.count(), 1)
+        self.assertEqual(compra.detalles.count(), 2)
+        self.producto.refresh_from_db()
+        producto2.refresh_from_db()
+        self.assertEqual(self.producto.stock_actual, 20)
+        self.assertEqual(producto2.stock_actual, 13)
+        self.assertEqual(compra.total, Decimal('40.00'))
