@@ -1,13 +1,11 @@
 import json
 from django.db import models
-from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.http import JsonResponse
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views import View
-from django.views.decorators.http import require_POST
 from urllib.parse import urlencode
 
 from django_filters.rest_framework import DjangoFilterBackend
@@ -17,9 +15,11 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
+from core.exceptions import AppError
 from .models import Categoria, Producto
 from .permissions import IsAdminOrReadOnly
 from .serializers import CategoriaSerializer, ProductoListSerializer, ProductoSerializer
+from .services import CategoriaService, ProductoService
 from .utils import get_role_permissions
 
 
@@ -179,58 +179,17 @@ class ProductoCreateView(View):
         except (json.JSONDecodeError, ValueError):
             data = request.POST.dict()
 
-        errors = {}
-        nombre = data.get('nombre', '').strip()
-        categoria_id = data.get('categoria')
-        precio_venta = data.get('precio_venta')
-        costo = data.get('costo')
-        stock_actual = data.get('stock_actual', 0)
-        stock_minimo = data.get('stock_minimo', 10)
-        unidad = data.get('unidad', 'unidad')
-        codigo_barra = data.get('codigo_barra', '').strip() or None
-        descripcion = data.get('descripcion', '').strip()
-
-        if not nombre:
-            errors['nombre'] = 'El nombre es obligatorio.'
-        if not categoria_id:
-            errors['categoria'] = 'La categoría es obligatoria.'
-        if precio_venta is None:
-            errors['precio_venta'] = 'El precio de venta es obligatorio.'
-        if costo is None:
-            errors['costo'] = 'El costo es obligatorio.'
-
         try:
-            precio_venta = float(precio_venta)
-            costo = float(costo)
-            if precio_venta < costo:
-                errors['precio_venta'] = 'El precio de venta debe ser mayor al costo.'
-        except (TypeError, ValueError):
-            errors['precio_venta'] = 'Valores numéricos inválidos.'
+            producto = ProductoService.crear(data)
+        except AppError as exc:
+            return JsonResponse({'error': str(exc)}, status=400)
 
-        if errors:
-            return JsonResponse({'errors': errors}, status=400)
-
-        try:
-            categoria = get_object_or_404(Categoria, pk=categoria_id)
-            producto = Producto.objects.create(
-                nombre=nombre,
-                categoria=categoria,
-                precio_venta=precio_venta,
-                costo=costo,
-                stock_actual=int(stock_actual),
-                stock_minimo=int(stock_minimo),
-                unidad=unidad,
-                codigo_barra=codigo_barra,
-                descripcion=descripcion,
-            )
-            return JsonResponse({
-                'success': True,
-                'id': producto.id,
-                'nombre': producto.nombre,
-                'message': f'Producto "{producto.nombre}" creado correctamente.',
-            }, status=201)
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
+        return JsonResponse({
+            'success': True,
+            'id': producto.id,
+            'nombre': producto.nombre,
+            'message': f'Producto "{producto.nombre}" creado correctamente.',
+        }, status=201)
 
 
 @method_decorator(login_required, name='dispatch')
@@ -264,47 +223,15 @@ class ProductoUpdateView(View):
             data = request.POST.dict()
 
         producto = get_object_or_404(Producto, pk=pk)
-        errors = {}
-
-        nombre = data.get('nombre', '').strip()
-        categoria_id = data.get('categoria')
-        precio_venta = data.get('precio_venta')
-        costo = data.get('costo')
-
-        if not nombre:
-            errors['nombre'] = 'El nombre es obligatorio.'
-        if not categoria_id:
-            errors['categoria'] = 'La categoría es obligatoria.'
         try:
-            precio_venta = float(precio_venta)
-            costo = float(costo)
-            if precio_venta < costo:
-                errors['precio_venta'] = 'El precio de venta debe ser mayor al costo.'
-        except (TypeError, ValueError):
-            errors['precio_venta'] = 'Valores numéricos inválidos.'
+            ProductoService.actualizar(producto, data)
+        except AppError as exc:
+            return JsonResponse({'error': str(exc)}, status=400)
 
-        if errors:
-            return JsonResponse({'errors': errors}, status=400)
-
-        try:
-            categoria = get_object_or_404(Categoria, pk=categoria_id)
-            producto.nombre = nombre
-            producto.categoria = categoria
-            producto.precio_venta = precio_venta
-            producto.costo = costo
-            producto.stock_actual = int(data.get('stock_actual', producto.stock_actual))
-            producto.stock_minimo = int(data.get('stock_minimo', producto.stock_minimo))
-            producto.unidad = data.get('unidad', producto.unidad)
-            producto.codigo_barra = data.get('codigo_barra', '').strip() or None
-            producto.descripcion = data.get('descripcion', '').strip()
-            producto.activo = data.get('activo', True)
-            producto.save()
-            return JsonResponse({
-                'success': True,
-                'message': f'Producto "{producto.nombre}" actualizado correctamente.',
-            })
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
+        return JsonResponse({
+            'success': True,
+            'message': f'Producto "{producto.nombre}" actualizado correctamente.',
+        })
 
 
 @method_decorator(login_required, name='dispatch')
@@ -317,9 +244,7 @@ class ProductoDeleteView(View):
 
         producto = get_object_or_404(Producto, pk=pk)
         nombre = producto.nombre
-        # Soft delete — conservar historial de ventas
-        producto.activo = False
-        producto.save()
+        ProductoService.eliminar(producto)
         return JsonResponse({'success': True, 'message': f'Producto "{nombre}" eliminado.'})
 
 
@@ -347,17 +272,11 @@ class CategoriaCreateView(View):
 
         nombre = data.get('nombre', '').strip()
         descripcion = data.get('descripcion', '').strip()
-        errors = {}
+        try:
+            categoria = CategoriaService.crear(nombre, descripcion)
+        except AppError as exc:
+            return JsonResponse({'error': str(exc)}, status=400)
 
-        if not nombre:
-            errors['nombre'] = 'El nombre es obligatorio.'
-        elif Categoria.objects.filter(nombre__iexact=nombre).exists():
-            errors['nombre'] = 'Ya existe una categoria con ese nombre.'
-
-        if errors:
-            return JsonResponse({'errors': errors}, status=400)
-
-        categoria = Categoria.objects.create(nombre=nombre, descripcion=descripcion)
         return JsonResponse({
             'success': True,
             'id': categoria.id,
@@ -390,21 +309,11 @@ class CategoriaUpdateView(View):
             data = request.POST.dict()
 
         categoria = get_object_or_404(Categoria, pk=pk)
-        nombre = data.get('nombre', '').strip()
-        descripcion = data.get('descripcion', '').strip()
-        errors = {}
+        try:
+            CategoriaService.actualizar(categoria, data.get('nombre', '').strip(), data.get('descripcion', '').strip())
+        except AppError as exc:
+            return JsonResponse({'error': str(exc)}, status=400)
 
-        if not nombre:
-            errors['nombre'] = 'El nombre es obligatorio.'
-        elif Categoria.objects.filter(nombre__iexact=nombre).exclude(pk=categoria.pk).exists():
-            errors['nombre'] = 'Ya existe una categoria con ese nombre.'
-
-        if errors:
-            return JsonResponse({'errors': errors}, status=400)
-
-        categoria.nombre = nombre
-        categoria.descripcion = descripcion
-        categoria.save(update_fields=['nombre', 'descripcion', 'updated_at'])
         return JsonResponse({
             'success': True,
             'message': f'Categoria "{categoria.nombre}" actualizada correctamente.',
@@ -420,11 +329,9 @@ class CategoriaDeleteView(View):
             return JsonResponse({'error': 'Sin permisos para eliminar categorias.'}, status=403)
 
         categoria = get_object_or_404(Categoria, pk=pk)
-        if categoria.productos.filter(activo=True).exists():
-            return JsonResponse({
-                'error': 'No se puede eliminar una categoria con productos activos.',
-            }, status=400)
+        try:
+            CategoriaService.eliminar(categoria)
+        except AppError as exc:
+            return JsonResponse({'error': str(exc)}, status=400)
 
-        categoria.activo = False
-        categoria.save(update_fields=['activo', 'updated_at'])
         return JsonResponse({'success': True, 'message': f'Categoria "{categoria.nombre}" eliminada.'})
