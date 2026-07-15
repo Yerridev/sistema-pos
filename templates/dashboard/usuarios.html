@@ -4,12 +4,6 @@
 
 {% block content %}
 <div class="flex flex-col gap-xl">
-  <div id="toast"
-       class="hidden fixed top-5 right-5 z-[200] flex items-center gap-sm px-lg py-md rounded-xl shadow-lg text-white text-sm font-medium transition-all"
-       role="alert" aria-live="polite">
-    <span class="material-symbols-outlined text-[18px]" id="toast-icon">check_circle</span>
-    <span id="toast-msg"></span>
-  </div>
   <section class="bg-white rounded-xl shadow-sm border border-border-subtle p-md flex flex-col gap-md">
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-md">
       <div>
@@ -225,19 +219,6 @@ const URLS = {
   pass:    (id) => `/dashboard/usuarios/${id}/password/`,
 };
 
-function showToast(msg, type = 'success') {
-  const el   = document.getElementById('toast');
-  const icon = document.getElementById('toast-icon');
-  const text = document.getElementById('toast-msg');
-  if (!el) return;
-  el.className = el.className.replace(/bg-\w+(-\w+)?/g, '');
-  el.classList.add(type === 'success' ? 'bg-primary' : 'bg-error');
-  el.classList.remove('hidden');
-  icon.textContent = type === 'success' ? 'check_circle' : 'error';
-  text.textContent = msg;
-  setTimeout(() => el.classList.add('hidden'), 4000);
-}
-
 async function apiFetch(url, method = 'GET', body = null) {
   const opts = { method, headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF } };
   if (body) opts.body = JSON.stringify(body);
@@ -292,11 +273,11 @@ function openModal(titulo, subtitulo, showPassword) {
   document.getElementById('f-username')?.focus();
 }
 
-function closeModal() {
-  modalUsuario?.classList.add('hidden');
+const closeModal = () => {
+  window.UIKit.closeModal('modal-usuario');
   resetForm();
   editingId = null;
-}
+};
 
 function getFormData() {
   return {
@@ -327,7 +308,7 @@ document.querySelectorAll('.btn-editar').forEach(btn => {
     const id = btn.dataset.id;
     try {
       const { ok, data } = await apiFetch(URLS.detalle(id), 'GET');
-      if (!ok) { showToast('Error al cargar el usuario.', 'error'); return; }
+      if (!ok) { window.UIKit.showToast('Error al cargar el usuario.', 'error'); return; }
       editingId = id;
       document.getElementById('f-username').value = data.username || '';
       document.getElementById('f-email').value = data.email || '';
@@ -336,7 +317,7 @@ document.querySelectorAll('.btn-editar').forEach(btn => {
       document.getElementById('f-rol').value = data.rol || '';
       openModal('Editar usuario', `Editando: ${data.username}`, false);
     } catch (e) {
-      showToast('Error de conexión.', 'error');
+      window.UIKit.showToast('Error de conexión.', 'error');
     }
   });
 });
@@ -352,7 +333,7 @@ btnGuardar?.addEventListener('click', async () => {
     if (editingId) delete payload.password;
     const { ok, data } = await apiFetch(url, 'POST', payload);
     if (ok && data.success) {
-      showToast(data.message, 'success');
+      window.UIKit.showToast(data.message, 'success');
       closeModal();
       setTimeout(() => location.reload(), 800);
     } else if (data.errors) {
@@ -402,17 +383,17 @@ document.getElementById('btn-confirmar-reset')?.addEventListener('click', async 
   try {
     const { ok, data } = await apiFetch(URLS.pass(resetId), 'POST', { password: pwd });
     if (ok && data.success) {
-      showToast(data.message, 'success');
+      window.UIKit.showToast(data.message, 'success');
       modalPassword?.classList.add('hidden');
     } else if (data.errors) {
       const err = document.getElementById('err-reset-password');
       err.textContent = data.errors.password || 'Error al actualizar.';
       err.classList.remove('hidden');
     } else {
-      showToast(data.error || 'Error al actualizar.', 'error');
+      window.UIKit.showToast(data.error || 'Error al actualizar.', 'error');
     }
   } catch (e) {
-    showToast('Error de conexión.', 'error');
+    window.UIKit.showToast('Error de conexión.', 'error');
   }
 });
 
@@ -423,13 +404,13 @@ document.querySelectorAll('.btn-estado').forEach(btn => {
     try {
       const { ok, data } = await apiFetch(URLS.estado(id), 'POST', { is_active: (!active).toString() });
       if (ok && data.success) {
-        showToast(data.message, 'success');
+        window.UIKit.showToast(data.message, 'success');
         setTimeout(() => location.reload(), 500);
       } else {
-        showToast(data.error || 'Error al actualizar.', 'error');
+        window.UIKit.showToast(data.error || 'Error al actualizar.', 'error');
       }
     } catch (e) {
-      showToast('Error de conexión.', 'error');
+      window.UIKit.showToast('Error de conexión.', 'error');
     }
   });
 });
