@@ -9,6 +9,7 @@ from django.views.decorators.http import require_POST
 
 from core.exceptions import AppError, RecursoNoEncontrado, ReglaNegocioViolada
 from productos.permissions import IsAdmin
+from productos.models import Producto
 from .models import Compra, Proveedor
 from .serializers import CompraReadSerializer, CompraSerializer, ProveedorSerializer
 from .services import CompraService
@@ -41,6 +42,8 @@ def compras_dashboard(request):
         "proveedores": Proveedor.objects.filter(activo=True).order_by("nombre"),
         "productos": Producto.objects.select_related("categoria").filter(activo=True).order_by("nombre"),
         "compras": Compra.objects.select_related("proveedor").prefetch_related("detalles__producto")[:10],
+        "page_title": "Compras",
+        "active_nav": "compras:dashboard",
     }
     return render(request, "dashboard/compras.html", context)
 

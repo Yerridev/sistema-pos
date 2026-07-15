@@ -22,22 +22,22 @@
         {% url 'compras:dashboard' as url_compras %}
 
         <a class="flex items-center gap-md p-md rounded-lg transition-transform hover:translate-x-1 font-inter text-sm font-semibold
-                  {% if request.path|slice:':17' == '/dashboard/ventas' %}bg-success text-white shadow-[0_0_10px_rgba(37,211,102,0.4)]{% else %}text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5{% endif %}"
+                  {% if active_nav|default:'' == 'ventas:dashboard' %}bg-success text-white shadow-[0_0_10px_rgba(37,211,102,0.4)]{% else %}text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5{% endif %}"
            href="{{ url_ventas }}">
             <span class="material-symbols-outlined" data-icon="point_of_sale">point_of_sale</span>
             Ventas
         </a>
 
         <a class="flex items-center gap-md p-md rounded-lg font-inter text-sm font-semibold
-                  {% if request.path|slice:':22' == '/dashboard/inventario' %}bg-success text-white shadow-[0_0_10px_rgba(37,211,102,0.4)]{% else %}text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-transform hover:translate-x-1{% endif %}"
+                  {% if active_nav|default:'' == 'productos:dashboard' %}bg-success text-white shadow-[0_0_10px_rgba(37,211,102,0.4)]{% else %}text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-transform hover:translate-x-1{% endif %}"
            href="{{ url_inventario }}">
             <span class="material-symbols-outlined" data-icon="inventory_2"
-                  {% if request.path|slice:':22' == '/dashboard/inventario' %}style="font-variation-settings: 'FILL' 1;"{% endif %}>inventory_2</span>
+                  {% if active_nav|default:'' == 'productos:dashboard' %}style="font-variation-settings: 'FILL' 1;"{% endif %}>inventory_2</span>
             Inventario
         </a>
 
         <a class="flex items-center gap-md p-md rounded-lg transition-transform hover:translate-x-1 font-inter text-sm font-semibold
-                  {% if request.path == '/dashboard/caja/' %}bg-success text-white shadow-[0_0_10px_rgba(37,211,102,0.4)]{% else %}text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5{% endif %}"
+                  {% if active_nav|default:'' == 'ventas:caja_dashboard' %}bg-success text-white shadow-[0_0_10px_rgba(37,211,102,0.4)]{% else %}text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5{% endif %}"
            href="{{ url_caja }}">
             <span class="material-symbols-outlined" data-icon="payments">payments</span>
             Caja
@@ -45,7 +45,7 @@
 
         {% if user.rol == 'admin' %}
         <a class="flex items-center gap-md p-md rounded-lg transition-transform hover:translate-x-1 font-inter text-sm font-semibold
-                  {% if request.path|slice:':18' == '/dashboard/compras' %}bg-success text-white shadow-[0_0_10px_rgba(37,211,102,0.4)]{% else %}text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5{% endif %}"
+                  {% if active_nav|default:'' == 'compras:dashboard' %}bg-success text-white shadow-[0_0_10px_rgba(37,211,102,0.4)]{% else %}text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5{% endif %}"
            href="{{ url_compras }}">
             <span class="material-symbols-outlined" data-icon="local_shipping">local_shipping</span>
             Compras
@@ -54,7 +54,7 @@
 
         {% if user.rol == 'admin' %}
         <a class="flex items-center gap-md p-md rounded-lg transition-transform hover:translate-x-1 font-inter text-sm font-semibold
-                  {% if request.path|slice:':19' == '/dashboard/reportes' %}bg-success text-white shadow-[0_0_10px_rgba(37,211,102,0.4)]{% else %}text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5{% endif %}"
+                  {% if active_nav|default:'' == 'reportes:dashboard' %}bg-success text-white shadow-[0_0_10px_rgba(37,211,102,0.4)]{% else %}text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5{% endif %}"
            href="{{ url_reportes }}">
             <span class="material-symbols-outlined" data-icon="bar_chart">bar_chart</span>
             Reportes
@@ -63,7 +63,7 @@
 
         {% if user.rol == 'admin' %}
         <a class="flex items-center gap-md p-md rounded-lg transition-transform hover:translate-x-1 font-inter text-sm font-semibold
-                  {% if request.path|slice:':19' == '/dashboard/usuarios' %}bg-success text-white shadow-[0_0_10px_rgba(37,211,102,0.4)]{% else %}text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5{% endif %}"
+                  {% if active_nav|default:'' == 'usuarios:list' %}bg-success text-white shadow-[0_0_10px_rgba(37,211,102,0.4)]{% else %}text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5{% endif %}"
            href="{{ url_usuarios }}">
             <span class="material-symbols-outlined" data-icon="group">group</span>
             Usuarios

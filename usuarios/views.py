@@ -92,6 +92,8 @@ class UsuarioListView(View):
             "users": users,
             "roles": roles,
             "current_user_id": request.user.id,
+            "page_title": "Usuarios",
+            "active_nav": "usuarios:list",
         }
         return render(request, "dashboard/usuarios.html", context)
 

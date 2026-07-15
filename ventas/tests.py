@@ -4,12 +4,65 @@ from decimal import Decimal
 
 from django.contrib.auth import get_user_model
 from django.test import SimpleTestCase, TestCase
+from django.urls import reverse
 
 from caja.models import Caja
 from productos.models import Categoria, Producto
 from ventas.models import DetalleVenta, Venta
 from ventas.permissions import CanAccessVentaObject, CanAnularVenta, IsCajeroOrAdmin
 from ventas.serializers import VentaCreateSerializer
+
+
+class VentasDashboardContextTests(TestCase):
+    def setUp(self):
+        User = get_user_model()
+        self.cajero = User.objects.create_user(
+            username='cajero_ctx', password='test123', rol='cajero',
+        )
+        self.client.login(username='cajero_ctx', password='test123')
+
+    def test_ventas_dashboard_context(self):
+        response = self.client.get(reverse('ventas:dashboard'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['page_title'], 'Ventas')
+        self.assertEqual(response.context['active_nav'], 'ventas:dashboard')
+
+    def test_nueva_venta_context(self):
+        response = self.client.get(reverse('ventas:nueva_venta'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['page_title'], 'Nueva Venta')
+        self.assertEqual(response.context['active_nav'], 'ventas:nueva_venta')
+
+    def test_caja_dashboard_context(self):
+        response = self.client.get(reverse('ventas:caja_dashboard'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['page_title'], 'Caja')
+        self.assertEqual(response.context['active_nav'], 'ventas:caja_dashboard')
+
+    def test_detalle_venta_context_keeps_ventas_active(self):
+        caja = Caja.objects.create(
+            nombre='Caja Ctx', cajero=self.cajero, saldo_inicial=Decimal('0.00'),
+            estado='ABIERTA',
+        )
+        categoria = Categoria.objects.create(nombre='Cat Ctx')
+        producto = Producto.objects.create(
+            nombre='Prod Ctx', categoria=categoria,
+            precio_venta=Decimal('11.80'), costo=Decimal('5.00'),
+            stock_actual=10,
+        )
+        venta = Venta.objects.create(
+            cajero=self.cajero, caja=caja, metodo_pago='EFECTIVO',
+        )
+        DetalleVenta.objects.create(
+            venta=venta, producto=producto, cantidad=1,
+            precio_unitario=producto.precio_venta,
+        )
+        venta.calcular_totales()
+
+        response = self.client.get(reverse('ventas:detalle_venta', args=[venta.pk]))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['page_title'], f'Venta #{venta.id}')
+        self.assertEqual(response.context['active_nav'], 'ventas:dashboard')
 
 
 class VentasPermissionsTests(SimpleTestCase):

@@ -162,6 +162,8 @@ class InventarioDashboardView(View):
             'categories_json': json.dumps([{'id': c.id, 'nombre': c.nombre} for c in categories]),
             'pagination_query': pagination_query,
             'total_count': paginator.count,
+            'page_title': 'Inventario',
+            'active_nav': 'productos:dashboard',
         }
         return render(request, 'dashboard/inventory.html', context)
 

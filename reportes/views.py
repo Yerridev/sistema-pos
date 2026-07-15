@@ -177,4 +177,6 @@ def reportes_dashboard(request):
         "stock_critico": stock_critico_data(),
         "utilidad": utilidad_data(desde, hasta),
         "filters": {"fecha": fecha, "desde": desde, "hasta": hasta},
+        "page_title": "Reportes",
+        "active_nav": "reportes:dashboard",
     })

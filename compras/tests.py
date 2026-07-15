@@ -2,11 +2,37 @@ from decimal import Decimal
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from django.urls import reverse
 
 from compras.models import Compra, DetalleCompra, Proveedor
 from compras.services import CompraService
 from core.exceptions import ReglaNegocioViolada
 from productos.models import Categoria, Producto
+
+
+class ComprasDashboardContextTests(TestCase):
+    def setUp(self):
+        User = get_user_model()
+        self.admin = User.objects.create_user(
+            username='admin_compras_ctx', password='password123', rol='admin',
+        )
+        self.client.login(username='admin_compras_ctx', password='password123')
+        self.url = reverse('compras:dashboard')
+
+    def test_context_has_page_title_and_active_nav(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['page_title'], 'Compras')
+        self.assertEqual(response.context['active_nav'], 'compras:dashboard')
+
+    def test_non_admin_is_forbidden(self):
+        User = get_user_model()
+        cajero = User.objects.create_user(
+            username='cajero_compras_ctx', password='password123', rol='cajero',
+        )
+        self.client.login(username='cajero_compras_ctx', password='password123')
+        response = self.client.get(self.url)
+        self.assertIn(response.status_code, (302, 403))
 
 
 # ── Golden Tests: comportamiento actual antes del refactor ─────────────────
