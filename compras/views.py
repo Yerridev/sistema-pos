@@ -2,14 +2,16 @@ from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.db import transaction
+from decimal import Decimal, InvalidOperation
+
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
 
-from productos.models import Producto
+from core.exceptions import AppError, RecursoNoEncontrado, ReglaNegocioViolada
 from productos.permissions import IsAdmin
-from .models import Compra, DetalleCompra, Proveedor
+from .models import Compra, Proveedor
 from .serializers import CompraReadSerializer, CompraSerializer, ProveedorSerializer
+from .services import CompraService
 
 
 class ProveedorViewSet(viewsets.ModelViewSet):
@@ -46,55 +48,18 @@ def compras_dashboard(request):
 @login_required
 @user_passes_test(_is_admin)
 @require_POST
-@transaction.atomic
 def registrar_compra(request):
-    proveedor_id = request.POST.get("proveedor")
-    producto_id = request.POST.get("producto")
-    cantidad = request.POST.get("cantidad", "").strip()
-    costo_unitario = request.POST.get("costo_unitario", "").strip()
-
     try:
-        proveedor = Proveedor.objects.get(pk=proveedor_id, activo=True)
-    except Proveedor.DoesNotExist:
-        messages.error(request, "Selecciona un proveedor valido.")
-        return redirect("compras:dashboard")
-
-    try:
-        producto = Producto.objects.select_for_update().get(pk=producto_id, activo=True)
-    except Producto.DoesNotExist:
-        messages.error(request, "Selecciona un producto valido.")
-        return redirect("compras:dashboard")
-
-    try:
-        cantidad = int(cantidad)
-        if cantidad <= 0:
-            raise ValueError
-    except ValueError:
-        messages.error(request, "La cantidad debe ser mayor que cero.")
-        return redirect("compras:dashboard")
-
-    try:
-        from decimal import Decimal
-        costo_unitario = Decimal(costo_unitario)
-        if costo_unitario < 0:
-            raise ValueError
-    except Exception:
-        messages.error(request, "El costo unitario debe ser un numero valido.")
-        return redirect("compras:dashboard")
-
-    compra = Compra.objects.create(proveedor=proveedor)
-    DetalleCompra.objects.create(
-        compra=compra,
-        producto=producto,
-        cantidad=cantidad,
-        costo_unitario=costo_unitario,
-    )
-    producto.stock_actual += cantidad
-    producto.costo = costo_unitario
-    producto.save(update_fields=["stock_actual", "costo"])
-    compra.calcular_total()
-
-    messages.success(request, f"Compra #{compra.id} registrada. Stock actualizado para {producto.nombre}.")
+        proveedor = Proveedor.objects.get(pk=request.POST.get("proveedor"), activo=True)
+        detalles = [{
+            "producto": int(request.POST.get("producto")),
+            "cantidad": int(request.POST.get("cantidad")),
+            "costo_unitario": Decimal(request.POST.get("costo_unitario", "").strip()),
+        }]
+        compra = CompraService.registrar(proveedor=proveedor, detalles=detalles)
+        messages.success(request, f"Compra #{compra.id} registrada correctamente.")
+    except (Proveedor.DoesNotExist, ValueError, InvalidOperation, AppError) as exc:
+        messages.error(request, str(exc))
     return redirect("compras:dashboard")
 
 

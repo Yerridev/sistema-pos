@@ -1,6 +1,6 @@
-from django.db import transaction
 from rest_framework import serializers
 
+from compras.services import CompraService
 from productos.models import Producto
 from .models import Compra, DetalleCompra, Proveedor
 
@@ -25,27 +25,12 @@ class CompraSerializer(serializers.ModelSerializer):
         fields = ["id", "proveedor", "fecha", "total", "estado", "detalles"]
         read_only_fields = ["fecha", "total", "estado"]
 
-    @transaction.atomic
     def create(self, validated_data):
         detalles = validated_data.pop("detalles")
-        compra = Compra.objects.create(**validated_data)
-
-        for item in detalles:
-            producto = item["producto"]
-            cantidad = item["cantidad"]
-            costo_unitario = item["costo_unitario"]
-            DetalleCompra.objects.create(
-                compra=compra,
-                producto=producto,
-                cantidad=cantidad,
-                costo_unitario=costo_unitario,
-            )
-            producto.stock_actual += cantidad
-            producto.costo = costo_unitario
-            producto.save(update_fields=["stock_actual", "costo"])
-
-        compra.calcular_total()
-        return compra
+        return CompraService.registrar(
+            proveedor=validated_data["proveedor"],
+            detalles=detalles,
+        )
 
 
 class CompraReadSerializer(serializers.ModelSerializer):
