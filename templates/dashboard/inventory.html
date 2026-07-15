@@ -5,14 +5,6 @@
 {% block content %}
 <div class="flex flex-col gap-xl">
 
-  {# ── Toast de feedback ── #}
-  <div id="toast"
-       class="hidden fixed top-5 right-5 z-[200] flex items-center gap-sm px-lg py-md rounded-xl shadow-lg text-white text-sm font-medium transition-all"
-       role="alert" aria-live="polite">
-    <span class="material-symbols-outlined text-[18px]" id="toast-icon">check_circle</span>
-    <span id="toast-msg"></span>
-  </div>
-
   {# ── Barra de filtros ── #}
   <section class="bg-white rounded-xl shadow-sm border border-border-subtle p-md">
     <form method="get" class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-md items-end">
@@ -500,18 +492,6 @@ const CAN_EDIT   = {{ can_edit|yesno:"true,false" }};
 const CAN_DELETE = {{ can_delete|yesno:"true,false" }};
 
 /* ── Helpers ─────────────────────────────────────────────── */
-function showToast(msg, type = 'success') {
-  const el   = document.getElementById('toast');
-  const icon = document.getElementById('toast-icon');
-  const text = document.getElementById('toast-msg');
-  el.className = el.className.replace(/bg-\w+(-\w+)?/g, '');
-  el.classList.add(type === 'success' ? 'bg-primary' : 'bg-error');
-  el.classList.remove('hidden');
-  icon.textContent = type === 'success' ? 'check_circle' : 'error';
-  text.textContent = msg;
-  setTimeout(() => el.classList.add('hidden'), 4000);
-}
-
 async function apiFetch(url, method = 'GET', body = null) {
   const opts = {
     method,
@@ -544,11 +524,11 @@ function openModal(titulo, subtitulo) {
   document.getElementById('f-nombre')?.focus();
 }
 
-function closeModal() {
-  modalProducto?.classList.add('hidden');
+const closeModal = () => {
+  window.UIKit.closeModal('modal-producto');
   resetForm();
   editingId = null;
-}
+};
 
 function resetForm() {
   ['f-nombre','f-codigo','f-precio','f-costo','f-stock','f-stock-min','f-descripcion'].forEach(id => {
@@ -707,7 +687,7 @@ document.getElementById('btn-guardar-categoria')?.addEventListener('click', asyn
   const {ok, data} = await apiFetch(url, 'POST', {nombre, descripcion});
 
   if (ok && data.success) {
-    showToast(data.message, 'success');
+    window.UIKit.showToast(data.message, 'success');
     resetCategoriaForm();
     await refreshCategorias();
     return;
@@ -731,7 +711,7 @@ document.getElementById('categorias-body')?.addEventListener('click', async (eve
     const id = editBtn.dataset.id;
     const {ok, data} = await apiFetch(URLS.categoriaEditar(id), 'GET');
     if (!ok) {
-      showToast('Error al cargar la categoria.', 'error');
+      window.UIKit.showToast('Error al cargar la categoria.', 'error');
       return;
     }
     editingCategoriaId = id;
@@ -744,10 +724,10 @@ document.getElementById('categorias-body')?.addEventListener('click', async (eve
     const id = deleteBtn.dataset.id;
     const {ok, data} = await apiFetch(URLS.categoriaEliminar(id), 'POST');
     if (ok && data.success) {
-      showToast(data.message, 'success');
+      window.UIKit.showToast(data.message, 'success');
       await refreshCategorias();
     } else {
-      showToast(data.error || 'Error al eliminar la categoria.', 'error');
+      window.UIKit.showToast(data.error || 'Error al eliminar la categoria.', 'error');
     }
   }
   {% endif %}
@@ -758,7 +738,7 @@ document.querySelectorAll('.btn-editar').forEach(btn => {
     const id = btn.dataset.id;
     try {
       const {ok, data} = await apiFetch(URLS.editar(id), 'GET');
-      if (!ok) { showToast('Error al cargar el producto.', 'error'); return; }
+      if (!ok) { window.UIKit.showToast('Error al cargar el producto.', 'error'); return; }
       editingId = id;
       populateCategorias(data.categoria);
       document.getElementById('f-nombre').value     = data.nombre || '';
@@ -772,7 +752,7 @@ document.querySelectorAll('.btn-editar').forEach(btn => {
       updateMargen();
       openModal('Editar producto', `Editando: ${data.nombre}`);
     } catch(e) {
-      showToast('Error de conexión.', 'error');
+      window.UIKit.showToast('Error de conexión.', 'error');
     }
   });
 });
@@ -787,7 +767,7 @@ btnGuardar?.addEventListener('click', async () => {
     const url    = editingId ? URLS.editar(editingId) : URLS.crear;
     const {ok, data} = await apiFetch(url, 'POST', formData);
     if (ok && data.success) {
-      showToast(data.message, 'success');
+      window.UIKit.showToast(data.message, 'success');
       closeModal();
       setTimeout(() => location.reload(), 800);
     } else if (data.errors) {
@@ -839,15 +819,15 @@ document.getElementById('btn-confirmar-eliminar')?.addEventListener('click', asy
   try {
     const {ok, data} = await apiFetch(URLS.eliminar(deleteId), 'POST');
     if (ok && data.success) {
-      showToast(data.message, 'success');
+      window.UIKit.showToast(data.message, 'success');
       modalEliminar?.classList.add('hidden');
       setTimeout(() => location.reload(), 800);
     } else {
-      showToast(data.error || 'Error al eliminar.', 'error');
+      window.UIKit.showToast(data.error || 'Error al eliminar.', 'error');
       modalEliminar?.classList.add('hidden');
     }
   } catch(e) {
-    showToast('Error de conexión.', 'error');
+    window.UIKit.showToast('Error de conexión.', 'error');
   } finally {
     btn.disabled = false;
     deleteId = null;
