@@ -4,17 +4,17 @@
 
 {% block content %}
 <div class="flex flex-col gap-xl">
-  <section class="bg-white rounded-xl shadow-sm border border-border-subtle p-md">
+  <section class="bg-white dark:bg-[#1E2128] rounded-xl shadow-sm border border-border-subtle dark:border-white/10 p-md">
     <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-md items-end">
       <div class="flex flex-col gap-xs">
-        <label class="text-caption-xs font-medium text-text-secondary" for="fecha">Fecha</label>
+        <label class="text-caption-xs font-medium text-text-secondary dark:text-slate-400" for="fecha">Fecha</label>
         <input id="fecha" name="fecha" type="date" value="{{ filters.fecha }}"
-               class="rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+               class="rounded-lg border border-border-subtle dark:border-white/10 dark:bg-[#15171C] px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
       </div>
       <div class="flex flex-col gap-xs">
-        <label class="text-caption-xs font-medium text-text-secondary" for="estado">Estado</label>
+        <label class="text-caption-xs font-medium text-text-secondary dark:text-slate-400" for="estado">Estado</label>
         <select id="estado" name="estado"
-                class="rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+                class="rounded-lg border border-border-subtle dark:border-white/10 dark:bg-[#15171C] px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
           <option value="">Todos</option>
           {% for value, label in estados %}
           <option value="{{ value }}" {% if filters.estado == value %}selected{% endif %}>{{ label }}</option>
@@ -25,7 +25,7 @@
         <button type="submit" class="bg-primary text-white rounded-lg py-sm px-md text-sm font-medium hover:bg-primary-hover transition-colors">
           Filtrar
         </button>
-        <a href="{% url 'ventas:dashboard' %}" class="px-md py-sm rounded-lg border border-border-subtle text-text-secondary hover:bg-slate-50 text-sm transition-colors">
+        <a href="{% url 'ventas:dashboard' %}" class="px-md py-sm rounded-lg border border-border-subtle dark:border-white/10 text-text-secondary dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 text-sm transition-colors">
           Limpiar
         </a>
       </div>
@@ -39,63 +39,63 @@
   </section>
 
   <section class="grid grid-cols-2 xl:grid-cols-4 gap-md">
-    <article class="bg-white rounded-xl shadow-sm border border-border-subtle p-md">
-      <p class="text-caption-xs text-text-secondary">Ventas</p>
-      <p class="text-2xl font-bold text-text-primary mt-xs">{{ stats.cantidad }}</p>
+    <article class="bg-white dark:bg-[#1E2128] rounded-xl shadow-sm border border-border-subtle dark:border-white/10 p-md">
+      <p class="text-caption-xs text-text-secondary dark:text-slate-400">Ventas</p>
+      <p class="text-2xl font-bold text-text-primary dark:text-[#E8E9EC] mt-xs">{{ stats.cantidad }}</p>
     </article>
-    <article class="bg-white rounded-xl shadow-sm border border-border-subtle p-md">
-      <p class="text-caption-xs text-text-secondary">Total cobrado</p>
-      <p class="text-2xl font-bold text-text-primary mt-xs">S/. {{ stats.total }}</p>
+    <article class="bg-white dark:bg-[#1E2128] rounded-xl shadow-sm border border-border-subtle dark:border-white/10 p-md">
+      <p class="text-caption-xs text-text-secondary dark:text-slate-400">Total cobrado</p>
+      <p class="text-2xl font-bold text-text-primary dark:text-[#E8E9EC] mt-xs">S/. {{ stats.total }}</p>
     </article>
-    <article class="bg-white rounded-xl shadow-sm border border-border-subtle p-md">
-      <p class="text-caption-xs text-text-secondary">Efectivo</p>
+    <article class="bg-white dark:bg-[#1E2128] rounded-xl shadow-sm border border-border-subtle dark:border-white/10 p-md">
+      <p class="text-caption-xs text-text-secondary dark:text-slate-400">Efectivo</p>
       <p class="text-2xl font-bold text-primary mt-xs">S/. {{ stats.efectivo }}</p>
     </article>
-    <article class="bg-white rounded-xl shadow-sm border border-border-subtle p-md">
-      <p class="text-caption-xs text-text-secondary">Tarjeta + transferencia</p>
-      <p class="text-2xl font-bold text-text-primary mt-xs">S/. {{ stats.tarjeta|add:stats.transferencia }}</p>
+    <article class="bg-white dark:bg-[#1E2128] rounded-xl shadow-sm border border-border-subtle dark:border-white/10 p-md">
+      <p class="text-caption-xs text-text-secondary dark:text-slate-400">Tarjeta + transferencia</p>
+      <p class="text-2xl font-bold text-text-primary dark:text-[#E8E9EC] mt-xs">S/. {{ stats.tarjeta|add:stats.transferencia }}</p>
     </article>
   </section>
 
   <section class="grid grid-cols-1 xl:grid-cols-[2fr,1fr] gap-md">
-    <div class="bg-white rounded-xl shadow-sm border border-border-subtle overflow-hidden">
-      <div class="px-lg py-md border-b border-border-subtle">
-        <h2 class="font-semibold text-text-primary">Ventas registradas</h2>
-        <p class="text-caption-xs text-text-secondary">Listado del dia o segun filtros aplicados</p>
+    <div class="bg-white dark:bg-[#1E2128] rounded-xl shadow-sm border border-border-subtle dark:border-white/10 overflow-hidden">
+      <div class="px-lg py-md border-b border-border-subtle dark:border-white/10">
+        <h2 class="font-semibold text-text-primary dark:text-[#E8E9EC]">Ventas registradas</h2>
+        <p class="text-caption-xs text-text-secondary dark:text-slate-400">Listado del dia o segun filtros aplicados</p>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse text-sm">
           <thead>
-            <tr class="bg-slate-50 border-b border-border-subtle">
-              <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase">ID</th>
-              <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase">Fecha</th>
-              <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase">Cajero</th>
-              <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase">Caja</th>
-              <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase">Metodo</th>
-              <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase">Estado</th>
-              <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase text-right">Total</th>
+            <tr class="bg-slate-50 dark:bg-white/5 border-b border-border-subtle dark:border-white/10">
+              <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary dark:text-slate-400 uppercase">ID</th>
+              <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary dark:text-slate-400 uppercase">Fecha</th>
+              <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary dark:text-slate-400 uppercase">Cajero</th>
+              <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary dark:text-slate-400 uppercase">Caja</th>
+              <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary dark:text-slate-400 uppercase">Metodo</th>
+              <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary dark:text-slate-400 uppercase">Estado</th>
+              <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary dark:text-slate-400 uppercase text-right">Total</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-border-subtle">
+          <tbody class="divide-y divide-border-subtle dark:divide-white/10">
             {% for venta in ventas %}
-            <tr class="hover:bg-slate-50 transition-colors">
+            <tr class="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
               <td class="px-lg py-sm font-mono text-xs">
                 <a href="{% url 'ventas:detalle_venta' venta.id %}" class="text-primary hover:underline">#{{ venta.id }}</a>
               </td>
-              <td class="px-lg py-sm text-text-primary">{{ venta.fecha|date:"d/m/Y H:i" }}</td>
-              <td class="px-lg py-sm text-text-primary">{{ venta.cajero.username }}</td>
-              <td class="px-lg py-sm text-text-secondary">{{ venta.caja.nombre }}</td>
-              <td class="px-lg py-sm text-text-secondary">{{ venta.get_metodo_pago_display }}</td>
+              <td class="px-lg py-sm text-text-primary dark:text-[#E8E9EC]">{{ venta.fecha|date:"d/m/Y H:i" }}</td>
+              <td class="px-lg py-sm text-text-primary dark:text-[#E8E9EC]">{{ venta.cajero.username }}</td>
+              <td class="px-lg py-sm text-text-secondary dark:text-slate-400">{{ venta.caja.nombre }}</td>
+              <td class="px-lg py-sm text-text-secondary dark:text-slate-400">{{ venta.get_metodo_pago_display }}</td>
               <td class="px-lg py-sm">
-                <span class="inline-flex px-sm py-[2px] rounded-full text-[11px] font-semibold {% if venta.estado == 'COMPLETADA' %}bg-primary/10 text-primary{% else %}bg-red-100 text-error{% endif %}">
+                <span class="inline-flex px-sm py-[2px] rounded-full text-[11px] font-semibold {% if venta.estado == 'COMPLETADA' %}bg-primary/10 dark:bg-primary/20 text-primary{% else %}bg-red-100 text-error{% endif %}">
                   {{ venta.get_estado_display }}
                 </span>
               </td>
-              <td class="px-lg py-sm text-right font-mono font-semibold text-text-primary">S/. {{ venta.total }}</td>
+              <td class="px-lg py-sm text-right font-mono font-semibold text-text-primary dark:text-[#E8E9EC]">S/. {{ venta.total }}</td>
             </tr>
             {% empty %}
             <tr>
-              <td colspan="7" class="px-lg py-xxl text-center text-text-secondary">No hay ventas para mostrar.</td>
+              <td colspan="7" class="px-lg py-xxl text-center text-text-secondary dark:text-slate-400">No hay ventas para mostrar.</td>
             </tr>
             {% endfor %}
           </tbody>
@@ -103,17 +103,17 @@
       </div>
     </div>
 
-    <div class="bg-white rounded-xl shadow-sm border border-border-subtle p-lg">
-      <h2 class="font-semibold text-text-primary">Top productos</h2>
-      <p class="text-caption-xs text-text-secondary mb-md">Mas vendidos en el periodo visible</p>
+    <div class="bg-white dark:bg-[#1E2128] rounded-xl shadow-sm border border-border-subtle dark:border-white/10 p-lg">
+      <h2 class="font-semibold text-text-primary dark:text-[#E8E9EC]">Top productos</h2>
+      <p class="text-caption-xs text-text-secondary dark:text-slate-400 mb-md">Mas vendidos en el periodo visible</p>
       <div class="flex flex-col gap-sm">
         {% for item in top_productos %}
         <div class="rounded-lg bg-surface-container px-md py-sm flex items-center justify-between">
-          <span class="text-sm font-medium text-text-primary">{{ item.producto__nombre }}</span>
+          <span class="text-sm font-medium text-text-primary dark:text-[#E8E9EC]">{{ item.producto__nombre }}</span>
           <span class="text-xs font-mono text-primary">{{ item.cantidad }} und.</span>
         </div>
         {% empty %}
-        <p class="text-sm text-text-secondary">Todavia no hay datos suficientes para el ranking.</p>
+        <p class="text-sm text-text-secondary dark:text-slate-400">Todavia no hay datos suficientes para el ranking.</p>
         {% endfor %}
       </div>
     </div>

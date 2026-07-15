@@ -7,24 +7,24 @@
   {% if messages %}
   <div class="flex flex-col gap-sm" role="status" aria-live="polite">
     {% for message in messages %}
-    <div class="rounded-lg px-md py-sm text-sm {% if message.tags == 'success' %}bg-primary/10 text-primary{% else %}bg-red-50 text-error{% endif %}">
+    <div class="rounded-lg px-md py-sm text-sm {% if message.tags == 'success' %}bg-primary/10 dark:bg-primary/20 text-primary{% else %}bg-red-50 text-error{% endif %}">
       {{ message }}
     </div>
     {% endfor %}
   </div>
   {% endif %}
 
-  <section class="bg-white rounded-xl shadow-sm border border-border-subtle overflow-hidden">
+  <section class="bg-white dark:bg-[#1E2128] rounded-xl shadow-sm border border-border-subtle dark:border-white/10 overflow-hidden">
     <div class="p-lg flex flex-col xl:flex-row xl:items-center xl:justify-between gap-lg">
       <div class="min-w-0 flex items-start gap-md">
-        <div class="hidden sm:flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <div class="hidden sm:flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10 dark:bg-primary/20 text-primary">
           <span class="material-symbols-outlined text-[28px]" aria-hidden="true">receipt_long</span>
         </div>
         <div class="min-w-0">
           <div class="flex flex-wrap items-center gap-sm">
             <p class="text-caption-xs font-semibold uppercase text-primary">Comprobante de venta</p>
             {% if venta.estado == "COMPLETADA" %}
-            <span class="inline-flex items-center gap-xs rounded-full bg-primary/10 px-sm py-xs text-xs font-semibold text-primary">
+            <span class="inline-flex items-center gap-xs rounded-full bg-primary/10 dark:bg-primary/20 px-sm py-xs text-xs font-semibold text-primary">
               <span class="material-symbols-outlined text-[16px]" aria-hidden="true">check_circle</span>
               Completada
             </span>
@@ -40,19 +40,19 @@
             </span>
             {% endif %}
           </div>
-          <h1 class="mt-xs text-2xl sm:text-3xl font-bold text-text-primary">Venta #{{ venta.id }}</h1>
-          <p class="mt-xs text-sm text-text-secondary">{{ venta.fecha|date:"d/m/Y" }} · {{ venta.fecha|date:"H:i" }} · {{ venta.caja.nombre }}</p>
+          <h1 class="mt-xs text-2xl sm:text-3xl font-bold text-text-primary dark:text-[#E8E9EC]">Venta #{{ venta.id }}</h1>
+          <p class="mt-xs text-sm text-text-secondary dark:text-slate-400">{{ venta.fecha|date:"d/m/Y" }} · {{ venta.fecha|date:"H:i" }} · {{ venta.caja.nombre }}</p>
         </div>
       </div>
 
       <div class="flex flex-col sm:items-end gap-md">
         <div class="rounded-lg bg-surface-container px-lg py-md text-left sm:text-right">
-          <p class="text-caption-xs font-medium uppercase text-text-secondary">Total cobrado</p>
-          <p class="mt-xs font-mono text-3xl font-bold text-text-primary">S/. {{ venta.total }}</p>
-          <p class="mt-xs text-caption-xs text-text-secondary">{{ venta.get_metodo_pago_display }} · IGV incluido</p>
+          <p class="text-caption-xs font-medium uppercase text-text-secondary dark:text-slate-400">Total cobrado</p>
+          <p class="mt-xs font-mono text-3xl font-bold text-text-primary dark:text-[#E8E9EC]">S/. {{ venta.total }}</p>
+          <p class="mt-xs text-caption-xs text-text-secondary dark:text-slate-400">{{ venta.get_metodo_pago_display }} · IGV incluido</p>
         </div>
         <div class="flex flex-wrap justify-start sm:justify-end gap-sm">
-          <button type="button" id="print-sale" class="inline-flex items-center justify-center gap-xs rounded-lg border border-border-subtle px-md py-sm text-sm font-medium text-text-secondary hover:bg-slate-50 transition-colors">
+          <button type="button" id="print-sale" class="inline-flex items-center justify-center gap-xs rounded-lg border border-border-subtle dark:border-white/10 px-md py-sm text-sm font-medium text-text-secondary dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
             <span class="material-symbols-outlined text-[18px]" aria-hidden="true">print</span>
             Imprimir
           </button>
@@ -60,7 +60,7 @@
             <span class="material-symbols-outlined text-[18px]" aria-hidden="true">add</span>
             Nueva venta (F9)
           </a>
-          <a href="{% url 'ventas:dashboard' %}" class="inline-flex items-center justify-center gap-xs rounded-lg border border-border-subtle px-md py-sm text-sm font-medium text-text-secondary hover:bg-slate-50 transition-colors">
+          <a href="{% url 'ventas:dashboard' %}" class="inline-flex items-center justify-center gap-xs rounded-lg border border-border-subtle dark:border-white/10 px-md py-sm text-sm font-medium text-text-secondary dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
             <span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_back</span>
             Volver
           </a>
@@ -77,57 +77,57 @@
 
   <section class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr),360px] gap-lg items-start">
     <div class="flex flex-col gap-lg">
-      <article class="bg-white rounded-xl shadow-sm border border-border-subtle p-lg">
-        <div class="flex items-center justify-between gap-md border-b border-border-subtle pb-md">
+      <article class="bg-white dark:bg-[#1E2128] rounded-xl shadow-sm border border-border-subtle dark:border-white/10 p-lg">
+        <div class="flex items-center justify-between gap-md border-b border-border-subtle dark:border-white/10 pb-md">
           <div class="flex items-center gap-sm">
             <span class="material-symbols-outlined text-primary" aria-hidden="true">badge</span>
-            <h2 class="font-semibold text-text-primary">Datos de la venta</h2>
+            <h2 class="font-semibold text-text-primary dark:text-[#E8E9EC]">Datos de la venta</h2>
           </div>
-          <span class="text-caption-xs text-text-secondary">Cliente general</span>
+          <span class="text-caption-xs text-text-secondary dark:text-slate-400">Cliente general</span>
         </div>
 
         <dl class="mt-md grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-sm">
-          <div class="rounded-lg border border-border-subtle px-md py-sm">
-            <dt class="flex items-center gap-xs text-caption-xs text-text-secondary">
+          <div class="rounded-lg border border-border-subtle dark:border-white/10 px-md py-sm">
+            <dt class="flex items-center gap-xs text-caption-xs text-text-secondary dark:text-slate-400">
               <span class="material-symbols-outlined text-[16px]" aria-hidden="true">tag</span>
               Numero
             </dt>
-            <dd class="mt-xs font-mono font-semibold text-text-primary">#{{ venta.id }}</dd>
+            <dd class="mt-xs font-mono font-semibold text-text-primary dark:text-[#E8E9EC]">#{{ venta.id }}</dd>
           </div>
-          <div class="rounded-lg border border-border-subtle px-md py-sm">
-            <dt class="flex items-center gap-xs text-caption-xs text-text-secondary">
+          <div class="rounded-lg border border-border-subtle dark:border-white/10 px-md py-sm">
+            <dt class="flex items-center gap-xs text-caption-xs text-text-secondary dark:text-slate-400">
               <span class="material-symbols-outlined text-[16px]" aria-hidden="true">calendar_today</span>
               Fecha y hora
             </dt>
-            <dd class="mt-xs font-semibold text-text-primary">{{ venta.fecha|date:"d/m/Y H:i" }}</dd>
+            <dd class="mt-xs font-semibold text-text-primary dark:text-[#E8E9EC]">{{ venta.fecha|date:"d/m/Y H:i" }}</dd>
           </div>
-          <div class="rounded-lg border border-border-subtle px-md py-sm">
-            <dt class="flex items-center gap-xs text-caption-xs text-text-secondary">
+          <div class="rounded-lg border border-border-subtle dark:border-white/10 px-md py-sm">
+            <dt class="flex items-center gap-xs text-caption-xs text-text-secondary dark:text-slate-400">
               <span class="material-symbols-outlined text-[16px]" aria-hidden="true">payments</span>
               Pago
             </dt>
-            <dd class="mt-xs font-semibold text-text-primary">{{ venta.get_metodo_pago_display }}</dd>
+            <dd class="mt-xs font-semibold text-text-primary dark:text-[#E8E9EC]">{{ venta.get_metodo_pago_display }}</dd>
           </div>
-          <div class="rounded-lg border border-border-subtle px-md py-sm">
-            <dt class="flex items-center gap-xs text-caption-xs text-text-secondary">
+          <div class="rounded-lg border border-border-subtle dark:border-white/10 px-md py-sm">
+            <dt class="flex items-center gap-xs text-caption-xs text-text-secondary dark:text-slate-400">
               <span class="material-symbols-outlined text-[16px]" aria-hidden="true">person</span>
               Cajero
             </dt>
-            <dd class="mt-xs font-semibold text-text-primary">{{ venta.cajero.username }}</dd>
+            <dd class="mt-xs font-semibold text-text-primary dark:text-[#E8E9EC]">{{ venta.cajero.username }}</dd>
           </div>
-          <div class="rounded-lg border border-border-subtle px-md py-sm">
-            <dt class="flex items-center gap-xs text-caption-xs text-text-secondary">
+          <div class="rounded-lg border border-border-subtle dark:border-white/10 px-md py-sm">
+            <dt class="flex items-center gap-xs text-caption-xs text-text-secondary dark:text-slate-400">
               <span class="material-symbols-outlined text-[16px]" aria-hidden="true">point_of_sale</span>
               Caja
             </dt>
-            <dd class="mt-xs font-semibold text-text-primary">{{ venta.caja.nombre }}</dd>
+            <dd class="mt-xs font-semibold text-text-primary dark:text-[#E8E9EC]">{{ venta.caja.nombre }}</dd>
           </div>
-          <div class="rounded-lg border border-border-subtle px-md py-sm">
-            <dt class="flex items-center gap-xs text-caption-xs text-text-secondary">
+          <div class="rounded-lg border border-border-subtle dark:border-white/10 px-md py-sm">
+            <dt class="flex items-center gap-xs text-caption-xs text-text-secondary dark:text-slate-400">
               <span class="material-symbols-outlined text-[16px]" aria-hidden="true">inventory_2</span>
               Items
             </dt>
-            <dd class="mt-xs font-semibold text-text-primary">{{ venta.detalles.count }} producto(s)</dd>
+            <dd class="mt-xs font-semibold text-text-primary dark:text-[#E8E9EC]">{{ venta.detalles.count }} producto(s)</dd>
           </div>
           {% if venta.estado == "ANULADA" %}
           <div class="rounded-lg bg-red-50 px-md py-sm sm:col-span-2 xl:col-span-3">
@@ -135,25 +135,25 @@
               <span class="material-symbols-outlined text-[16px]" aria-hidden="true">report</span>
               Anulacion
             </dt>
-            <dd class="mt-xs text-sm font-medium text-text-primary">
+            <dd class="mt-xs text-sm font-medium text-text-primary dark:text-[#E8E9EC]">
               {{ venta.fecha_anulacion|date:"d/m/Y H:i" }} por {{ venta.anulado_por.username|default:"-" }}
             </dd>
-            <dd class="mt-xs text-sm text-text-secondary">{{ venta.motivo_anulacion|default:"Sin motivo registrado" }}</dd>
+            <dd class="mt-xs text-sm text-text-secondary dark:text-slate-400">{{ venta.motivo_anulacion|default:"Sin motivo registrado" }}</dd>
           </div>
           {% endif %}
         </dl>
       </article>
 
-      <article class="bg-white rounded-xl shadow-sm border border-border-subtle overflow-hidden">
-        <div class="px-lg py-md border-b border-border-subtle flex flex-col sm:flex-row sm:items-center sm:justify-between gap-sm">
+      <article class="bg-white dark:bg-[#1E2128] rounded-xl shadow-sm border border-border-subtle dark:border-white/10 overflow-hidden">
+        <div class="px-lg py-md border-b border-border-subtle dark:border-white/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-sm">
           <div class="flex items-center gap-sm">
             <span class="material-symbols-outlined text-primary" aria-hidden="true">shopping_cart</span>
             <div>
-              <h2 class="font-semibold text-text-primary">Productos vendidos</h2>
-              <p class="text-caption-xs text-text-secondary">Precios finales con IGV incluido</p>
+              <h2 class="font-semibold text-text-primary dark:text-[#E8E9EC]">Productos vendidos</h2>
+              <p class="text-caption-xs text-text-secondary dark:text-slate-400">Precios finales con IGV incluido</p>
             </div>
           </div>
-          <span class="inline-flex items-center gap-xs rounded-full bg-surface-container px-sm py-xs text-caption-xs font-medium text-text-secondary">
+          <span class="inline-flex items-center gap-xs rounded-full bg-surface-container px-sm py-xs text-caption-xs font-medium text-text-secondary dark:text-slate-400">
             <span class="material-symbols-outlined text-[16px]" aria-hidden="true">receipt</span>
             {{ venta.detalles.count }} linea(s)
           </span>
@@ -162,29 +162,29 @@
         <div class="overflow-x-auto">
           <table class="w-full min-w-[680px] text-left border-collapse text-sm">
             <thead>
-              <tr class="bg-slate-50 border-b border-border-subtle">
-                <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase">Producto</th>
-                <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase text-right">Cantidad</th>
-                <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase text-right">Precio unitario</th>
-                <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase text-right">Descuento</th>
-                <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase text-right">Importe</th>
+              <tr class="bg-slate-50 dark:bg-white/5 border-b border-border-subtle dark:border-white/10">
+                <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary dark:text-slate-400 uppercase">Producto</th>
+                <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary dark:text-slate-400 uppercase text-right">Cantidad</th>
+                <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary dark:text-slate-400 uppercase text-right">Precio unitario</th>
+                <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary dark:text-slate-400 uppercase text-right">Descuento</th>
+                <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary dark:text-slate-400 uppercase text-right">Importe</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-border-subtle">
+            <tbody class="divide-y divide-border-subtle dark:divide-white/10">
               {% for detalle in venta.detalles.all %}
-              <tr class="hover:bg-slate-50 transition-colors">
+              <tr class="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                 <td class="px-lg py-sm">
-                  <p class="font-semibold text-text-primary">{{ detalle.producto.nombre }}</p>
-                  <p class="text-caption-xs text-text-secondary">{{ detalle.producto.codigo_barra|default:"Sin codigo" }} · {{ detalle.producto.get_unidad_display }}</p>
+                  <p class="font-semibold text-text-primary dark:text-[#E8E9EC]">{{ detalle.producto.nombre }}</p>
+                  <p class="text-caption-xs text-text-secondary dark:text-slate-400">{{ detalle.producto.codigo_barra|default:"Sin codigo" }} · {{ detalle.producto.get_unidad_display }}</p>
                 </td>
-                <td class="px-lg py-sm text-right font-mono text-text-primary">{{ detalle.cantidad }}</td>
-                <td class="px-lg py-sm text-right font-mono text-text-primary">S/. {{ detalle.precio_unitario }}</td>
-                <td class="px-lg py-sm text-right font-mono {% if detalle.descuento_linea > 0 %}text-error{% else %}text-text-secondary{% endif %}">S/. {{ detalle.descuento_linea }}</td>
-                <td class="px-lg py-sm text-right font-mono font-semibold text-text-primary">S/. {{ detalle.subtotal }}</td>
+                <td class="px-lg py-sm text-right font-mono text-text-primary dark:text-[#E8E9EC]">{{ detalle.cantidad }}</td>
+                <td class="px-lg py-sm text-right font-mono text-text-primary dark:text-[#E8E9EC]">S/. {{ detalle.precio_unitario }}</td>
+                <td class="px-lg py-sm text-right font-mono {% if detalle.descuento_linea > 0 %}text-error{% else %}text-text-secondary dark:text-slate-400{% endif %}">S/. {{ detalle.descuento_linea }}</td>
+                <td class="px-lg py-sm text-right font-mono font-semibold text-text-primary dark:text-[#E8E9EC]">S/. {{ detalle.subtotal }}</td>
               </tr>
               {% empty %}
               <tr>
-                <td colspan="5" class="px-lg py-xxl text-center text-text-secondary">Esta venta no tiene productos registrados.</td>
+                <td colspan="5" class="px-lg py-xxl text-center text-text-secondary dark:text-slate-400">Esta venta no tiene productos registrados.</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -193,44 +193,44 @@
       </article>
     </div>
 
-    <aside class="bg-white rounded-xl shadow-sm border border-border-subtle p-lg flex flex-col gap-md xl:sticky xl:top-6">
-      <div class="border-b border-border-subtle pb-md">
+    <aside class="bg-white dark:bg-[#1E2128] rounded-xl shadow-sm border border-border-subtle dark:border-white/10 p-lg flex flex-col gap-md xl:sticky xl:top-6">
+      <div class="border-b border-border-subtle dark:border-white/10 pb-md">
         <div class="flex items-center gap-sm">
           <span class="material-symbols-outlined text-primary" aria-hidden="true">calculate</span>
-          <h2 class="font-semibold text-text-primary">Resumen de pago</h2>
+          <h2 class="font-semibold text-text-primary dark:text-[#E8E9EC]">Resumen de pago</h2>
         </div>
-        <div class="mt-md rounded-lg bg-primary/10 px-md py-sm">
+        <div class="mt-md rounded-lg bg-primary/10 dark:bg-primary/20 px-md py-sm">
           <p class="text-caption-xs font-medium uppercase text-primary">Importe final</p>
-          <p class="mt-xs font-mono text-3xl font-bold text-text-primary">S/. {{ venta.total }}</p>
+          <p class="mt-xs font-mono text-3xl font-bold text-text-primary dark:text-[#E8E9EC]">S/. {{ venta.total }}</p>
         </div>
       </div>
 
-      <div class="flex flex-col gap-sm rounded-lg border border-border-subtle p-md">
-        <div class="flex items-center justify-between gap-md text-sm text-text-secondary">
+      <div class="flex flex-col gap-sm rounded-lg border border-border-subtle dark:border-white/10 p-md">
+        <div class="flex items-center justify-between gap-md text-sm text-text-secondary dark:text-slate-400">
           <span>Subtotal sin IGV</span>
-          <span class="font-mono text-text-primary">S/. {{ venta.subtotal }}</span>
+          <span class="font-mono text-text-primary dark:text-[#E8E9EC]">S/. {{ venta.subtotal }}</span>
         </div>
-        <div class="flex items-center justify-between gap-md text-sm text-text-secondary">
+        <div class="flex items-center justify-between gap-md text-sm text-text-secondary dark:text-slate-400">
           <span>IGV incluido 18%</span>
-          <span class="font-mono text-text-primary">S/. {{ venta.igv }}</span>
+          <span class="font-mono text-text-primary dark:text-[#E8E9EC]">S/. {{ venta.igv }}</span>
         </div>
-        <div class="flex items-center justify-between gap-md text-sm text-text-secondary">
+        <div class="flex items-center justify-between gap-md text-sm text-text-secondary dark:text-slate-400">
           <span>Descuento</span>
-          <span class="font-mono text-text-primary">S/. {{ venta.descuento }}</span>
+          <span class="font-mono text-text-primary dark:text-[#E8E9EC]">S/. {{ venta.descuento }}</span>
         </div>
-        <div class="flex items-center justify-between gap-md border-t border-outline-variant pt-md text-lg font-bold text-text-primary">
+        <div class="flex items-center justify-between gap-md border-t border-outline-variant pt-md text-lg font-bold text-text-primary dark:text-[#E8E9EC]">
           <span>Total pagado</span>
           <span class="font-mono">S/. {{ venta.total }}</span>
         </div>
       </div>
 
-      <div class="rounded-lg bg-slate-50 px-md py-sm text-sm">
+      <div class="rounded-lg bg-slate-50 dark:bg-white/5 px-md py-sm text-sm">
         <div class="flex items-center justify-between gap-md">
-          <span class="text-text-secondary">Metodo</span>
-          <span class="font-semibold text-text-primary">{{ venta.get_metodo_pago_display }}</span>
+          <span class="text-text-secondary dark:text-slate-400">Metodo</span>
+          <span class="font-semibold text-text-primary dark:text-[#E8E9EC]">{{ venta.get_metodo_pago_display }}</span>
         </div>
         <div class="mt-xs flex items-center justify-between gap-md">
-          <span class="text-text-secondary">Estado</span>
+          <span class="text-text-secondary dark:text-slate-400">Estado</span>
           <span class="font-semibold {% if venta.estado == 'ANULADA' %}text-error{% else %}text-primary{% endif %}">{{ venta.get_estado_display }}</span>
         </div>
       </div>
@@ -251,13 +251,13 @@
 
 {% if venta.estado != "ANULADA" %}
 <div id="cancel-modal" class="fixed inset-0 z-[80] hidden items-center justify-center bg-black/40 px-md" role="dialog" aria-modal="true" aria-labelledby="cancel-modal-title">
-  <div class="w-full max-w-lg rounded-xl bg-white shadow-xl border border-border-subtle">
-    <div class="px-lg py-md border-b border-border-subtle flex items-start justify-between gap-md">
+  <div class="w-full max-w-lg rounded-xl bg-white dark:bg-[#1E2128] shadow-xl border border-border-subtle dark:border-white/10">
+    <div class="px-lg py-md border-b border-border-subtle dark:border-white/10 flex items-start justify-between gap-md">
       <div>
-        <h2 id="cancel-modal-title" class="text-xl font-bold text-text-primary">Anular venta #{{ venta.id }}</h2>
-        <p class="text-sm text-text-secondary mt-xs">Esta accion devolvera el stock de los productos al inventario.</p>
+        <h2 id="cancel-modal-title" class="text-xl font-bold text-text-primary dark:text-[#E8E9EC]">Anular venta #{{ venta.id }}</h2>
+        <p class="text-sm text-text-secondary dark:text-slate-400 mt-xs">Esta accion devolvera el stock de los productos al inventario.</p>
       </div>
-      <button id="close-cancel-modal" type="button" class="rounded-lg p-xs text-text-secondary hover:bg-slate-50" aria-label="Cerrar modal">
+      <button id="close-cancel-modal" type="button" class="rounded-lg p-xs text-text-secondary dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5" aria-label="Cerrar modal">
         <span class="material-symbols-outlined" aria-hidden="true">close</span>
       </button>
     </div>
@@ -268,13 +268,13 @@
         Estas seguro de que deseas anular esta venta? Esta operacion no debe usarse por accidente.
       </div>
       <div>
-        <label for="motivo" class="text-caption-xs font-medium text-text-secondary">Motivo de anulacion</label>
+        <label for="motivo" class="text-caption-xs font-medium text-text-secondary dark:text-slate-400">Motivo de anulacion</label>
         <textarea id="motivo" name="motivo" rows="3" required
-                  class="mt-xs w-full rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-red-100 focus:border-error outline-none"
+                  class="mt-xs w-full rounded-lg border border-border-subtle dark:border-white/10 dark:bg-[#15171C] px-md py-sm text-sm focus:ring-2 focus:ring-red-100 focus:border-error outline-none"
                   placeholder="Ejemplo: error en producto, devolucion, venta duplicada"></textarea>
       </div>
       <div class="flex flex-col sm:flex-row sm:justify-end gap-sm">
-        <button id="cancel-modal-secondary" type="button" class="rounded-lg border border-border-subtle px-md py-sm text-sm font-medium text-text-secondary hover:bg-slate-50">
+        <button id="cancel-modal-secondary" type="button" class="rounded-lg border border-border-subtle dark:border-white/10 px-md py-sm text-sm font-medium text-text-secondary dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5">
           Conservar venta
         </button>
         <button type="submit" class="rounded-lg bg-error px-md py-sm text-sm font-semibold text-white hover:bg-red-700 focus:ring-4 focus:ring-red-200">

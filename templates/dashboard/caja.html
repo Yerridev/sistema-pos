@@ -7,7 +7,7 @@
   {% if messages %}
   <div class="flex flex-col gap-sm">
     {% for message in messages %}
-    <div class="rounded-lg px-md py-sm text-sm {% if message.tags == 'success' %}bg-primary/10 text-primary{% else %}bg-red-50 text-error{% endif %}">
+    <div class="rounded-lg px-md py-sm text-sm {% if message.tags == 'success' %}bg-primary/10 dark:bg-primary/20 text-primary{% else %}bg-red-50 text-error{% endif %}">
       {{ message }}
     </div>
     {% endfor %}
@@ -15,19 +15,19 @@
   {% endif %}
 
   <section class="grid grid-cols-1 xl:grid-cols-[1.3fr,1fr] gap-md">
-    <article class="bg-white rounded-xl shadow-sm border border-border-subtle p-lg">
+    <article class="bg-white dark:bg-[#1E2128] rounded-xl shadow-sm border border-border-subtle dark:border-white/10 p-lg">
       <div class="flex items-start justify-between gap-md">
         <div>
-          <p class="text-caption-xs text-text-secondary">Caja actual</p>
+          <p class="text-caption-xs text-text-secondary dark:text-slate-400">Caja actual</p>
           {% if caja_actual %}
-          <h2 class="text-2xl font-bold text-text-primary mt-xs">{{ caja_actual.nombre }}</h2>
-          <p class="text-sm text-text-secondary mt-xs">Cajero: {{ caja_actual.cajero.username }}</p>
+          <h2 class="text-2xl font-bold text-text-primary dark:text-[#E8E9EC] mt-xs">{{ caja_actual.nombre }}</h2>
+          <p class="text-sm text-text-secondary dark:text-slate-400 mt-xs">Cajero: {{ caja_actual.cajero.username }}</p>
           {% else %}
-          <h2 class="text-2xl font-bold text-text-primary mt-xs">Sin caja asignada</h2>
+          <h2 class="text-2xl font-bold text-text-primary dark:text-[#E8E9EC] mt-xs">Sin caja asignada</h2>
           {% endif %}
         </div>
         {% if caja_actual %}
-        <span class="inline-flex px-sm py-[2px] rounded-full text-[11px] font-semibold {% if caja_actual.estado == 'ABIERTA' %}bg-primary/10 text-primary{% else %}bg-slate-100 text-text-secondary{% endif %}">
+        <span class="inline-flex px-sm py-[2px] rounded-full text-[11px] font-semibold {% if caja_actual.estado == 'ABIERTA' %}bg-primary/10 dark:bg-primary/20 text-primary{% else %}bg-slate-100 dark:bg-white/10 text-text-secondary dark:text-slate-400{% endif %}">
           {{ caja_actual.get_estado_display }}
         </span>
         {% endif %}
@@ -36,11 +36,11 @@
       {% if caja_actual %}
       <div class="grid grid-cols-2 gap-md mt-lg">
         <div class="rounded-lg bg-surface-container px-md py-sm">
-          <p class="text-caption-xs text-text-secondary">Saldo inicial</p>
-          <p class="text-xl font-bold text-text-primary">S/. {{ caja_actual.saldo_inicial }}</p>
+          <p class="text-caption-xs text-text-secondary dark:text-slate-400">Saldo inicial</p>
+          <p class="text-xl font-bold text-text-primary dark:text-[#E8E9EC]">S/. {{ caja_actual.saldo_inicial }}</p>
         </div>
         <div class="rounded-lg bg-surface-container px-md py-sm">
-          <p class="text-caption-xs text-text-secondary">Saldo actual</p>
+          <p class="text-caption-xs text-text-secondary dark:text-slate-400">Saldo actual</p>
           <p class="text-xl font-bold text-primary">S/. {{ caja_actual.saldo_actual }}</p>
         </div>
       </div>
@@ -48,89 +48,89 @@
         {% if caja_actual.estado == 'ABIERTA' %}
         <form method="post" action="{% url 'ventas:cerrar_caja' caja_actual.id %}">
           {% csrf_token %}
-          <button type="submit" class="px-md py-sm rounded-lg border border-border-subtle text-text-secondary hover:bg-slate-50 text-sm transition-colors">Cerrar caja</button>
+          <button type="submit" class="px-md py-sm rounded-lg border border-border-subtle dark:border-white/10 text-text-secondary dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 text-sm transition-colors">Cerrar caja</button>
         </form>
         {% endif %}
       </div>
       {% else %}
-      <p class="text-sm text-text-secondary mt-md">Aun no hay una caja visible para este usuario.</p>
+      <p class="text-sm text-text-secondary dark:text-slate-400 mt-md">Aun no hay una caja visible para este usuario.</p>
       <form method="post" action="{% url 'ventas:abrir_caja' %}" class="grid grid-cols-1 sm:grid-cols-3 gap-sm mt-lg">
         {% csrf_token %}
         <input name="nombre" type="text" placeholder="Nombre de caja"
-               class="rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+               class="rounded-lg border border-border-subtle dark:border-white/10 dark:bg-[#15171C] px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
         <input name="saldo_inicial" type="number" min="0" step="0.01" value="0.00"
-               class="rounded-lg border border-border-subtle px-md py-sm text-sm font-mono focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+               class="rounded-lg border border-border-subtle dark:border-white/10 dark:bg-[#15171C] px-md py-sm text-sm font-mono focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
         <button type="submit" class="rounded-lg bg-primary px-md py-sm text-sm font-medium text-white hover:bg-primary-hover transition-colors">Abrir caja</button>
       </form>
       {% endif %}
     </article>
 
-    <article class="bg-white rounded-xl shadow-sm border border-border-subtle p-lg">
+    <article class="bg-white dark:bg-[#1E2128] rounded-xl shadow-sm border border-border-subtle dark:border-white/10 p-lg">
       {% if caja_actual and caja_actual.estado == 'ABIERTA' %}
-      <h2 class="font-semibold text-text-primary">Registrar movimiento</h2>
+      <h2 class="font-semibold text-text-primary dark:text-[#E8E9EC]">Registrar movimiento</h2>
       <form method="post" action="{% url 'ventas:movimiento_caja' caja_actual.id %}" class="mt-md flex flex-col gap-sm">
         {% csrf_token %}
-        <select name="tipo" class="rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+        <select name="tipo" class="rounded-lg border border-border-subtle dark:border-white/10 dark:bg-[#15171C] px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
           <option value="INGRESO">Ingreso</option>
           <option value="EGRESO">Egreso</option>
         </select>
         <input name="monto" type="number" min="0.01" step="0.01" placeholder="Monto"
-               class="rounded-lg border border-border-subtle px-md py-sm text-sm font-mono focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+               class="rounded-lg border border-border-subtle dark:border-white/10 dark:bg-[#15171C] px-md py-sm text-sm font-mono focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
         <input name="concepto" type="text" placeholder="Concepto"
-               class="rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+               class="rounded-lg border border-border-subtle dark:border-white/10 dark:bg-[#15171C] px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
         <button type="submit" class="rounded-lg bg-primary px-md py-sm text-sm font-medium text-white hover:bg-primary-hover transition-colors">Guardar movimiento</button>
       </form>
       {% else %}
-      <h2 class="font-semibold text-text-primary">Historial reciente</h2>
+      <h2 class="font-semibold text-text-primary dark:text-[#E8E9EC]">Historial reciente</h2>
       <div class="mt-md flex flex-col gap-sm">
         {% for caja in historial %}
-        <div class="rounded-lg border border-border-subtle px-md py-sm">
+        <div class="rounded-lg border border-border-subtle dark:border-white/10 px-md py-sm">
           <div class="flex items-center justify-between gap-sm">
-            <span class="font-medium text-text-primary">{{ caja.nombre }}</span>
-            <span class="text-[11px] text-text-secondary">{{ caja.fecha_apertura|date:"d/m H:i" }}</span>
+            <span class="font-medium text-text-primary dark:text-[#E8E9EC]">{{ caja.nombre }}</span>
+            <span class="text-[11px] text-text-secondary dark:text-slate-400">{{ caja.fecha_apertura|date:"d/m H:i" }}</span>
           </div>
-          <p class="text-sm text-text-secondary mt-xs">{{ caja.cajero.username }} · {{ caja.get_estado_display }}</p>
+          <p class="text-sm text-text-secondary dark:text-slate-400 mt-xs">{{ caja.cajero.username }} · {{ caja.get_estado_display }}</p>
         </div>
         {% empty %}
-        <p class="text-sm text-text-secondary">No hay historial disponible.</p>
+        <p class="text-sm text-text-secondary dark:text-slate-400">No hay historial disponible.</p>
         {% endfor %}
       </div>
       {% endif %}
     </article>
   </section>
 
-  <section class="bg-white rounded-xl shadow-sm border border-border-subtle overflow-hidden">
-    <div class="px-lg py-md border-b border-border-subtle">
-      <h2 class="font-semibold text-text-primary">Movimientos del dia</h2>
-      <p class="text-caption-xs text-text-secondary">Ultimos ingresos y egresos de la caja actual</p>
+  <section class="bg-white dark:bg-[#1E2128] rounded-xl shadow-sm border border-border-subtle dark:border-white/10 overflow-hidden">
+    <div class="px-lg py-md border-b border-border-subtle dark:border-white/10">
+      <h2 class="font-semibold text-text-primary dark:text-[#E8E9EC]">Movimientos del dia</h2>
+      <p class="text-caption-xs text-text-secondary dark:text-slate-400">Ultimos ingresos y egresos de la caja actual</p>
     </div>
     <div class="overflow-x-auto">
       <table class="w-full text-left border-collapse text-sm">
         <thead>
-          <tr class="bg-slate-50 border-b border-border-subtle">
-            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase">Fecha</th>
-            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase">Tipo</th>
-            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase">Concepto</th>
-            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase">Usuario</th>
-            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase text-right">Monto</th>
+          <tr class="bg-slate-50 dark:bg-white/5 border-b border-border-subtle dark:border-white/10">
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary dark:text-slate-400 uppercase">Fecha</th>
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary dark:text-slate-400 uppercase">Tipo</th>
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary dark:text-slate-400 uppercase">Concepto</th>
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary dark:text-slate-400 uppercase">Usuario</th>
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary dark:text-slate-400 uppercase text-right">Monto</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-border-subtle">
+        <tbody class="divide-y divide-border-subtle dark:divide-white/10">
           {% for movimiento in movimientos %}
-          <tr class="hover:bg-slate-50 transition-colors">
-            <td class="px-lg py-sm text-text-primary">{{ movimiento.fecha|date:"d/m/Y H:i" }}</td>
+          <tr class="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+            <td class="px-lg py-sm text-text-primary dark:text-[#E8E9EC]">{{ movimiento.fecha|date:"d/m/Y H:i" }}</td>
             <td class="px-lg py-sm">
-              <span class="inline-flex px-sm py-[2px] rounded-full text-[11px] font-semibold {% if movimiento.tipo == 'INGRESO' %}bg-primary/10 text-primary{% else %}bg-red-100 text-error{% endif %}">
+              <span class="inline-flex px-sm py-[2px] rounded-full text-[11px] font-semibold {% if movimiento.tipo == 'INGRESO' %}bg-primary/10 dark:bg-primary/20 text-primary{% else %}bg-red-100 text-error{% endif %}">
                 {{ movimiento.get_tipo_display }}
               </span>
             </td>
-            <td class="px-lg py-sm text-text-secondary">{{ movimiento.concepto }}</td>
-            <td class="px-lg py-sm text-text-secondary">{{ movimiento.usuario.username }}</td>
-            <td class="px-lg py-sm text-right font-mono font-semibold text-text-primary">S/. {{ movimiento.monto }}</td>
+            <td class="px-lg py-sm text-text-secondary dark:text-slate-400">{{ movimiento.concepto }}</td>
+            <td class="px-lg py-sm text-text-secondary dark:text-slate-400">{{ movimiento.usuario.username }}</td>
+            <td class="px-lg py-sm text-right font-mono font-semibold text-text-primary dark:text-[#E8E9EC]">S/. {{ movimiento.monto }}</td>
           </tr>
           {% empty %}
           <tr>
-            <td colspan="5" class="px-lg py-xxl text-center text-text-secondary">No hay movimientos para mostrar.</td>
+            <td colspan="5" class="px-lg py-xxl text-center text-text-secondary dark:text-slate-400">No hay movimientos para mostrar.</td>
           </tr>
           {% endfor %}
         </tbody>
