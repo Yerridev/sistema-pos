@@ -2,7 +2,6 @@ from decimal import Decimal
 
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.db import transaction
 from django.db.models import Count, Prefetch, Q, Sum
 from django.contrib import messages
 import json
@@ -15,8 +14,10 @@ from django.views import View
 from django.views.decorators.http import require_POST
 
 from caja.models import Caja, MovimientoCaja
+from core.exceptions import AppError
 from productos.models import Producto
 from .models import DetalleVenta, Venta
+from .services import VentaService
 
 
 def _user_can_access_venta(user, venta):
@@ -134,76 +135,36 @@ class NuevaVentaView(View):
         }
         return render(request, "dashboard/nueva_venta.html", context)
 
-    @transaction.atomic
     def post(self, request):
-        caja_id = request.POST.get("caja")
         metodo_pago = request.POST.get("metodo_pago")
-        descuento = request.POST.get("descuento", "0").strip() or "0"
-        detalles = self._parse_cart_items(request)
-
         if metodo_pago not in dict(Venta.METODO_PAGO_CHOICES):
             messages.error(request, "Selecciona un metodo de pago valido.")
             return redirect("ventas:nueva_venta")
 
-        try:
-            descuento = Decimal(descuento)
-            if descuento < 0:
-                raise ValueError
-        except Exception:
-            messages.error(request, "El descuento debe ser un numero positivo.")
-            return redirect("ventas:nueva_venta")
-
-        try:
-            caja = Caja.objects.select_for_update().get(pk=caja_id, estado="ABIERTA")
-        except Caja.DoesNotExist:
-            messages.error(request, "Selecciona una caja abierta.")
-            return redirect("ventas:nueva_venta")
-
-        if caja.cajero_id != request.user.id and request.user.rol != "admin":
-            messages.error(request, "No puedes vender en una caja de otro cajero.")
-            return redirect("ventas:nueva_venta")
-
-        if not detalles:
+        detalles_raw = self._parse_cart_items(request)
+        if not detalles_raw:
             messages.error(request, "Agrega productos al carrito antes de confirmar la venta.")
             return redirect("ventas:nueva_venta")
 
-        venta = Venta.objects.create(
-            cajero=request.user,
-            caja=caja,
-            metodo_pago=metodo_pago,
-            descuento=descuento,
-        )
+        try:
+            descuento = Decimal(request.POST.get("descuento", "0").strip() or "0")
+        except Exception:
+            messages.error(request, "El descuento debe ser un numero valido.")
+            return redirect("ventas:nueva_venta")
 
-        for producto_id, cantidad in detalles:
-            try:
-                producto = Producto.objects.select_for_update().get(pk=producto_id, activo=True)
-            except Producto.DoesNotExist:
-                transaction.set_rollback(True)
-                messages.error(request, "Uno de los productos seleccionados no existe.")
-                return redirect("ventas:nueva_venta")
-
-            if producto.stock_actual < cantidad:
-                transaction.set_rollback(True)
-                messages.error(request, f"Stock insuficiente para {producto.nombre}. Disponible: {producto.stock_actual}.")
-                return redirect("ventas:nueva_venta")
-
-            DetalleVenta.objects.create(
-                venta=venta,
-                producto=producto,
-                cantidad=cantidad,
-                precio_unitario=producto.precio_venta,
+        detalles = [{"producto": pid, "cantidad": qty} for pid, qty in detalles_raw]
+        try:
+            venta = VentaService.registrar(
+                usuario=request.user,
+                caja_id=request.POST.get("caja"),
+                metodo_pago=metodo_pago,
+                descuento=descuento,
+                detalles=detalles,
             )
-            producto.stock_actual -= cantidad
-            producto.save(update_fields=["stock_actual"])
+        except AppError as exc:
+            messages.error(request, str(exc))
+            return redirect("ventas:nueva_venta")
 
-        venta.calcular_totales()
-        MovimientoCaja.objects.create(
-            caja=caja,
-            tipo="INGRESO",
-            monto=venta.total,
-            concepto=f"Venta #{venta.id}",
-            usuario=request.user,
-        )
         messages.success(request, f"Venta #{venta.id} registrada correctamente por S/. {venta.total}.")
         return redirect("ventas:detalle_venta", pk=venta.pk)
 
@@ -256,42 +217,23 @@ class VentaDetalleDashboardView(View):
 
 @login_required
 @require_POST
-@transaction.atomic
 def anular_venta_dashboard(request, pk):
     venta = get_object_or_404(
-        Venta.objects.select_for_update().select_related("cajero", "caja"),
+        Venta.objects.select_related("cajero", "caja"),
         pk=pk,
     )
 
     if not _user_can_access_venta(request.user, venta):
         messages.error(request, "No puedes anular una venta de otro cajero.")
         return redirect("ventas:dashboard")
-    if venta.estado == "ANULADA":
-        messages.error(request, "La venta ya se encuentra anulada.")
-        return redirect("ventas:detalle_venta", pk=venta.pk)
 
     motivo = request.POST.get("motivo", "").strip() or "Anulacion desde detalle de venta"
+    try:
+        VentaService.anular(venta=venta, usuario=request.user, motivo=motivo)
+        messages.success(request, f"Venta #{venta.id} anulada correctamente. El stock fue devuelto.")
+    except AppError as exc:
+        messages.error(request, str(exc))
 
-    venta.estado = "ANULADA"
-    venta.motivo_anulacion = motivo
-    venta.anulado_por = request.user
-    venta.fecha_anulacion = timezone.now()
-    venta.save(update_fields=["estado", "motivo_anulacion", "anulado_por", "fecha_anulacion"])
-
-    detalles = DetalleVenta.objects.select_related("producto").select_for_update().filter(venta=venta)
-    for detalle in detalles:
-        detalle.producto.stock_actual += detalle.cantidad
-        detalle.producto.save(update_fields=["stock_actual"])
-
-    MovimientoCaja.objects.create(
-        caja=venta.caja,
-        tipo="EGRESO",
-        monto=venta.total,
-        concepto=f"Anulacion venta #{venta.id}: {motivo}",
-        usuario=request.user,
-    )
-
-    messages.success(request, f"Venta #{venta.id} anulada correctamente. El stock fue devuelto.")
     return redirect("ventas:detalle_venta", pk=venta.pk)
 
 

@@ -68,6 +68,223 @@ class VentaCreateSerializerTests(SimpleTestCase):
         self.assertIn('caja_id', serializer.errors)
 
 
+class VentaServiceTests(TestCase):
+    """Tests unitarios del service de ventas (lógica de dominio)."""
+
+    def setUp(self):
+        User = get_user_model()
+        self.cajero = User.objects.create_user(
+            username='cajero_service', password='test123', rol='cajero',
+        )
+        self.otro_cajero = User.objects.create_user(
+            username='otro_cajero', password='test123', rol='cajero',
+        )
+        self.admin = User.objects.create_user(
+            username='admin_service', password='test123', rol='admin',
+        )
+        self.caja = Caja.objects.create(
+            nombre='Caja Service', cajero=self.cajero, saldo_inicial=Decimal('100.00'),
+            estado='ABIERTA',
+        )
+        self.caja_cerrada = Caja.objects.create(
+            nombre='Caja Cerrada', cajero=self.cajero, saldo_inicial=Decimal('0.00'),
+            estado='CERRADA',
+        )
+        self.caja_otro = Caja.objects.create(
+            nombre='Caja Otro', cajero=self.otro_cajero, saldo_inicial=Decimal('0.00'),
+            estado='ABIERTA',
+        )
+        self.categoria = Categoria.objects.create(nombre='Service Cat')
+        self.producto = Producto.objects.create(
+            nombre='Producto Service',
+            categoria=self.categoria,
+            precio_venta=Decimal('11.80'),
+            costo=Decimal('5.00'),
+            stock_actual=10,
+        )
+
+    def _detalle(self, producto, cantidad, precio_unitario=None, descuento_linea=None):
+        return {
+            'producto': producto,
+            'cantidad': cantidad,
+            'precio_unitario': precio_unitario or producto.precio_venta,
+            'descuento_linea': descuento_linea or Decimal('0.00'),
+        }
+
+    def test_registrar_crea_venta_decrementa_stock_y_crea_movimiento(self):
+        from ventas.services import VentaService
+
+        stock_antes = self.producto.stock_actual
+        movimientos_antes = self.caja.movimientos.count()
+        detalles = [self._detalle(self.producto, 3)]
+
+        venta = VentaService.registrar(
+            usuario=self.cajero,
+            caja_id=self.caja.id,
+            metodo_pago='EFECTIVO',
+            descuento=Decimal('0.00'),
+            detalles=detalles,
+        )
+
+        self.assertEqual(venta.cajero, self.cajero)
+        self.assertEqual(venta.caja, self.caja)
+        self.assertEqual(venta.estado, 'COMPLETADA')
+        self.assertEqual(venta.detalles.count(), 1)
+        self.producto.refresh_from_db()
+        self.assertEqual(self.producto.stock_actual, stock_antes - 3)
+        self.caja.refresh_from_db()
+        self.assertEqual(self.caja.movimientos.count(), movimientos_antes + 1)
+        movimiento = self.caja.movimientos.latest('fecha')
+        self.assertEqual(movimiento.tipo, 'INGRESO')
+        self.assertEqual(movimiento.monto, venta.total)
+
+    def test_registrar_stock_insuficiente_lanza_excepcion_y_no_crea_venta(self):
+        from ventas.services import VentaService
+        from core.exceptions import ProductoSinStock
+
+        stock_antes = self.producto.stock_actual
+        detalles = [self._detalle(self.producto, 999)]
+
+        with self.assertRaises(ProductoSinStock):
+            VentaService.registrar(
+                usuario=self.cajero,
+                caja_id=self.caja.id,
+                metodo_pago='EFECTIVO',
+                descuento=Decimal('0.00'),
+                detalles=detalles,
+            )
+
+        self.producto.refresh_from_db()
+        self.assertEqual(self.producto.stock_actual, stock_antes)
+        self.assertEqual(Venta.objects.filter(cajero=self.cajero).count(), 0)
+
+    def test_registrar_caja_cerrada_lanza_caja_no_abierta(self):
+        from ventas.services import VentaService
+        from core.exceptions import CajaNoAbierta
+
+        detalles = [self._detalle(self.producto, 1)]
+
+        with self.assertRaises(CajaNoAbierta):
+            VentaService.registrar(
+                usuario=self.cajero,
+                caja_id=self.caja_cerrada.id,
+                metodo_pago='EFECTIVO',
+                descuento=Decimal('0.00'),
+                detalles=detalles,
+            )
+
+    def test_registrar_caja_ajena_lanza_excepcion(self):
+        from ventas.services import VentaService
+        from core.exceptions import CajaAjena
+
+        detalles = [self._detalle(self.producto, 1)]
+
+        with self.assertRaises(CajaAjena):
+            VentaService.registrar(
+                usuario=self.cajero,
+                caja_id=self.caja_otro.id,
+                metodo_pago='EFECTIVO',
+                descuento=Decimal('0.00'),
+                detalles=detalles,
+            )
+
+        # Admin sí puede vender en caja ajena
+        venta = VentaService.registrar(
+            usuario=self.admin,
+            caja_id=self.caja_otro.id,
+            metodo_pago='EFECTIVO',
+            descuento=Decimal('0.00'),
+            detalles=detalles,
+        )
+        self.assertEqual(venta.caja, self.caja_otro)
+
+    def test_registrar_descuento_mayor_importe_lanza_regla_negocio(self):
+        from ventas.services import VentaService
+        from core.exceptions import ReglaNegocioViolada
+
+        detalles = [self._detalle(self.producto, 1)]
+
+        with self.assertRaises(ReglaNegocioViolada):
+            VentaService.registrar(
+                usuario=self.cajero,
+                caja_id=self.caja.id,
+                metodo_pago='EFECTIVO',
+                descuento=Decimal('100.00'),
+                detalles=detalles,
+            )
+
+    def test_anular_restaura_stock_y_crea_movimiento_egreso(self):
+        from ventas.services import VentaService
+
+        venta = VentaService.registrar(
+            usuario=self.cajero,
+            caja_id=self.caja.id,
+            metodo_pago='EFECTIVO',
+            descuento=Decimal('0.00'),
+            detalles=[self._detalle(self.producto, 4)],
+        )
+        self.producto.refresh_from_db()
+        stock_despues_venta = self.producto.stock_actual
+        movimientos_antes = self.caja.movimientos.count()
+
+        venta_anulada = VentaService.anular(
+            venta=venta,
+            usuario=self.cajero,
+            motivo='Error de registro',
+            restaurar_stock=True,
+        )
+
+        self.assertEqual(venta_anulada.estado, 'ANULADA')
+        self.assertEqual(venta_anulada.motivo_anulacion, 'Error de registro')
+        self.assertEqual(venta_anulada.anulado_por, self.cajero)
+        self.producto.refresh_from_db()
+        self.assertEqual(self.producto.stock_actual, stock_despues_venta + 4)
+        self.assertEqual(self.caja.movimientos.count(), movimientos_antes + 1)
+        movimiento = self.caja.movimientos.latest('fecha')
+        self.assertEqual(movimiento.tipo, 'EGRESO')
+        self.assertEqual(movimiento.monto, venta_anulada.total)
+
+    def test_anular_venta_ya_anulada_lanza_excepcion(self):
+        from ventas.services import VentaService
+        from core.exceptions import VentaYaAnulada
+
+        venta = VentaService.registrar(
+            usuario=self.cajero,
+            caja_id=self.caja.id,
+            metodo_pago='EFECTIVO',
+            descuento=Decimal('0.00'),
+            detalles=[self._detalle(self.producto, 1)],
+        )
+        VentaService.anular(venta=venta, usuario=self.cajero, motivo='Primera')
+
+        with self.assertRaises(VentaYaAnulada):
+            VentaService.anular(venta=venta, usuario=self.cajero, motivo='Segunda')
+
+    def test_anular_sin_restaurar_stock_no_modifica_inventario(self):
+        from ventas.services import VentaService
+
+        venta = VentaService.registrar(
+            usuario=self.cajero,
+            caja_id=self.caja.id,
+            metodo_pago='EFECTIVO',
+            descuento=Decimal('0.00'),
+            detalles=[self._detalle(self.producto, 2)],
+        )
+        self.producto.refresh_from_db()
+        stock_despues_venta = self.producto.stock_actual
+
+        VentaService.anular(
+            venta=venta,
+            usuario=self.cajero,
+            motivo='Sin stock',
+            restaurar_stock=False,
+        )
+
+        self.producto.refresh_from_db()
+        self.assertEqual(self.producto.stock_actual, stock_despues_venta)
+        self.assertEqual(venta.estado, 'ANULADA')
+
+
 class VentaTotalesPeruTests(TestCase):
     def test_calcular_totales_desglosa_igv_incluido_en_precio(self):
         user = get_user_model().objects.create_user(username='cajero', password='test123', rol='cajero')
