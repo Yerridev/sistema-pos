@@ -6,18 +6,18 @@
 <div class="flex flex-col gap-xl">
 
   {# ── Barra de filtros ── #}
-  <section class="bg-white rounded-xl shadow-sm border border-border-subtle p-md">
+  <section class="bg-white dark:bg-[#1E2128] rounded-xl shadow-sm border border-border-subtle dark:border-white/10 p-md">
     <form method="get" class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-md items-end">
       <div class="col-span-2 md:col-span-1 flex flex-col gap-xs">
-        <label class="text-caption-xs font-medium text-text-secondary" for="search">Buscar</label>
+        <label class="text-caption-xs font-medium text-text-secondary dark:text-slate-400" for="search">Buscar</label>
         <input id="search" name="search" type="text" value="{{ filters.search }}"
                placeholder="Nombre o código de barras"
-               class="rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+               class="rounded-lg border border-border-subtle dark:border-white/10 dark:bg-[#15171C] px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
       </div>
       <div class="flex flex-col gap-xs">
-        <label class="text-caption-xs font-medium text-text-secondary" for="categoria">Categoría</label>
+        <label class="text-caption-xs font-medium text-text-secondary dark:text-slate-400" for="categoria">Categoría</label>
         <select id="categoria" name="categoria"
-                class="rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+                class="rounded-lg border border-border-subtle dark:border-white/10 dark:bg-[#15171C] px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
           <option value="">Todas</option>
           {% for cat in categories %}
           <option value="{{ cat.id }}" {% if filters.categoria == cat.id|stringformat:"s" %}selected{% endif %}>
@@ -27,9 +27,9 @@
         </select>
       </div>
       <div class="flex flex-col gap-xs">
-        <label class="text-caption-xs font-medium text-text-secondary" for="stock_status">Stock</label>
+        <label class="text-caption-xs font-medium text-text-secondary dark:text-slate-400" for="stock_status">Stock</label>
         <select id="stock_status" name="stock_status"
-                class="rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+                class="rounded-lg border border-border-subtle dark:border-white/10 dark:bg-[#15171C] px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
           <option value="" {% if not filters.stock_status %}selected{% endif %}>Todos</option>
           <option value="normal"  {% if filters.stock_status == "normal" %}selected{% endif %}>Normal</option>
           <option value="bajo"    {% if filters.stock_status == "bajo" %}selected{% endif %}>Bajo</option>
@@ -43,7 +43,7 @@
         </button>
         {% if filters.search or filters.categoria or filters.stock_status %}
         <a href="{% url 'productos:dashboard' %}"
-           class="px-md py-sm rounded-lg border border-border-subtle text-text-secondary hover:bg-slate-50 text-sm transition-colors">
+           class="px-md py-sm rounded-lg border border-border-subtle dark:border-white/10 text-text-secondary dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 text-sm transition-colors">
           ✕
         </a>
         {% endif %}
@@ -51,7 +51,7 @@
       {% if can_edit %}
       <div class="col-span-2 md:col-span-1 flex items-end justify-end gap-sm">
         <button type="button" id="btn-categorias"
-                class="flex items-center gap-xs border border-border-subtle text-text-secondary rounded-lg py-sm px-md text-sm font-medium hover:bg-slate-50 active:scale-95 transition-all justify-center">
+                class="flex items-center gap-xs border border-border-subtle dark:border-white/10 text-text-secondary dark:text-slate-400 rounded-lg py-sm px-md text-sm font-medium hover:bg-slate-50 dark:hover:bg-white/5 active:scale-95 transition-all justify-center">
           <span class="material-symbols-outlined text-[18px]">category</span>
           Categorias
         </button>
@@ -68,24 +68,24 @@
   {# ── Stats ── #}
   <section class="grid grid-cols-2 xl:grid-cols-4 gap-md">
     {% for stat in stats_list %}
-    <div class="bg-white rounded-xl shadow-sm border {% if stat.warning and stat.value > 0 %}border-warning/40{% else %}border-border-subtle{% endif %} p-md flex items-start gap-md">
+    <div class="bg-white dark:bg-[#1E2128] rounded-xl shadow-sm border {% if stat.warning and stat.value > 0 %}border-warning/40{% else %}border-border-subtle dark:border-white/10{% endif %} p-md flex items-start gap-md">
       <span class="material-symbols-outlined text-[28px] {% if stat.warning and stat.value > 0 %}text-warning{% else %}text-primary{% endif %} mt-xs">{{ stat.icon }}</span>
       <div>
-        <p class="text-caption-xs text-text-secondary font-medium leading-tight">{{ stat.label }}</p>
-        <p class="text-xl font-bold text-text-primary mt-xs {% if stat.warning and stat.value > 0 %}text-warning{% endif %}">{{ stat.value }}</p>
+        <p class="text-caption-xs text-text-secondary dark:text-slate-400 font-medium leading-tight">{{ stat.label }}</p>
+        <p class="text-xl font-bold text-text-primary dark:text-[#E8E9EC] mt-xs {% if stat.warning and stat.value > 0 %}text-warning{% endif %}">{{ stat.value }}</p>
       </div>
     </div>
     {% endfor %}
   </section>
 
   {# ── Tabla de productos ── #}
-  <section class="bg-white rounded-xl shadow-sm border border-border-subtle overflow-hidden">
-    <div class="px-lg py-md border-b border-border-subtle flex items-center justify-between">
+  <section class="bg-white dark:bg-[#1E2128] rounded-xl shadow-sm border border-border-subtle dark:border-white/10 overflow-hidden">
+    <div class="px-lg py-md border-b border-border-subtle dark:border-white/10 flex items-center justify-between">
       <div>
-        <h2 class="font-semibold text-text-primary">Catálogo de productos</h2>
-        <p class="text-caption-xs text-text-secondary">{{ total_count }} producto{{ total_count|pluralize }}</p>
+        <h2 class="font-semibold text-text-primary dark:text-[#E8E9EC]">Catálogo de productos</h2>
+        <p class="text-caption-xs text-text-secondary dark:text-slate-400">{{ total_count }} producto{{ total_count|pluralize }}</p>
       </div>
-      <div class="flex items-center gap-sm text-caption-xs text-text-secondary">
+      <div class="flex items-center gap-sm text-caption-xs text-text-secondary dark:text-slate-400">
         <span class="w-2.5 h-2.5 rounded-full bg-error inline-block"></span>Stock crítico
         <span class="w-2.5 h-2.5 rounded-full bg-warning inline-block ml-sm"></span>Stock bajo
       </div>
@@ -94,25 +94,25 @@
     <div class="overflow-x-auto">
       <table class="w-full text-left border-collapse text-sm">
         <thead>
-          <tr class="bg-slate-50 border-b border-border-subtle">
-            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase tracking-wider">Código</th>
-            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase tracking-wider">Nombre</th>
-            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase tracking-wider hidden md:table-cell">Categoría</th>
-            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase tracking-wider hidden lg:table-cell">Unidad</th>
-            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase tracking-wider text-right">Stock</th>
-            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase tracking-wider text-right hidden sm:table-cell">Costo</th>
-            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase tracking-wider text-right">P. Venta</th>
-            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase tracking-wider text-right hidden lg:table-cell">Margen</th>
+          <tr class="bg-slate-50 dark:bg-white/5 border-b border-border-subtle dark:border-white/10">
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary dark:text-slate-400 uppercase tracking-wider">Código</th>
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary dark:text-slate-400 uppercase tracking-wider">Nombre</th>
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary dark:text-slate-400 uppercase tracking-wider hidden md:table-cell">Categoría</th>
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary dark:text-slate-400 uppercase tracking-wider hidden lg:table-cell">Unidad</th>
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary dark:text-slate-400 uppercase tracking-wider text-right">Stock</th>
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary dark:text-slate-400 uppercase tracking-wider text-right hidden sm:table-cell">Costo</th>
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary dark:text-slate-400 uppercase tracking-wider text-right">P. Venta</th>
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary dark:text-slate-400 uppercase tracking-wider text-right hidden lg:table-cell">Margen</th>
             <th class="px-lg py-sm"></th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-border-subtle">
+        <tbody class="divide-y divide-border-subtle dark:divide-white/10">
           {% for p in products %}
           {% with es_critico=p.stock_critico %}
-          <tr class="hover:bg-slate-50 transition-colors {% if es_critico %}bg-red-50{% elif p.stock_actual <= p.stock_minimo|add:p.stock_minimo %}bg-amber-50/40{% endif %}"
+          <tr class="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors {% if es_critico %}bg-red-50{% elif p.stock_actual <= p.stock_minimo|add:p.stock_minimo %}bg-amber-50/40{% endif %}"
               data-id="{{ p.id }}">
-            <td class="px-lg py-sm font-mono text-xs text-text-secondary">{{ p.codigo_barra|default:"—" }}</td>
-            <td class="px-lg py-sm font-medium text-text-primary">
+            <td class="px-lg py-sm font-mono text-xs text-text-secondary dark:text-slate-400">{{ p.codigo_barra|default:"—" }}</td>
+            <td class="px-lg py-sm font-medium text-text-primary dark:text-[#E8E9EC]">
               {{ p.nombre }}
               {% if es_critico %}
               <span class="ml-xs inline-flex items-center gap-xs text-[10px] font-bold text-error bg-red-100 px-xs py-[2px] rounded-full">
@@ -120,21 +120,21 @@
               </span>
               {% endif %}
             </td>
-            <td class="px-lg py-sm hidden md:table-cell text-text-secondary">{{ p.categoria.nombre }}</td>
-            <td class="px-lg py-sm hidden lg:table-cell text-text-secondary capitalize">{{ p.get_unidad_display }}</td>
-            <td class="px-lg py-sm text-right font-mono font-medium {% if es_critico %}text-error{% elif p.stock_actual <= p.stock_minimo|add:p.stock_minimo %}text-warning{% else %}text-text-primary{% endif %}">
+            <td class="px-lg py-sm hidden md:table-cell text-text-secondary dark:text-slate-400">{{ p.categoria.nombre }}</td>
+            <td class="px-lg py-sm hidden lg:table-cell text-text-secondary dark:text-slate-400 capitalize">{{ p.get_unidad_display }}</td>
+            <td class="px-lg py-sm text-right font-mono font-medium {% if es_critico %}text-error{% elif p.stock_actual <= p.stock_minimo|add:p.stock_minimo %}text-warning{% else %}text-text-primary dark:text-[#E8E9EC]{% endif %}">
               {{ p.stock_actual }}
-              <span class="text-text-secondary font-normal text-[11px]">/{{ p.stock_minimo }}</span>
+              <span class="text-text-secondary dark:text-slate-400 font-normal text-[11px]">/{{ p.stock_minimo }}</span>
             </td>
-            <td class="px-lg py-sm text-right font-mono hidden sm:table-cell text-text-secondary">S/. {{ p.costo }}</td>
-            <td class="px-lg py-sm text-right font-mono font-semibold text-text-primary">S/. {{ p.precio_venta }}</td>
+            <td class="px-lg py-sm text-right font-mono hidden sm:table-cell text-text-secondary dark:text-slate-400">S/. {{ p.costo }}</td>
+            <td class="px-lg py-sm text-right font-mono font-semibold text-text-primary dark:text-[#E8E9EC]">S/. {{ p.precio_venta }}</td>
             <td class="px-lg py-sm text-right font-mono hidden lg:table-cell text-success">
               S/. {{ p.ganancia_unitaria }}
             </td>
             <td class="px-lg py-sm text-right">
               <div class="flex items-center justify-end gap-xs">
                 {% if can_edit %}
-                <button class="btn-editar p-xs rounded hover:bg-slate-100 text-text-secondary transition-colors"
+                <button class="btn-editar p-xs rounded hover:bg-slate-100 text-text-secondary dark:text-slate-400 transition-colors"
                         data-id="{{ p.id }}" title="Editar">
                   <span class="material-symbols-outlined text-[18px]">edit</span>
                 </button>
@@ -151,7 +151,7 @@
           {% endwith %}
           {% empty %}
           <tr>
-            <td colspan="9" class="px-lg py-xxl text-center text-text-secondary">
+            <td colspan="9" class="px-lg py-xxl text-center text-text-secondary dark:text-slate-400">
               <span class="material-symbols-outlined text-[48px] block mb-md opacity-30">inventory_2</span>
               No se encontraron productos con los filtros aplicados.
             </td>
@@ -163,25 +163,25 @@
 
     {# ── Paginación ── #}
     {% if page_obj.paginator.num_pages > 1 %}
-    <div class="px-lg py-md bg-white border-t border-border-subtle flex items-center justify-between flex-wrap gap-sm">
-      <span class="text-caption-xs text-text-secondary">
+    <div class="px-lg py-md bg-white dark:bg-[#1E2128] border-t border-border-subtle dark:border-white/10 flex items-center justify-between flex-wrap gap-sm">
+      <span class="text-caption-xs text-text-secondary dark:text-slate-400">
         Mostrando {{ page_obj.start_index }}–{{ page_obj.end_index }} de {{ page_obj.paginator.count }} productos
       </span>
       <div class="flex gap-xs">
         {% if page_obj.has_previous %}
         <a href="?page=1{% if pagination_query %}&{{ pagination_query }}{% endif %}"
-           class="p-xs px-sm border border-border-subtle rounded hover:bg-slate-50 active:scale-95 transition-all">
+           class="p-xs px-sm border border-border-subtle dark:border-white/10 rounded hover:bg-slate-50 dark:hover:bg-white/5 active:scale-95 transition-all">
           <span class="material-symbols-outlined text-[18px]">first_page</span>
         </a>
         <a href="?page={{ page_obj.previous_page_number }}{% if pagination_query %}&{{ pagination_query }}{% endif %}"
-           class="p-xs px-sm border border-border-subtle rounded hover:bg-slate-50 active:scale-95 transition-all">
+           class="p-xs px-sm border border-border-subtle dark:border-white/10 rounded hover:bg-slate-50 dark:hover:bg-white/5 active:scale-95 transition-all">
           <span class="material-symbols-outlined text-[18px]">chevron_left</span>
         </a>
         {% else %}
-        <button disabled class="p-xs px-sm border border-border-subtle rounded opacity-40 cursor-not-allowed">
+        <button disabled class="p-xs px-sm border border-border-subtle dark:border-white/10 rounded opacity-40 cursor-not-allowed">
           <span class="material-symbols-outlined text-[18px]">first_page</span>
         </button>
-        <button disabled class="p-xs px-sm border border-border-subtle rounded opacity-40 cursor-not-allowed">
+        <button disabled class="p-xs px-sm border border-border-subtle dark:border-white/10 rounded opacity-40 cursor-not-allowed">
           <span class="material-symbols-outlined text-[18px]">chevron_left</span>
         </button>
         {% endif %}
@@ -191,24 +191,24 @@
           <button disabled class="p-xs px-sm bg-primary text-white rounded font-bold text-xs">{{ num }}</button>
           {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
           <a href="?page={{ num }}{% if pagination_query %}&{{ pagination_query }}{% endif %}"
-             class="p-xs px-sm border border-border-subtle rounded hover:bg-slate-50 active:scale-95 transition-all text-xs">{{ num }}</a>
+             class="p-xs px-sm border border-border-subtle dark:border-white/10 rounded hover:bg-slate-50 dark:hover:bg-white/5 active:scale-95 transition-all text-xs">{{ num }}</a>
           {% endif %}
         {% endfor %}
 
         {% if page_obj.has_next %}
         <a href="?page={{ page_obj.next_page_number }}{% if pagination_query %}&{{ pagination_query }}{% endif %}"
-           class="p-xs px-sm border border-border-subtle rounded hover:bg-slate-50 active:scale-95 transition-all">
+           class="p-xs px-sm border border-border-subtle dark:border-white/10 rounded hover:bg-slate-50 dark:hover:bg-white/5 active:scale-95 transition-all">
           <span class="material-symbols-outlined text-[18px]">chevron_right</span>
         </a>
         <a href="?page={{ page_obj.paginator.num_pages }}{% if pagination_query %}&{{ pagination_query }}{% endif %}"
-           class="p-xs px-sm border border-border-subtle rounded hover:bg-slate-50 active:scale-95 transition-all">
+           class="p-xs px-sm border border-border-subtle dark:border-white/10 rounded hover:bg-slate-50 dark:hover:bg-white/5 active:scale-95 transition-all">
           <span class="material-symbols-outlined text-[18px]">last_page</span>
         </a>
         {% else %}
-        <button disabled class="p-xs px-sm border border-border-subtle rounded opacity-40 cursor-not-allowed">
+        <button disabled class="p-xs px-sm border border-border-subtle dark:border-white/10 rounded opacity-40 cursor-not-allowed">
           <span class="material-symbols-outlined text-[18px]">chevron_right</span>
         </button>
-        <button disabled class="p-xs px-sm border border-border-subtle rounded opacity-40 cursor-not-allowed">
+        <button disabled class="p-xs px-sm border border-border-subtle dark:border-white/10 rounded opacity-40 cursor-not-allowed">
           <span class="material-symbols-outlined text-[18px]">last_page</span>
         </button>
         {% endif %}
@@ -232,13 +232,13 @@
   <div id="modal-backdrop" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
 
   {# Panel #}
-  <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto z-10">
+  <div class="relative bg-white dark:bg-[#1E2128] rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto z-10">
 
     {# Header #}
-    <div class="sticky top-0 bg-white px-xl py-md border-b border-border-subtle flex items-center justify-between z-10 rounded-t-2xl">
+    <div class="sticky top-0 bg-white dark:bg-[#1E2128] px-xl py-md border-b border-border-subtle dark:border-white/10 flex items-center justify-between z-10 rounded-t-2xl">
       <div>
-        <h3 id="modal-titulo" class="font-semibold text-lg text-text-primary"></h3>
-        <p id="modal-subtitulo" class="text-caption-xs text-text-secondary"></p>
+        <h3 id="modal-titulo" class="font-semibold text-lg text-text-primary dark:text-[#E8E9EC]"></h3>
+        <p id="modal-subtitulo" class="text-caption-xs text-text-secondary dark:text-slate-400"></p>
       </div>
       <button id="btn-cerrar-modal" type="button"
               class="p-sm rounded-full hover:bg-slate-100 transition-colors active:scale-95"
@@ -258,32 +258,32 @@
 
         {# Nombre #}
         <div class="sm:col-span-2 flex flex-col gap-xs">
-          <label class="text-caption-xs font-medium text-text-secondary" for="f-nombre">
+          <label class="text-caption-xs font-medium text-text-secondary dark:text-slate-400" for="f-nombre">
             Nombre <span class="text-error">*</span>
           </label>
           <input id="f-nombre" name="nombre" type="text" maxlength="200"
                  placeholder="Ej. Arroz extra fino 1kg"
-                 class="form-field rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+                 class="form-field rounded-lg border border-border-subtle dark:border-white/10 dark:bg-[#15171C] px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
           <p class="field-error hidden text-[11px] text-error" id="err-nombre"></p>
         </div>
 
         {# Código de barras #}
         <div class="flex flex-col gap-xs">
-          <label class="text-caption-xs font-medium text-text-secondary" for="f-codigo">
+          <label class="text-caption-xs font-medium text-text-secondary dark:text-slate-400" for="f-codigo">
             Código de barras
           </label>
           <input id="f-codigo" name="codigo_barra" type="text" maxlength="50"
                  placeholder="Ej. 7751234567890"
-                 class="form-field font-mono rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+                 class="form-field font-mono rounded-lg border border-border-subtle dark:border-white/10 dark:bg-[#15171C] px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
         </div>
 
         {# Categoría #}
         <div class="flex flex-col gap-xs">
-          <label class="text-caption-xs font-medium text-text-secondary" for="f-categoria">
+          <label class="text-caption-xs font-medium text-text-secondary dark:text-slate-400" for="f-categoria">
             Categoría <span class="text-error">*</span>
           </label>
           <select id="f-categoria" name="categoria"
-                  class="form-field rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+                  class="form-field rounded-lg border border-border-subtle dark:border-white/10 dark:bg-[#15171C] px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
             <option value="">— Selecciona categoría —</option>
           </select>
           <p class="field-error hidden text-[11px] text-error" id="err-categoria"></p>
@@ -291,9 +291,9 @@
 
         {# Unidad #}
         <div class="flex flex-col gap-xs">
-          <label class="text-caption-xs font-medium text-text-secondary" for="f-unidad">Unidad</label>
+          <label class="text-caption-xs font-medium text-text-secondary dark:text-slate-400" for="f-unidad">Unidad</label>
           <select id="f-unidad" name="unidad"
-                  class="form-field rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+                  class="form-field rounded-lg border border-border-subtle dark:border-white/10 dark:bg-[#15171C] px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
             <option value="unidad">Unidad</option>
             <option value="kg">Kilogramo</option>
             <option value="litro">Litro</option>
@@ -304,23 +304,23 @@
 
         {# Precio venta #}
         <div class="flex flex-col gap-xs">
-          <label class="text-caption-xs font-medium text-text-secondary" for="f-precio">
+          <label class="text-caption-xs font-medium text-text-secondary dark:text-slate-400" for="f-precio">
             Precio de venta (S/.) <span class="text-error">*</span>
           </label>
           <input id="f-precio" name="precio_venta" type="number" min="0" step="0.01"
                  placeholder="0.00"
-                 class="form-field font-mono rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+                 class="form-field font-mono rounded-lg border border-border-subtle dark:border-white/10 dark:bg-[#15171C] px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
           <p class="field-error hidden text-[11px] text-error" id="err-precio_venta"></p>
         </div>
 
         {# Costo #}
         <div class="flex flex-col gap-xs">
-          <label class="text-caption-xs font-medium text-text-secondary" for="f-costo">
+          <label class="text-caption-xs font-medium text-text-secondary dark:text-slate-400" for="f-costo">
             Costo (S/.) <span class="text-error">*</span>
           </label>
           <input id="f-costo" name="costo" type="number" min="0" step="0.01"
                  placeholder="0.00"
-                 class="form-field font-mono rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+                 class="form-field font-mono rounded-lg border border-border-subtle dark:border-white/10 dark:bg-[#15171C] px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
           <p class="field-error hidden text-[11px] text-error" id="err-costo"></p>
         </div>
 
@@ -335,33 +335,33 @@
 
         {# Stock actual #}
         <div class="flex flex-col gap-xs">
-          <label class="text-caption-xs font-medium text-text-secondary" for="f-stock">Stock actual</label>
+          <label class="text-caption-xs font-medium text-text-secondary dark:text-slate-400" for="f-stock">Stock actual</label>
           <input id="f-stock" name="stock_actual" type="number" min="0" value="0"
-                 class="form-field font-mono rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+                 class="form-field font-mono rounded-lg border border-border-subtle dark:border-white/10 dark:bg-[#15171C] px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
         </div>
 
         {# Stock mínimo #}
         <div class="flex flex-col gap-xs">
-          <label class="text-caption-xs font-medium text-text-secondary" for="f-stock-min">Stock mínimo</label>
+          <label class="text-caption-xs font-medium text-text-secondary dark:text-slate-400" for="f-stock-min">Stock mínimo</label>
           <input id="f-stock-min" name="stock_minimo" type="number" min="0" value="10"
-                 class="form-field font-mono rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+                 class="form-field font-mono rounded-lg border border-border-subtle dark:border-white/10 dark:bg-[#15171C] px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
         </div>
 
         {# Descripción #}
         <div class="sm:col-span-2 flex flex-col gap-xs">
-          <label class="text-caption-xs font-medium text-text-secondary" for="f-descripcion">Descripción</label>
+          <label class="text-caption-xs font-medium text-text-secondary dark:text-slate-400" for="f-descripcion">Descripción</label>
           <textarea id="f-descripcion" name="descripcion" rows="2"
                     placeholder="Descripción opcional del producto..."
-                    class="form-field rounded-lg border border-border-subtle px-md py-sm text-sm resize-none focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"></textarea>
+                    class="form-field rounded-lg border border-border-subtle dark:border-white/10 dark:bg-[#15171C] px-md py-sm text-sm resize-none focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"></textarea>
         </div>
 
       </div>{# /grid #}
     </div>{# /body #}
 
     {# Footer de acciones #}
-    <div class="sticky bottom-0 bg-white px-xl py-md border-t border-border-subtle flex items-center justify-end gap-sm rounded-b-2xl">
+    <div class="sticky bottom-0 bg-white dark:bg-[#1E2128] px-xl py-md border-t border-border-subtle dark:border-white/10 flex items-center justify-end gap-sm rounded-b-2xl">
       <button id="btn-cancelar-modal" type="button"
-              class="px-lg py-sm rounded-lg border border-border-subtle text-text-secondary hover:bg-slate-50 text-sm transition-colors">
+              class="px-lg py-sm rounded-lg border border-border-subtle dark:border-white/10 text-text-secondary dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 text-sm transition-colors">
         Cancelar
       </button>
       <button id="btn-guardar" type="button"
@@ -380,11 +380,11 @@
      class="hidden fixed inset-0 z-[100] flex items-center justify-center p-lg"
      role="dialog" aria-modal="true">
   <div id="modal-categorias-backdrop" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
-  <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto z-10">
-    <div class="sticky top-0 bg-white px-xl py-md border-b border-border-subtle flex items-center justify-between z-10 rounded-t-2xl">
+  <div class="relative bg-white dark:bg-[#1E2128] rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto z-10">
+    <div class="sticky top-0 bg-white dark:bg-[#1E2128] px-xl py-md border-b border-border-subtle dark:border-white/10 flex items-center justify-between z-10 rounded-t-2xl">
       <div>
-        <h3 class="font-semibold text-lg text-text-primary">Categorias</h3>
-        <p class="text-caption-xs text-text-secondary">Crea y organiza las categorias del inventario</p>
+        <h3 class="font-semibold text-lg text-text-primary dark:text-[#E8E9EC]">Categorias</h3>
+        <p class="text-caption-xs text-text-secondary dark:text-slate-400">Crea y organiza las categorias del inventario</p>
       </div>
       <button id="btn-cerrar-categorias" type="button"
               class="p-sm rounded-full hover:bg-slate-100 transition-colors active:scale-95"
@@ -400,15 +400,15 @@
 
       <div class="grid grid-cols-1 sm:grid-cols-[1fr,1fr,auto] gap-sm items-end">
         <div class="flex flex-col gap-xs">
-          <label class="text-caption-xs font-medium text-text-secondary" for="cat-nombre">Nombre</label>
+          <label class="text-caption-xs font-medium text-text-secondary dark:text-slate-400" for="cat-nombre">Nombre</label>
           <input id="cat-nombre" type="text" maxlength="100"
-                 class="rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+                 class="rounded-lg border border-border-subtle dark:border-white/10 dark:bg-[#15171C] px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
           <p class="hidden text-[11px] text-error" id="err-cat-nombre"></p>
         </div>
         <div class="flex flex-col gap-xs">
-          <label class="text-caption-xs font-medium text-text-secondary" for="cat-descripcion">Descripcion</label>
+          <label class="text-caption-xs font-medium text-text-secondary dark:text-slate-400" for="cat-descripcion">Descripcion</label>
           <input id="cat-descripcion" type="text"
-                 class="rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+                 class="rounded-lg border border-border-subtle dark:border-white/10 dark:bg-[#15171C] px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
         </div>
         <button id="btn-guardar-categoria" type="button"
                 class="rounded-lg bg-primary px-md py-sm text-sm font-medium text-white hover:bg-primary-hover transition-colors">
@@ -416,16 +416,16 @@
         </button>
       </div>
 
-      <div class="overflow-x-auto rounded-lg border border-border-subtle">
+      <div class="overflow-x-auto rounded-lg border border-border-subtle dark:border-white/10">
         <table class="w-full text-left text-sm">
-          <thead class="bg-slate-50">
+          <thead class="bg-slate-50 dark:bg-white/5">
             <tr>
-              <th class="px-md py-sm text-caption-xs font-semibold text-text-secondary uppercase">Nombre</th>
-              <th class="px-md py-sm text-caption-xs font-semibold text-text-secondary uppercase">Descripcion</th>
+              <th class="px-md py-sm text-caption-xs font-semibold text-text-secondary dark:text-slate-400 uppercase">Nombre</th>
+              <th class="px-md py-sm text-caption-xs font-semibold text-text-secondary dark:text-slate-400 uppercase">Descripcion</th>
               <th class="px-md py-sm"></th>
             </tr>
           </thead>
-          <tbody id="categorias-body" class="divide-y divide-border-subtle"></tbody>
+          <tbody id="categorias-body" class="divide-y divide-border-subtle dark:divide-white/10"></tbody>
         </table>
       </div>
     </div>
@@ -439,21 +439,21 @@
      class="hidden fixed inset-0 z-[100] flex items-center justify-center p-lg"
      role="dialog" aria-modal="true">
   <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
-  <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm z-10 p-xl flex flex-col gap-lg">
+  <div class="relative bg-white dark:bg-[#1E2128] rounded-2xl shadow-2xl w-full max-w-sm z-10 p-xl flex flex-col gap-lg">
     <div class="flex items-center gap-md">
       <span class="material-symbols-outlined text-[36px] text-error">delete_forever</span>
       <div>
-        <h3 class="font-semibold text-text-primary">Eliminar producto</h3>
-        <p class="text-caption-xs text-text-secondary">Esta acción no se puede deshacer fácilmente.</p>
+        <h3 class="font-semibold text-text-primary dark:text-[#E8E9EC]">Eliminar producto</h3>
+        <p class="text-caption-xs text-text-secondary dark:text-slate-400">Esta acción no se puede deshacer fácilmente.</p>
       </div>
     </div>
-    <p class="text-sm text-text-secondary">
-      ¿Estás seguro de eliminar <strong id="del-nombre" class="text-text-primary"></strong>?
+    <p class="text-sm text-text-secondary dark:text-slate-400">
+      ¿Estás seguro de eliminar <strong id="del-nombre" class="text-text-primary dark:text-[#E8E9EC]"></strong>?
       El producto se marcará como inactivo.
     </p>
     <div class="flex gap-sm justify-end">
       <button id="btn-cancelar-eliminar" type="button"
-              class="px-lg py-sm rounded-lg border border-border-subtle text-text-secondary hover:bg-slate-50 text-sm transition-colors">
+              class="px-lg py-sm rounded-lg border border-border-subtle dark:border-white/10 text-text-secondary dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 text-sm transition-colors">
         Cancelar
       </button>
       <button id="btn-confirmar-eliminar" type="button"
@@ -577,10 +577,10 @@ function renderCategorias() {
   CATEGORIAS.forEach(c => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td class="px-md py-sm font-medium text-text-primary">${c.nombre}</td>
-      <td class="px-md py-sm text-text-secondary">${c.descripcion || ''}</td>
+      <td class="px-md py-sm font-medium text-text-primary dark:text-[#E8E9EC]">${c.nombre}</td>
+      <td class="px-md py-sm text-text-secondary dark:text-slate-400">${c.descripcion || ''}</td>
       <td class="px-md py-sm text-right">
-        <button type="button" class="btn-cat-edit p-xs rounded hover:bg-slate-100 text-text-secondary transition-colors" data-id="${c.id}" title="Editar">
+        <button type="button" class="btn-cat-edit p-xs rounded hover:bg-slate-100 text-text-secondary dark:text-slate-400 transition-colors" data-id="${c.id}" title="Editar">
           <span class="material-symbols-outlined text-[18px]">edit</span>
         </button>
         {% if can_delete %}

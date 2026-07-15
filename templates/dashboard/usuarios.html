@@ -4,11 +4,11 @@
 
 {% block content %}
 <div class="flex flex-col gap-xl">
-  <section class="bg-white rounded-xl shadow-sm border border-border-subtle p-md flex flex-col gap-md">
+  <section class="bg-white dark:bg-[#1E2128] rounded-xl shadow-sm border border-border-subtle dark:border-white/10 p-md flex flex-col gap-md">
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-md">
       <div>
-        <h2 class="font-semibold text-text-primary">Gestión de usuarios</h2>
-        <p class="text-caption-xs text-text-secondary">Administra accesos y roles del sistema</p>
+        <h2 class="font-semibold text-text-primary dark:text-[#E8E9EC]">Gestión de usuarios</h2>
+        <p class="text-caption-xs text-text-secondary dark:text-slate-400">Administra accesos y roles del sistema</p>
       </div>
       <button id="btn-nuevo" type="button"
               class="flex items-center gap-xs bg-primary text-white rounded-lg py-sm px-md text-sm font-medium hover:bg-primary-hover active:scale-95 transition-all neon-glow">
@@ -18,35 +18,35 @@
     </div>
   </section>
 
-  <section class="bg-white rounded-xl shadow-sm border border-border-subtle overflow-hidden">
-    <div class="px-lg py-md border-b border-border-subtle flex items-center justify-between">
+  <section class="bg-white dark:bg-[#1E2128] rounded-xl shadow-sm border border-border-subtle dark:border-white/10 overflow-hidden">
+    <div class="px-lg py-md border-b border-border-subtle dark:border-white/10 flex items-center justify-between">
       <div>
-        <h3 class="font-semibold text-text-primary">Usuarios registrados</h3>
-        <p class="text-caption-xs text-text-secondary">{{ users|length }} usuarios</p>
+        <h3 class="font-semibold text-text-primary dark:text-[#E8E9EC]">Usuarios registrados</h3>
+        <p class="text-caption-xs text-text-secondary dark:text-slate-400">{{ users|length }} usuarios</p>
       </div>
     </div>
 
     <div class="overflow-x-auto">
       <table class="w-full text-left border-collapse text-sm">
         <thead>
-          <tr class="bg-slate-50 border-b border-border-subtle">
-            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase tracking-wider">Usuario</th>
-            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase tracking-wider">Nombre</th>
-            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase tracking-wider hidden md:table-cell">Email</th>
-            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase tracking-wider">Rol</th>
-            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary uppercase tracking-wider">Estado</th>
+          <tr class="bg-slate-50 dark:bg-white/5 border-b border-border-subtle dark:border-white/10">
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary dark:text-slate-400 uppercase tracking-wider">Usuario</th>
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary dark:text-slate-400 uppercase tracking-wider">Nombre</th>
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary dark:text-slate-400 uppercase tracking-wider hidden md:table-cell">Email</th>
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary dark:text-slate-400 uppercase tracking-wider">Rol</th>
+            <th class="px-lg py-sm text-caption-xs font-semibold text-text-secondary dark:text-slate-400 uppercase tracking-wider">Estado</th>
             <th class="px-lg py-sm"></th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-border-subtle">
+        <tbody class="divide-y divide-border-subtle dark:divide-white/10">
           {% for u in users %}
-          <tr class="hover:bg-slate-50 transition-colors" data-id="{{ u.id }}">
-            <td class="px-lg py-sm font-medium text-text-primary">{{ u.username }}</td>
-            <td class="px-lg py-sm text-text-secondary">{{ u.get_full_name|default:"—" }}</td>
-            <td class="px-lg py-sm hidden md:table-cell text-text-secondary">{{ u.email|default:"—" }}</td>
+          <tr class="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors" data-id="{{ u.id }}">
+            <td class="px-lg py-sm font-medium text-text-primary dark:text-[#E8E9EC]">{{ u.username }}</td>
+            <td class="px-lg py-sm text-text-secondary dark:text-slate-400">{{ u.get_full_name|default:"—" }}</td>
+            <td class="px-lg py-sm hidden md:table-cell text-text-secondary dark:text-slate-400">{{ u.email|default:"—" }}</td>
             <td class="px-lg py-sm">
               <span class="uppercase text-[10px] font-bold px-2 py-0.5 rounded-full
-                {% if u.rol == 'admin' %}bg-primary/10 text-primary{% else %}bg-slate-100 text-slate-500{% endif %}">
+                {% if u.rol == 'admin' %}bg-primary/10 dark:bg-primary/20 text-primary{% else %}bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-300{% endif %}">
                 {{ u.rol }}
               </span>
             </td>
@@ -59,16 +59,16 @@
             </td>
             <td class="px-lg py-sm text-right">
               <div class="flex items-center justify-end gap-xs">
-                <button class="btn-editar p-xs rounded hover:bg-slate-100 text-text-secondary transition-colors"
+                <button class="btn-editar p-xs rounded hover:bg-slate-100 text-text-secondary dark:text-slate-400 transition-colors"
                         data-id="{{ u.id }}" title="Editar">
                   <span class="material-symbols-outlined text-[18px]">edit</span>
                 </button>
-                <button class="btn-password p-xs rounded hover:bg-slate-100 text-text-secondary transition-colors"
+                <button class="btn-password p-xs rounded hover:bg-slate-100 text-text-secondary dark:text-slate-400 transition-colors"
                         data-id="{{ u.id }}" title="Resetear contraseña">
                   <span class="material-symbols-outlined text-[18px]">lock_reset</span>
                 </button>
                 {% if u.id != current_user_id %}
-                <button class="btn-estado p-xs rounded hover:bg-slate-100 text-text-secondary transition-colors"
+                <button class="btn-estado p-xs rounded hover:bg-slate-100 text-text-secondary dark:text-slate-400 transition-colors"
                         data-id="{{ u.id }}" data-active="{{ u.is_active|yesno:'true,false' }}"
                         title="{% if u.is_active %}Desactivar{% else %}Activar{% endif %}">
                   <span class="material-symbols-outlined text-[18px]">{% if u.is_active %}toggle_on{% else %}toggle_off{% endif %}</span>
@@ -79,7 +79,7 @@
           </tr>
           {% empty %}
           <tr>
-            <td colspan="6" class="px-lg py-xxl text-center text-text-secondary">
+            <td colspan="6" class="px-lg py-xxl text-center text-text-secondary dark:text-slate-400">
               <span class="material-symbols-outlined text-[48px] block mb-md opacity-30">group</span>
               No hay usuarios registrados.
             </td>
@@ -98,11 +98,11 @@
      class="hidden fixed inset-0 z-[100] flex items-center justify-center p-lg"
      role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
   <div id="modal-backdrop" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
-  <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl z-10">
-    <div class="sticky top-0 bg-white px-xl py-md border-b border-border-subtle flex items-center justify-between z-10 rounded-t-2xl">
+  <div class="relative bg-white dark:bg-[#1E2128] rounded-2xl shadow-2xl w-full max-w-xl z-10">
+    <div class="sticky top-0 bg-white dark:bg-[#1E2128] px-xl py-md border-b border-border-subtle dark:border-white/10 flex items-center justify-between z-10 rounded-t-2xl">
       <div>
-        <h3 id="modal-titulo" class="font-semibold text-lg text-text-primary"></h3>
-        <p id="modal-subtitulo" class="text-caption-xs text-text-secondary"></p>
+        <h3 id="modal-titulo" class="font-semibold text-lg text-text-primary dark:text-[#E8E9EC]"></h3>
+        <p id="modal-subtitulo" class="text-caption-xs text-text-secondary dark:text-slate-400"></p>
       </div>
       <button id="btn-cerrar-modal" type="button"
               class="p-sm rounded-full hover:bg-slate-100 transition-colors active:scale-95"
@@ -118,31 +118,31 @@
     <div class="p-xl">
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-md">
         <div class="flex flex-col gap-xs">
-          <label class="text-caption-xs font-medium text-text-secondary" for="f-username">Usuario <span class="text-error">*</span></label>
+          <label class="text-caption-xs font-medium text-text-secondary dark:text-slate-400" for="f-username">Usuario <span class="text-error">*</span></label>
           <input id="f-username" name="username" type="text" maxlength="150"
-                 class="form-field rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+                 class="form-field rounded-lg border border-border-subtle dark:border-white/10 dark:bg-[#15171C] px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
           <p class="field-error hidden text-[11px] text-error" id="err-username"></p>
         </div>
         <div class="flex flex-col gap-xs">
-          <label class="text-caption-xs font-medium text-text-secondary" for="f-email">Email</label>
+          <label class="text-caption-xs font-medium text-text-secondary dark:text-slate-400" for="f-email">Email</label>
           <input id="f-email" name="email" type="email" maxlength="254"
-                 class="form-field rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+                 class="form-field rounded-lg border border-border-subtle dark:border-white/10 dark:bg-[#15171C] px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
           <p class="field-error hidden text-[11px] text-error" id="err-email"></p>
         </div>
         <div class="flex flex-col gap-xs">
-          <label class="text-caption-xs font-medium text-text-secondary" for="f-first">Nombres</label>
+          <label class="text-caption-xs font-medium text-text-secondary dark:text-slate-400" for="f-first">Nombres</label>
           <input id="f-first" name="first_name" type="text" maxlength="150"
-                 class="form-field rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+                 class="form-field rounded-lg border border-border-subtle dark:border-white/10 dark:bg-[#15171C] px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
         </div>
         <div class="flex flex-col gap-xs">
-          <label class="text-caption-xs font-medium text-text-secondary" for="f-last">Apellidos</label>
+          <label class="text-caption-xs font-medium text-text-secondary dark:text-slate-400" for="f-last">Apellidos</label>
           <input id="f-last" name="last_name" type="text" maxlength="150"
-                 class="form-field rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+                 class="form-field rounded-lg border border-border-subtle dark:border-white/10 dark:bg-[#15171C] px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
         </div>
         <div class="flex flex-col gap-xs">
-          <label class="text-caption-xs font-medium text-text-secondary" for="f-rol">Rol <span class="text-error">*</span></label>
+          <label class="text-caption-xs font-medium text-text-secondary dark:text-slate-400" for="f-rol">Rol <span class="text-error">*</span></label>
           <select id="f-rol" name="rol"
-                  class="form-field rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+                  class="form-field rounded-lg border border-border-subtle dark:border-white/10 dark:bg-[#15171C] px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
             <option value="">— Selecciona rol —</option>
             {% for value, label in roles %}
             <option value="{{ value }}">{{ label }}</option>
@@ -151,17 +151,17 @@
           <p class="field-error hidden text-[11px] text-error" id="err-rol"></p>
         </div>
         <div class="flex flex-col gap-xs" id="password-field">
-          <label class="text-caption-xs font-medium text-text-secondary" for="f-password">Contraseña <span class="text-error">*</span></label>
+          <label class="text-caption-xs font-medium text-text-secondary dark:text-slate-400" for="f-password">Contraseña <span class="text-error">*</span></label>
           <input id="f-password" name="password" type="password" maxlength="128"
-                 class="form-field rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+                 class="form-field rounded-lg border border-border-subtle dark:border-white/10 dark:bg-[#15171C] px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
           <p class="field-error hidden text-[11px] text-error" id="err-password"></p>
         </div>
       </div>
     </div>
 
-    <div class="sticky bottom-0 bg-white px-xl py-md border-t border-border-subtle flex items-center justify-end gap-sm rounded-b-2xl">
+    <div class="sticky bottom-0 bg-white dark:bg-[#1E2128] px-xl py-md border-t border-border-subtle dark:border-white/10 flex items-center justify-end gap-sm rounded-b-2xl">
       <button id="btn-cancelar-modal" type="button"
-              class="px-lg py-sm rounded-lg border border-border-subtle text-text-secondary hover:bg-slate-50 text-sm transition-colors">
+              class="px-lg py-sm rounded-lg border border-border-subtle dark:border-white/10 text-text-secondary dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 text-sm transition-colors">
         Cancelar
       </button>
       <button id="btn-guardar" type="button"
@@ -178,23 +178,23 @@
      class="hidden fixed inset-0 z-[100] flex items-center justify-center p-lg"
      role="dialog" aria-modal="true">
   <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
-  <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm z-10 p-xl flex flex-col gap-lg">
+  <div class="relative bg-white dark:bg-[#1E2128] rounded-2xl shadow-2xl w-full max-w-sm z-10 p-xl flex flex-col gap-lg">
     <div class="flex items-center gap-md">
       <span class="material-symbols-outlined text-[36px] text-warning">lock_reset</span>
       <div>
-        <h3 class="font-semibold text-text-primary">Resetear contraseña</h3>
-        <p class="text-caption-xs text-text-secondary">Define una nueva clave</p>
+        <h3 class="font-semibold text-text-primary dark:text-[#E8E9EC]">Resetear contraseña</h3>
+        <p class="text-caption-xs text-text-secondary dark:text-slate-400">Define una nueva clave</p>
       </div>
     </div>
     <div class="flex flex-col gap-xs">
-      <label class="text-caption-xs font-medium text-text-secondary" for="reset-password">Nueva contraseña</label>
+      <label class="text-caption-xs font-medium text-text-secondary dark:text-slate-400" for="reset-password">Nueva contraseña</label>
       <input id="reset-password" type="password" maxlength="128"
-             class="rounded-lg border border-border-subtle px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
+             class="rounded-lg border border-border-subtle dark:border-white/10 dark:bg-[#15171C] px-md py-sm text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none" />
       <p class="text-[11px] text-error hidden" id="err-reset-password"></p>
     </div>
     <div class="flex gap-sm justify-end">
       <button id="btn-cancelar-reset" type="button"
-              class="px-lg py-sm rounded-lg border border-border-subtle text-text-secondary hover:bg-slate-50 text-sm transition-colors">
+              class="px-lg py-sm rounded-lg border border-border-subtle dark:border-white/10 text-text-secondary dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 text-sm transition-colors">
         Cancelar
       </button>
       <button id="btn-confirmar-reset" type="button"

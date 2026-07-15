@@ -7,7 +7,7 @@
   {% if messages %}
   <div class="flex flex-col gap-sm">
     {% for message in messages %}
-    <div class="rounded-lg px-md py-sm text-sm {% if message.tags == 'success' %}bg-primary/10 text-primary{% else %}bg-red-50 text-error{% endif %}">
+    <div class="rounded-lg px-md py-sm text-sm {% if message.tags == 'success' %}bg-primary/10 dark:bg-primary/20 text-primary{% else %}bg-red-50 text-error{% endif %}">
       {{ message }}
     </div>
     {% endfor %}
@@ -15,15 +15,15 @@
   {% endif %}
 
   <section class="grid grid-cols-1 xl:grid-cols-[1.2fr,0.8fr] gap-md">
-    <article class="bg-white rounded-xl shadow-sm border border-border-subtle p-lg">
-      <h2 class="font-semibold text-text-primary">Entrada de mercaderia</h2>
-      <p class="text-caption-xs text-text-secondary mt-xs">Registra una compra y actualiza el stock automaticamente.</p>
+    <article class="bg-white dark:bg-[#1E2128] rounded-xl shadow-sm border border-border-subtle dark:border-white/10 p-lg">
+      <h2 class="font-semibold text-text-primary dark:text-[#E8E9EC]">Entrada de mercaderia</h2>
+      <p class="text-caption-xs text-text-secondary dark:text-slate-400 mt-xs">Registra una compra y actualiza el stock automaticamente.</p>
 
       <form method="post" action="{% url 'compras:registrar' %}" class="mt-lg grid grid-cols-1 sm:grid-cols-2 gap-md">
         {% csrf_token %}
         <div class="flex flex-col gap-xs">
-          <label class="text-caption-xs font-medium text-text-secondary" for="proveedor">Proveedor</label>
-          <select id="proveedor" name="proveedor" class="rounded-lg border border-border-subtle px-md py-sm text-sm">
+          <label class="text-caption-xs font-medium text-text-secondary dark:text-slate-400" for="proveedor">Proveedor</label>
+          <select id="proveedor" name="proveedor" class="rounded-lg border border-border-subtle dark:border-white/10 px-md py-sm text-sm">
             <option value="">Selecciona proveedor</option>
             {% for proveedor in proveedores %}
             <option value="{{ proveedor.id }}">{{ proveedor.nombre }} - {{ proveedor.ruc }}</option>
@@ -31,8 +31,8 @@
           </select>
         </div>
         <div class="flex flex-col gap-xs">
-          <label class="text-caption-xs font-medium text-text-secondary" for="producto">Producto</label>
-          <select id="producto" name="producto" class="rounded-lg border border-border-subtle px-md py-sm text-sm">
+          <label class="text-caption-xs font-medium text-text-secondary dark:text-slate-400" for="producto">Producto</label>
+          <select id="producto" name="producto" class="rounded-lg border border-border-subtle dark:border-white/10 px-md py-sm text-sm">
             <option value="">Selecciona producto</option>
             {% for producto in productos %}
             <option value="{{ producto.id }}">{{ producto.nombre }} | Stock: {{ producto.stock_actual }}</option>
@@ -40,14 +40,14 @@
           </select>
         </div>
         <div class="flex flex-col gap-xs">
-          <label class="text-caption-xs font-medium text-text-secondary" for="cantidad">Cantidad</label>
+          <label class="text-caption-xs font-medium text-text-secondary dark:text-slate-400" for="cantidad">Cantidad</label>
           <input id="cantidad" name="cantidad" type="number" min="1" value="1"
-                 class="rounded-lg border border-border-subtle px-md py-sm text-sm font-mono" />
+                 class="rounded-lg border border-border-subtle dark:border-white/10 px-md py-sm text-sm font-mono" />
         </div>
         <div class="flex flex-col gap-xs">
-          <label class="text-caption-xs font-medium text-text-secondary" for="costo_unitario">Costo unitario (S/.)</label>
+          <label class="text-caption-xs font-medium text-text-secondary dark:text-slate-400" for="costo_unitario">Costo unitario (S/.)</label>
           <input id="costo_unitario" name="costo_unitario" type="number" min="0" step="0.01"
-                 class="rounded-lg border border-border-subtle px-md py-sm text-sm font-mono" />
+                 class="rounded-lg border border-border-subtle dark:border-white/10 px-md py-sm text-sm font-mono" />
         </div>
         <div class="sm:col-span-2 flex justify-end">
           <button type="submit" class="rounded-lg bg-primary px-lg py-sm text-sm font-medium text-white hover:bg-primary-hover transition-colors">
@@ -57,44 +57,44 @@
       </form>
     </article>
 
-    <article class="bg-white rounded-xl shadow-sm border border-border-subtle p-lg">
-      <h2 class="font-semibold text-text-primary">Nuevo proveedor</h2>
+    <article class="bg-white dark:bg-[#1E2128] rounded-xl shadow-sm border border-border-subtle dark:border-white/10 p-lg">
+      <h2 class="font-semibold text-text-primary dark:text-[#E8E9EC]">Nuevo proveedor</h2>
       <form method="post" action="{% url 'compras:proveedor_crear' %}" class="mt-lg flex flex-col gap-sm">
         {% csrf_token %}
         <input name="nombre" type="text" placeholder="Nombre del proveedor"
-               class="rounded-lg border border-border-subtle px-md py-sm text-sm" />
+               class="rounded-lg border border-border-subtle dark:border-white/10 px-md py-sm text-sm" />
         <input name="ruc" type="text" maxlength="11" placeholder="RUC"
-               class="rounded-lg border border-border-subtle px-md py-sm text-sm font-mono" />
+               class="rounded-lg border border-border-subtle dark:border-white/10 px-md py-sm text-sm font-mono" />
         <input name="contacto" type="text" placeholder="Contacto"
-               class="rounded-lg border border-border-subtle px-md py-sm text-sm" />
-        <button type="submit" class="rounded-lg border border-border-subtle px-md py-sm text-sm font-medium text-text-secondary hover:bg-slate-50">
+               class="rounded-lg border border-border-subtle dark:border-white/10 px-md py-sm text-sm" />
+        <button type="submit" class="rounded-lg border border-border-subtle dark:border-white/10 px-md py-sm text-sm font-medium text-text-secondary dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5">
           Guardar proveedor
         </button>
       </form>
     </article>
   </section>
 
-  <section class="bg-white rounded-xl shadow-sm border border-border-subtle overflow-hidden">
-    <div class="px-lg py-md border-b border-border-subtle">
-      <h2 class="font-semibold text-text-primary">Compras recientes</h2>
-      <p class="text-caption-xs text-text-secondary">Ultimas entradas de mercaderia registradas</p>
+  <section class="bg-white dark:bg-[#1E2128] rounded-xl shadow-sm border border-border-subtle dark:border-white/10 overflow-hidden">
+    <div class="px-lg py-md border-b border-border-subtle dark:border-white/10">
+      <h2 class="font-semibold text-text-primary dark:text-[#E8E9EC]">Compras recientes</h2>
+      <p class="text-caption-xs text-text-secondary dark:text-slate-400">Ultimas entradas de mercaderia registradas</p>
     </div>
     <div class="overflow-x-auto">
       <table class="w-full text-left text-sm">
-        <thead class="bg-slate-50">
+        <thead class="bg-slate-50 dark:bg-white/5">
           <tr>
-            <th class="px-lg py-sm text-caption-xs text-text-secondary uppercase">Fecha</th>
-            <th class="px-lg py-sm text-caption-xs text-text-secondary uppercase">Proveedor</th>
-            <th class="px-lg py-sm text-caption-xs text-text-secondary uppercase">Detalle</th>
-            <th class="px-lg py-sm text-caption-xs text-text-secondary uppercase text-right">Total</th>
+            <th class="px-lg py-sm text-caption-xs text-text-secondary dark:text-slate-400 uppercase">Fecha</th>
+            <th class="px-lg py-sm text-caption-xs text-text-secondary dark:text-slate-400 uppercase">Proveedor</th>
+            <th class="px-lg py-sm text-caption-xs text-text-secondary dark:text-slate-400 uppercase">Detalle</th>
+            <th class="px-lg py-sm text-caption-xs text-text-secondary dark:text-slate-400 uppercase text-right">Total</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-border-subtle">
+        <tbody class="divide-y divide-border-subtle dark:divide-white/10">
           {% for compra in compras %}
           <tr>
             <td class="px-lg py-sm">{{ compra.fecha|date:"d/m/Y H:i" }}</td>
-            <td class="px-lg py-sm text-text-secondary">{{ compra.proveedor.nombre }}</td>
-            <td class="px-lg py-sm text-text-secondary">
+            <td class="px-lg py-sm text-text-secondary dark:text-slate-400">{{ compra.proveedor.nombre }}</td>
+            <td class="px-lg py-sm text-text-secondary dark:text-slate-400">
               {% for detalle in compra.detalles.all %}
                 {{ detalle.producto.nombre }} x{{ detalle.cantidad }}{% if not forloop.last %}, {% endif %}
               {% endfor %}
@@ -102,7 +102,7 @@
             <td class="px-lg py-sm text-right font-mono font-semibold">S/. {{ compra.total }}</td>
           </tr>
           {% empty %}
-          <tr><td colspan="4" class="px-lg py-xxl text-center text-text-secondary">No hay compras registradas.</td></tr>
+          <tr><td colspan="4" class="px-lg py-xxl text-center text-text-secondary dark:text-slate-400">No hay compras registradas.</td></tr>
           {% endfor %}
         </tbody>
       </table>
