@@ -106,6 +106,28 @@ class InventarioDashboardTests(TestCase):
         self.assertIn('Total productos', content)
 
 
+class InventarioContextTests(TestCase):
+    def setUp(self):
+        self.url = reverse('productos:dashboard')
+        self.user_model = get_user_model()
+
+    def _login_user(self, role):
+        user = self.user_model.objects.create_user(
+            username=f'{role}_ctx_user',
+            password='password123',
+            rol=role,
+        )
+        self.client.login(username=user.username, password='password123')
+        return user
+
+    def test_context_has_page_title_and_active_nav(self):
+        self._login_user('admin')
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['page_title'], 'Inventario')
+        self.assertEqual(response.context['active_nav'], 'productos:dashboard')
+
+
 class ProductosDashboardApiTests(TestCase):
     def setUp(self):
         self.user_model = get_user_model()

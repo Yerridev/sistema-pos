@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+{% load static %}
 <html lang="es">
 <head>
     <meta charset="utf-8"/>
@@ -8,109 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-    <script>
-        tailwind.config = {
-          darkMode: "class",
-          theme: {
-            extend: {
-              colors: {
-                "error-container": "#ffdad6",
-                "background": "#f3fcef",
-                "primary-fixed": "#66ff8e",
-                "surface-container-low": "#edf6e9",
-                "warning": "#FFC107",
-                "background-base": "#F7F8FA",
-                "surface-bright": "#f3fcef",
-                "surface-container": "#e7f1e4",
-                "primary-hover": "#20BD5A",
-                "secondary-fixed": "#a8f0e3",
-                "surface-variant": "#dce5d8",
-                "surface-container-high": "#e2ebde",
-                "primary-container": "#25d366",
-                "primary": "#006d2f",
-                "secondary": "#1c695f",
-                "on-secondary-container": "#226e63",
-                "tertiary-container": "#ffa07e",
-                "on-background": "#151e16",
-                "outline-variant": "#bbcbb9",
-                "on-tertiary": "#ffffff",
-                "on-secondary": "#ffffff",
-                "surface-container-lowest": "#ffffff",
-                "secondary-container": "#a5ede0",
-                "on-surface": "#151e16",
-                "border-glass": "rgba(255, 255, 255, 0.3)",
-                "border-subtle": "#E9EDEF",
-                "on-tertiary-fixed-variant": "#763319",
-                "on-primary-fixed-variant": "#005322",
-                "error": "#EA0038",
-                "secondary-fixed-dim": "#8cd4c7",
-                "accent-glow": "#4ADE80",
-                "on-surface-variant": "#3c4a3d",
-                "on-tertiary-container": "#78351b",
-                "on-error": "#ffffff",
-                "tertiary": "#93492e",
-                "critical-red-light": "#FEE2E2",
-                "primary-fixed-dim": "#3de273",
-                "surface-dim": "#d3ddd0",
-                "on-tertiary-fixed": "#380d00",
-                "surface-glass": "rgba(255, 255, 255, 0.6)",
-                "on-secondary-fixed-variant": "#005047",
-                "outline": "#6c7b6b",
-                "text-secondary": "#667781",
-                "inverse-surface": "#2a332a",
-                "surface-container-highest": "#dce5d8",
-                "surface": "#f3fcef",
-                "surface-solid": "#FFFFFF",
-                "text-primary": "#111B21",
-                "on-primary-container": "#005523",
-                "inverse-primary": "#3de273",
-                "surface-tint": "#006d2f",
-                "tertiary-fixed-dim": "#ffb59b",
-                "on-primary": "#ffffff",
-                "success": "#25D366",
-                "on-secondary-fixed": "#00201c",
-                "tertiary-fixed": "#ffdbcf",
-                "inverse-on-surface": "#eaf3e6",
-                "on-error-container": "#93000a",
-                "on-primary-fixed": "#002109"
-              },
-              borderRadius: {
-                "DEFAULT": "0.25rem",
-                "lg": "0.5rem",
-                "xl": "0.75rem",
-                "full": "9999px"
-              },
-              spacing: {
-                "base": "4px",
-                "lg": "16px",
-                "xl": "24px",
-                "md": "12px",
-                "xs": "4px",
-                "sm": "8px",
-                "xxl": "32px"
-              },
-              fontFamily: {
-                "caption-xs": ["Inter", "sans-serif"],
-                "body-main": ["Inter", "sans-serif"],
-                "metadata-sm": ["Inter", "sans-serif"],
-                "label-md": ["Inter", "sans-serif"],
-                "title-lg": ["Inter", "sans-serif"],
-                "price-table": ["JetBrains Mono", "monospace"],
-                "display-total": ["JetBrains Mono", "monospace"]
-              },
-              fontSize: {
-                "caption-xs": ["12px", {"lineHeight": "1.2", "fontWeight": "400"}],
-                "body-main": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
-                "metadata-sm": ["14px", {"lineHeight": "1.4", "fontWeight": "400"}],
-                "label-md": ["16px", {"lineHeight": "1.4", "fontWeight": "500"}],
-                "title-lg": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
-                "price-table": ["16px", {"lineHeight": "1", "fontWeight": "500"}],
-                "display-total": ["32px", {"lineHeight": "1.2", "fontWeight": "600"}]
-              }
-            },
-          },
-        }
-    </script>
+    <script src="{% static 'js/tailwind.config.js' %}"></script>
     <style>
         .glass-card {
             background: rgba(255, 255, 255, 0.6);

@@ -1,86 +1,28 @@
 <!DOCTYPE html>
 {% load static %}
-<html class="light" lang="es-pe">
+<html lang="es-pe">
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>{% block title %}Cobrate POS{% endblock %}</title>
+    <!-- Theme init: se ejecuta antes del render para evitar flash de tema incorrecto -->
+    <script>
+        (function () {
+            var saved = localStorage.getItem('cobrate-theme');
+            var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            var isDark = saved ? saved === 'dark' : prefersDark;
+            document.documentElement.classList.toggle('dark', isDark);
+            document.documentElement.classList.toggle('light', !isDark);
+        })();
+    </script>
     
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
     
-    <!-- Tailwind CSS -->
+<!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        primary: "#006d2f",
-                        success: "#25D366",
-                        error: "#EA0038",
-                        warning: "#FFC107",
-                        "text-primary": "#111B21",
-                        "text-secondary": "#667781",
-                        "background-base": "#F7F8FA",
-                        "border-subtle": "#E9EDEF",
-                        "border-glass": "rgba(255, 255, 255, 0.3)",
-                        "surface-glass": "rgba(255, 255, 255, 0.6)",
-                        "on-surface": "#151e16",
-                        "on-surface-variant": "#3c4a3d",
-                        "on-primary": "#ffffff",
-                        "on-secondary-container": "#226e63",
-                        "on-tertiary-container": "#78351b",
-                        "critical-red-light": "#FEE2E2",
-                        "surface-container": "#e7f1e4",
-                        "surface-container-high": "#e2ebde",
-                        "outline-variant": "#bbcbb9",
-                        "secondary": "#1c695f",
-                        "tertiary": "#93492e",
-                        "primary-container": "#25d366",
-                        "secondary-container": "#a5ede0",
-                        "tertiary-fixed": "#ffdbcf",
-                        "primary-hover": "#20BD5A",
-                        "accent-glow": "#4ADE80",
-                    },
-                    borderRadius: {
-                        DEFAULT: "0.25rem",
-                        lg: "0.5rem",
-                        xl: "0.75rem",
-                        full: "9999px",
-                    },
-                    spacing: {
-                        md: "12px",
-                        lg: "16px",
-                        sm: "8px",
-                        xs: "4px",
-                        xxl: "32px",
-                        xl: "24px",
-                    },
-                    fontFamily: {
-                        "caption-xs": ["Inter", "sans-serif"],
-                        "price-table": ["JetBrains Mono", "monospace"],
-                        "metadata-sm": ["Inter", "sans-serif"],
-                        "label-md": ["Inter", "sans-serif"],
-                        "title-lg": ["Inter", "sans-serif"],
-                        "body-main": ["Inter", "sans-serif"],
-                        "display-total": ["JetBrains Mono", "monospace"],
-                    },
-                    fontSize: {
-                        "caption-xs": ["12px", { lineHeight: "1.2", fontWeight: "400" }],
-                        "price-table": ["16px", { lineHeight: "1", fontWeight: "500" }],
-                        "metadata-sm": ["14px", { lineHeight: "1.4", fontWeight: "400" }],
-                        "label-md": ["16px", { lineHeight: "1.4", fontWeight: "500" }],
-                        "title-lg": ["20px", { lineHeight: "1.4", fontWeight: "600" }],
-                        "body-main": ["16px", { lineHeight: "1.5", fontWeight: "400" }],
-                        "display-total": ["32px", { lineHeight: "1.2", fontWeight: "600" }],
-                    },
-                }
-            }
-        }
-    </script>
+    <script src="{% static 'js/tailwind.config.js' %}"></script>
     <style>
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
@@ -96,7 +38,22 @@
     
     {% block extra_css %}{% endblock %}
 </head>
-<body class="bg-background-base font-body-main text-on-surface min-h-screen flex">
+<body class="bg-background-base dark:bg-[#15171C] font-body-main text-on-surface dark:text-[#E8E9EC] min-h-screen flex transition-colors">
+    <script>
+        function toggleTheme() {
+            var isDark = document.documentElement.classList.toggle('dark');
+            document.documentElement.classList.toggle('light', !isDark);
+            localStorage.setItem('cobrate-theme', isDark ? 'dark' : 'light');
+            syncThemeIcon();
+        }
+        function syncThemeIcon() {
+            var isDark = document.documentElement.classList.contains('dark');
+            document.querySelectorAll('[data-theme-icon]').forEach(function (el) {
+                el.textContent = isDark ? 'light_mode' : 'dark_mode';
+            });
+        }
+        document.addEventListener('DOMContentLoaded', syncThemeIcon);
+    </script>
     <!-- Sidebar -->
     {% include "components/sidebar.html" %}
     
@@ -119,6 +76,7 @@
         <span class="material-symbols-outlined" data-icon="add">add</span>
     </button>
     
+    <script src="{% static 'js/ui-kit.js' %}"></script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>
