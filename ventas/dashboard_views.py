@@ -14,6 +14,7 @@ from django.views import View
 from django.views.decorators.http import require_POST
 
 from caja.models import Caja, MovimientoCaja
+from caja.services import CajaService
 from core.exceptions import AppError
 from productos.models import Producto
 from .models import DetalleVenta, Venta
@@ -261,28 +262,23 @@ class CajaDashboardView(View):
 @login_required
 @require_POST
 def abrir_caja(request):
-    if Caja.objects.filter(cajero=request.user, estado="ABIERTA").exists():
-        messages.error(request, "Ya tienes una caja abierta.")
-        return redirect("ventas:caja_dashboard")
-
     nombre = request.POST.get("nombre", "").strip() or f"Caja {request.user.username}"
-    saldo_inicial = request.POST.get("saldo_inicial", "0").strip() or "0"
+    saldo_raw = request.POST.get("saldo_inicial", "0").strip() or "0"
 
     try:
-        saldo_inicial = Decimal(saldo_inicial)
+        saldo_inicial = Decimal(saldo_raw)
         if saldo_inicial < 0:
             raise ValueError
     except Exception:
         messages.error(request, "El saldo inicial debe ser un numero positivo.")
         return redirect("ventas:caja_dashboard")
 
-    Caja.objects.create(
-        nombre=nombre,
-        saldo_inicial=saldo_inicial,
-        cajero=request.user,
-        estado="ABIERTA",
-    )
-    messages.success(request, "Caja abierta correctamente.")
+    try:
+        CajaService.abrir(usuario=request.user, nombre=nombre, saldo_inicial=saldo_inicial)
+        messages.success(request, "Caja abierta correctamente.")
+    except AppError as exc:
+        messages.error(request, str(exc))
+
     return redirect("ventas:caja_dashboard")
 
 
@@ -293,18 +289,13 @@ def cerrar_caja(request, pk):
     if not caja:
         messages.error(request, "La caja no existe.")
         return redirect("ventas:caja_dashboard")
-    if caja.cajero_id != request.user.id and request.user.rol != "admin":
-        messages.error(request, "No puedes cerrar una caja de otro cajero.")
-        return redirect("ventas:caja_dashboard")
-    if caja.estado != "ABIERTA":
-        messages.error(request, "Solo se puede cerrar una caja abierta.")
-        return redirect("ventas:caja_dashboard")
 
-    caja.saldo_final = caja.saldo_actual
-    caja.fecha_cierre = timezone.now()
-    caja.estado = "CERRADA"
-    caja.save(update_fields=["saldo_final", "fecha_cierre", "estado"])
-    messages.success(request, "Caja cerrada correctamente.")
+    try:
+        CajaService.cerrar(caja=caja, usuario=request.user)
+        messages.success(request, "Caja cerrada correctamente.")
+    except AppError as exc:
+        messages.error(request, str(exc))
+
     return redirect("ventas:caja_dashboard")
 
 
@@ -315,38 +306,29 @@ def registrar_movimiento_caja(request, pk):
     if not caja:
         messages.error(request, "La caja no existe.")
         return redirect("ventas:caja_dashboard")
-    if caja.cajero_id != request.user.id and request.user.rol != "admin":
-        messages.error(request, "No puedes registrar movimientos en esta caja.")
-        return redirect("ventas:caja_dashboard")
-    if caja.estado != "ABIERTA":
-        messages.error(request, "Solo se registran movimientos en cajas abiertas.")
-        return redirect("ventas:caja_dashboard")
 
     tipo = request.POST.get("tipo", "").strip()
     concepto = request.POST.get("concepto", "").strip()
-    monto = request.POST.get("monto", "").strip()
+    monto_raw = request.POST.get("monto", "").strip()
 
-    if tipo not in {"INGRESO", "EGRESO"}:
-        messages.error(request, "Selecciona un tipo de movimiento valido.")
-        return redirect("ventas:caja_dashboard")
     if not concepto:
         messages.error(request, "El concepto del movimiento es obligatorio.")
         return redirect("ventas:caja_dashboard")
 
     try:
-        monto = Decimal(monto)
+        monto = Decimal(monto_raw)
         if monto <= 0:
             raise ValueError
     except Exception:
         messages.error(request, "El monto debe ser mayor que cero.")
         return redirect("ventas:caja_dashboard")
 
-    MovimientoCaja.objects.create(
-        caja=caja,
-        tipo=tipo,
-        monto=monto,
-        concepto=concepto,
-        usuario=request.user,
-    )
-    messages.success(request, "Movimiento registrado correctamente.")
+    try:
+        CajaService.registrar_movimiento(
+            caja=caja, usuario=request.user, tipo=tipo, monto=monto, concepto=concepto
+        )
+        messages.success(request, "Movimiento registrado correctamente.")
+    except AppError as exc:
+        messages.error(request, str(exc))
+
     return redirect("ventas:caja_dashboard")
