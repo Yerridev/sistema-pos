@@ -13,6 +13,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     Usa el serializer custom que incluye validación de usuario activo y rol.
     """
     serializer_class = CustomTokenObtainPairSerializer
+    permission_classes = [AllowAny]
     
     @extend_schema(
         summary="Obtener tokens JWT",
@@ -27,6 +28,7 @@ class CustomTokenRefreshView(TokenRefreshView):
     """
     View personalizado para renovar access token.
     """
+    permission_classes = [AllowAny]
     
     @extend_schema(
         summary="Renovar access token",

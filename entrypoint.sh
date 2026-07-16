@@ -1,6 +1,11 @@
 #!/bin/sh
 set -e
 
+echo "Waiting for PostgreSQL..."
+until pg_isready -h "${DB_HOST:-db}" -p "${DB_PORT:-5432}" -U "${DB_USER}"; do
+  sleep 1
+done
+
 echo "Running migrations..."
 python manage.py migrate --noinput
 

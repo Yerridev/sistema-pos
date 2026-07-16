@@ -35,3 +35,9 @@ class ModeloBase(models.Model):
         """Soft delete: desactiva el registro sin borrarlo."""
         self.activo = False
         self.save(update_fields=['activo', 'actualizado_en'])
+
+    def delete(self, *args, **kwargs):
+        """Override para aplicar soft delete ante llamadas directas a delete()."""
+        self.activo = False
+        self.save(update_fields=['activo', 'actualizado_en'])
+        return 1

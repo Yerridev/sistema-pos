@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.response import Response
 
 from core.exceptions import AccesoNoAutorizado, AppError, RecursoNoEncontrado, ReglaNegocioViolada
@@ -79,3 +80,7 @@ class VentaViewSet(viewsets.ModelViewSet):
             return self._domain_error_response(exc)
 
         return Response(self._serialize_response(venta), status=status.HTTP_200_OK)
+
+    def destroy(self, request, *args, **kwargs):
+        """Bloquea la eliminación física de ventas."""
+        raise MethodNotAllowed("DELETE", detail="Las ventas no se pueden eliminar. Use POST /anular/.")

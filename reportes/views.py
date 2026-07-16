@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework import serializers
 
 from caja.models import Caja
+from reportes.permissions import IsAdminUser
 from reportes.services import ReporteService
 
 
@@ -39,7 +40,7 @@ def _parse_date(request, key, default=None):
     ),
 )
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, IsAdminUser])
 def ventas_del_dia_api(request):
     data = ReporteService.ventas_del_dia(_parse_date(request, "fecha", timezone.localdate()))
     return Response({
@@ -58,7 +59,7 @@ def ventas_del_dia_api(request):
     ),
 )
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, IsAdminUser])
 def stock_critico_api(request):
     return Response({"results": ReporteService.stock_critico()})
 
