@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Admin - Cobrate POS{% endblock %}
+
+{% block content %}
+<div class="flex flex-col gap-xl">
+  <!-- Stats Cards -->
+  <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-md">
+    <article class="bg-white dark:bg-[#1E2128] rounded-xl shadow-sm border border-border-subtle dark:border-white/10 p-lg">
+      <p class="text-caption-xs text-text-secondary dark:text-slate-400">Ventas hoy</p>
+      <p class="mt-xs text-3xl font-bold text-text-primary dark:text-[#E8E9EC]">{{ ventas_dia.cantidad }}</p>
+      <p class="text-sm text-text-secondary dark:text-slate-400">S/. {{ ventas_dia.total }}</p>
+    </article>
+    <article class="bg-white dark:bg-[#1E2128] rounded-xl shadow-sm border border-border-subtle dark:border-white/10 p-lg">
+      <p class="text-caption-xs text-text-secondary dark:text-slate-400">Cajas abiertas</p>
+      <p class="mt-xs text-3xl font-bold text-primary">{{ cajas_abiertas|length }}</p>
+    </article>
+    <article class="bg-white dark:bg-[#1E2128] rounded-xl shadow-sm border border-border-subtle dark:border-white/10 p-lg">
+      <p class="text-caption-xs text-text-secondary dark:text-slate-400">Stock critico</p>
+      <p class="mt-xs text-3xl font-bold text-error">{{ stock_critico|length }}</p>
+    </article>
+    <article class="bg-white dark:bg-[#1E2128] rounded-xl shadow-sm border border-border-subtle dark:border-white/10 p-lg">
+      <p class="text-caption-xs text-text-secondary dark:text-slate-400">Total ventas S/.</p>
+      <p class="mt-xs text-3xl font-bold text-primary">{{ ventas_dia.total }}</p>
+    </article>
+  </section>
+
+  <!-- Gráficos -->
+  <section class="grid grid-cols-1 xl:grid-cols-2 gap-md">
+    <article class="bg-white dark:bg-[#1E2128] rounded-xl shadow-sm border border-border-subtle dark:border-white/10 p-lg">
+      <h2 class="font-semibold text-text-primary dark:text-[#E8E9EC]">Ventas por método</h2>
+      <div class="mt-md" style="max-width: 350px;">
+        <canvas id="chartMetodo"></canvas>
+      </div>
+    </article>
+    <article class="bg-white dark:bg-[#1E2128] rounded-xl shadow-sm border border-border-subtle dark:border-white/10 p-lg">
+      <h2 class="font-semibold text-text-primary dark:text-[#E8E9EC]">Top productos hoy</h2>
+      <div class="mt-md" style="height: 250px;">
+        <canvas id="chartTop"></canvas>
+      </div>
+    </article>
+  </section>
+
+  <!-- Cajas abiertas -->
+  <section class="bg-white dark:bg-[#1E2128] rounded-xl shadow-sm border border-border-subtle dark:border-white/10 overflow-hidden">
+    <div class="px-lg py-md border-b border-border-subtle dark:border-white/10">
+      <h2 class="font-semibold text-text-primary dark:text-[#E8E9EC]">Cajas abiertas</h2>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm">
+        <thead class="bg-slate-50 dark:bg-white/5">
+          <tr>
+            <th class="px-lg py-sm text-caption-xs text-text-secondary dark:text-slate-400 uppercase">Caja</th>
+            <th class="px-lg py-sm text-caption-xs text-text-secondary dark:text-slate-400 uppercase">Cajero</th>
+            <th class="px-lg py-sm text-caption-xs text-text-secondary dark:text-slate-400 uppercase text-right">Saldo actual</th>
+            <th class="px-lg py-sm text-caption-xs text-text-secondary dark:text-slate-400 uppercase">Abierta desde</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border-subtle dark:divide-white/10">
+          {% for caja in cajas_abiertas %}
+          <tr>
+            <td class="px-lg py-sm font-medium">{{ caja.nombre }}</td>
+            <td class="px-lg py-sm">{{ caja.cajero }}</td>
+            <td class="px-lg py-sm text-right font-mono">S/. {{ caja.saldo_actual }}</td>
+            <td class="px-lg py-sm">{{ caja.fecha_apertura|date:"d/m/Y H:i" }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" class="px-lg py-xxl text-center text-text-secondary dark:text-slate-400">No hay cajas abiertas.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Stock crítico -->
+  <section class="bg-white dark:bg-[#1E2128] rounded-xl shadow-sm border border-border-subtle dark:border-white/10 overflow-hidden">
+    <div class="px-lg py-md border-b border-border-subtle dark:border-white/10">
+      <h2 class="font-semibold text-text-primary dark:text-[#E8E9EC]">Alertas de stock critico</h2>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm">
+        <thead class="bg-slate-50 dark:bg-white/5">
+          <tr>
+            <th class="px-lg py-sm">Producto</th>
+            <th class="px-lg py-sm">Stock</th>
+            <th class="px-lg py-sm">Mínimo</th>
+            <th class="px-lg py-sm text-right">Sugerencia</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border-subtle dark:divide-white/10">
+          {% for prod in stock_critico %}
+          <tr class="bg-red-50">
+            <td class="px-lg py-sm font-medium">{{ prod.nombre }}</td>
+            <td class="px-lg py-sm text-error font-mono">{{ prod.stock_actual }}</td>
+            <td class="px-lg py-sm font-mono">{{ prod.stock_minimo }}</td>
+            <td class="px-lg py-sm text-right font-mono">{{ prod.sugerencia_reposicion }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" class="px-lg py-xxl text-center text-text-secondary">Sin alertas.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Gráfico de torta: Métodos de pago
+  const ctx1 = document.getElementById('chartMetodo');
+  if (ctx1) {
+    new Chart(ctx1, {
+      type: 'doughnut',
+      data: {
+        labels: [{% for metodo, total in ventas_dia.por_metodo.items %}'{{ metodo }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+          data: [{% for metodo, total in ventas_dia.por_metodo.items %}{{ total }}{% if not forloop.last %},{% endif %}{% endfor %}],
+          backgroundColor: ['#22c55e', '#3b82f6', '#f59e0b'],
+          borderWidth: 0,
+        }]
+      },
+      options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+    });
+  }
+
+  // Gráfico de barras: Top productos
+  const ctx2 = document.getElementById('chartTop');
+  if (ctx2) {
+    new Chart(ctx2, {
+      type: 'bar',
+      data: {
+        labels: [{% for item in ventas_dia.top_productos %}'{{ item.nombre|truncatechars:20 }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+          label: 'Unidades',
+          data: [{% for item in ventas_dia.top_productos %}{{ item.cantidad }}{% if not forloop.last %},{% endif %}{% endfor %}],
+          backgroundColor: '#6366f1',
+          borderRadius: 4,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+        plugins: { legend: { display: false } },
+        scales: { x: { beginAtZero: true } }
+      }
+    });
+  }
+});
+</script>
+{% endblock %}
+{% endblock %}
