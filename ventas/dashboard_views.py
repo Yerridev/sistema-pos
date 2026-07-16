@@ -1,4 +1,4 @@
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
@@ -283,7 +283,7 @@ def abrir_caja(request):
         saldo_inicial = Decimal(saldo_raw)
         if saldo_inicial < 0:
             raise ValueError
-    except Exception:
+    except (ValueError, TypeError, InvalidOperation):
         messages.error(request, "El saldo inicial debe ser un numero positivo.")
         return redirect("ventas:caja_dashboard")
 
@@ -333,7 +333,7 @@ def registrar_movimiento_caja(request, pk):
         monto = Decimal(monto_raw)
         if monto <= 0:
             raise ValueError
-    except Exception:
+    except (ValueError, TypeError, InvalidOperation):
         messages.error(request, "El monto debe ser mayor que cero.")
         return redirect("ventas:caja_dashboard")
 

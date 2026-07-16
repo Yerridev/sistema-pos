@@ -9,6 +9,9 @@ from django.views import View
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_protect
 
+from core.exceptions import ReglaNegocioViolada
+from usuarios.services import UsuarioService
+
 User = get_user_model()
 
 
@@ -102,45 +105,17 @@ class UsuarioListView(View):
 class UsuarioCreateView(View):
     def post(self, request):
         data = _parse_request_data(request)
-        errors = {}
-
-        username = (data.get("username") or "").strip()
-        password = (data.get("password") or "").strip()
-        email = (data.get("email") or "").strip()
-        first_name = (data.get("first_name") or "").strip()
-        last_name = (data.get("last_name") or "").strip()
-        rol = (data.get("rol") or "").strip()
-
-        roles = getattr(User, "ROL_CHOICES", [])
-        valid_roles = {value for value, _ in roles}
-
-        if not username:
-            errors["username"] = "El usuario es obligatorio."
-        if not password:
-            errors["password"] = "La contraseña es obligatoria."
-        if not rol:
-            errors["rol"] = "El rol es obligatorio."
-        elif valid_roles and rol not in valid_roles:
-            errors["rol"] = "Rol inválido."
-
-        if username and User.objects.filter(username=username).exists():
-            errors["username"] = "El usuario ya existe."
-        if email and User.objects.filter(email=email).exclude(username=username).exists():
-            errors["email"] = "El email ya está en uso."
-
-        if errors:
-            return JsonResponse({"errors": errors}, status=400)
-
-        user = User.objects.create_user(
-            username=username,
-            password=password,
-            email=email or None,
-            first_name=first_name,
-            last_name=last_name,
-        )
-        user.rol = rol
-        user.is_active = True
-        user.save(update_fields=["rol", "is_active"])
+        try:
+            user = UsuarioService.crear(
+                username=data.get("username", ""),
+                password=data.get("password", ""),
+                email=data.get("email"),
+                first_name=data.get("first_name", ""),
+                last_name=data.get("last_name", ""),
+                rol=data.get("rol", "cajero"),
+            )
+        except ReglaNegocioViolada as exc:
+            return JsonResponse({"error": str(exc)}, status=400)
 
         return JsonResponse({"success": True, "message": f'Usuario "{user.username}" creado correctamente.'}, status=201)
 
@@ -165,38 +140,17 @@ class UsuarioUpdateView(View):
     def post(self, request, pk):
         user = get_object_or_404(User, pk=pk)
         data = _parse_request_data(request)
-        errors = {}
-
-        username = (data.get("username") or "").strip()
-        email = (data.get("email") or "").strip()
-        first_name = (data.get("first_name") or "").strip()
-        last_name = (data.get("last_name") or "").strip()
-        rol = (data.get("rol") or "").strip()
-
-        roles = getattr(User, "ROL_CHOICES", [])
-        valid_roles = {value for value, _ in roles}
-
-        if not username:
-            errors["username"] = "El usuario es obligatorio."
-        if not rol:
-            errors["rol"] = "El rol es obligatorio."
-        elif valid_roles and rol not in valid_roles:
-            errors["rol"] = "Rol inválido."
-
-        if username and User.objects.filter(username=username).exclude(pk=user.pk).exists():
-            errors["username"] = "El usuario ya existe."
-        if email and User.objects.filter(email=email).exclude(pk=user.pk).exists():
-            errors["email"] = "El email ya está en uso."
-
-        if errors:
-            return JsonResponse({"errors": errors}, status=400)
-
-        user.username = username
-        user.email = email or ""
-        user.first_name = first_name
-        user.last_name = last_name
-        user.rol = rol
-        user.save(update_fields=["username", "email", "first_name", "last_name", "rol"])
+        try:
+            UsuarioService.actualizar(
+                user=user,
+                username=data.get("username", ""),
+                email=data.get("email"),
+                first_name=data.get("first_name", ""),
+                last_name=data.get("last_name", ""),
+                rol=data.get("rol", "cajero"),
+            )
+        except ReglaNegocioViolada as exc:
+            return JsonResponse({"error": str(exc)}, status=400)
 
         return JsonResponse({"success": True, "message": f'Usuario "{user.username}" actualizado correctamente.'})
 
@@ -205,16 +159,19 @@ class UsuarioUpdateView(View):
 class UsuarioStatusView(View):
     def post(self, request, pk):
         user = get_object_or_404(User, pk=pk)
-        if user.pk == request.user.pk:
-            return JsonResponse({"error": "No podés desactivar tu propio usuario."}, status=400)
-
         data = _parse_request_data(request)
         is_active = data.get("is_active")
         if is_active is None:
             return JsonResponse({"error": "Estado inválido."}, status=400)
 
-        user.is_active = is_active.lower() == "true"
-        user.save(update_fields=["is_active"])
+        try:
+            UsuarioService.toggle_activo(
+                user=request.user,
+                target_user=user,
+            )
+        except ReglaNegocioViolada as exc:
+            return JsonResponse({"error": str(exc)}, status=400)
+
         estado = "activado" if user.is_active else "desactivado"
         return JsonResponse({"success": True, "message": f'Usuario "{user.username}" {estado}.'})
 
@@ -226,9 +183,9 @@ class UsuarioResetPasswordView(View):
         data = _parse_request_data(request)
         password = (data.get("password") or "").strip()
 
-        if not password:
-            return JsonResponse({"errors": {"password": "La contraseña es obligatoria."}}, status=400)
+        try:
+            UsuarioService.reset_password(user=user, new_password=password)
+        except ReglaNegocioViolada as exc:
+            return JsonResponse({"error": str(exc)}, status=400)
 
-        user.set_password(password)
-        user.save(update_fields=["password"])
         return JsonResponse({"success": True, "message": f'Contraseña actualizada para "{user.username}".'})

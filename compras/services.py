@@ -5,7 +5,25 @@ from django.db import transaction
 from core.exceptions import RecursoNoEncontrado, ReglaNegocioViolada
 from productos.models import Producto
 
-from .models import Compra, DetalleCompra
+from .models import Compra, DetalleCompra, Proveedor
+
+
+class ProveedorService:
+    """Servicio de dominio para operaciones de proveedores."""
+
+    @classmethod
+    def crear(cls, nombre, ruc, contacto=""):
+        if not nombre.strip():
+            raise ReglaNegocioViolada("El nombre del proveedor es obligatorio.")
+        if not ruc or len(ruc) != 11:
+            raise ReglaNegocioViolada("El RUC debe tener 11 dígitos.")
+        if Proveedor.objects.filter(ruc=ruc).exists():
+            raise ReglaNegocioViolada("Ya existe un proveedor con ese RUC.")
+        return Proveedor.objects.create(
+            nombre=nombre.strip(),
+            ruc=ruc,
+            contacto=contacto,
+        )
 
 
 class CompraService:
