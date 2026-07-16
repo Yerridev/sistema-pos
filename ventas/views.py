@@ -59,6 +59,12 @@ class VentaViewSet(viewsets.ModelViewSet):
 
         return Response(self._serialize_response(venta), status=status.HTTP_201_CREATED)
 
+    @action(detail=False, methods=["get"], url_path="politicas-descuento")
+    def politicas_descuento(self, request):
+        """Lista las políticas de descuento disponibles (Strategy Pattern)."""
+        from core.descuentos import POLITICAS
+        return Response({"politicas": list(POLITICAS.keys())})
+
     @action(detail=True, methods=["post"])
     def anular(self, request, pk=None):
         venta = self.get_object()
