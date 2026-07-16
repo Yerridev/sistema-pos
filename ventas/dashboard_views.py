@@ -16,6 +16,7 @@ from django.views.decorators.http import require_POST
 from caja.models import Caja, MovimientoCaja
 from caja.services import CajaService
 from core.exceptions import AppError
+from productos.cache import get_cached_productos, set_cached_productos
 from productos.models import Producto
 from .models import DetalleVenta, Venta
 from .services import VentaService
@@ -96,6 +97,11 @@ def buscar_productos_venta(request):
     if not query:
         return JsonResponse({"results": []})
 
+    # Cache first: la búsqueda por código/nombre se repite en cada tecleo.
+    cached = get_cached_productos(query, scope="venta")
+    if cached is not None:
+        return JsonResponse(cached)
+
     productos = Producto.objects.select_related("categoria").filter(activo=True, stock_actual__gt=0)
     exact_barcode = productos.filter(codigo_barra__iexact=query).first()
 
@@ -108,7 +114,7 @@ def buscar_productos_venta(request):
         ).order_by("nombre")[:10]
         match_type = "search"
 
-    return JsonResponse({
+    payload = {
         "match_type": match_type,
         "results": [
             {
@@ -122,7 +128,9 @@ def buscar_productos_venta(request):
             }
             for producto in results
         ],
-    })
+    }
+    set_cached_productos(query, payload, scope="venta")
+    return JsonResponse(payload)
 
 
 @method_decorator(login_required, name="dispatch")

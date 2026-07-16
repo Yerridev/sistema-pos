@@ -1,6 +1,7 @@
 from decimal import Decimal, InvalidOperation
 
 from core.exceptions import MargenInvalidoError, ReglaNegocioViolada
+from .cache import invalidate_productos_cache
 from .models import Categoria, Producto
 
 
@@ -31,7 +32,7 @@ class ProductoService:
         costo = cls._coerce_decimal(data["costo"])
         cls._validar_margen(precio_venta, costo)
 
-        return Producto.objects.create(
+        producto = Producto.objects.create(
             nombre=data.get("nombre", "").strip(),
             categoria=categoria_obj,
             precio_venta=precio_venta,
@@ -42,6 +43,8 @@ class ProductoService:
             codigo_barra=(data.get("codigo_barra", "") or "").strip() or None,
             descripcion=(data.get("descripcion", "") or "").strip() or None,
         )
+        invalidate_productos_cache()
+        return producto
 
     @classmethod
     def actualizar(cls, producto, data):
@@ -89,6 +92,7 @@ class ProductoService:
             producto.activo = bool(data["activo"])
 
         producto.save()
+        invalidate_productos_cache()
         return producto
 
     @staticmethod
@@ -96,6 +100,7 @@ class ProductoService:
         """Desactiva un producto (soft delete) conservando su historial."""
         producto.activo = False
         producto.save(update_fields=["activo", "actualizado_en"])
+        invalidate_productos_cache()
         return producto
 
 
