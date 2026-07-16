@@ -1,42 +1,55 @@
-<!-- Pagination Component -->
-<!-- Usage: {% include "components/pagination.html" with page_obj=page_obj %} -->
-<div class="px-lg py-md bg-white border-t border-border-subtle flex items-center justify-between">
-    <span class="text-caption-xs text-text-secondary">
-        Showing {{ page_obj.start_index|default:1 }} to {{ page_obj.end_index|default:10 }} of {{ page_obj.paginator.count }} entries
-    </span>
-    <div class="flex gap-xs">
-        {% if page_obj.has_previous %}
-        <a href="?page=1{% if pagination_query %}&{{ pagination_query }}{% endif %}" class="p-xs px-sm border border-border-subtle rounded hover:bg-slate-50 active:scale-95 transition-all">
-            <span class="material-symbols-outlined text-[18px]" data-icon="first_page">first_page</span>
-        </a>
-        <a href="?page={{ page_obj.previous_page_number }}{% if pagination_query %}&{{ pagination_query }}{% endif %}" class="p-xs px-sm border border-border-subtle rounded hover:bg-slate-50 active:scale-95 transition-all">
-            <span class="material-symbols-outlined text-[18px]" data-icon="chevron_left">chevron_left</span>
-        </a>
-        {% else %}
-        <button disabled class="p-xs px-sm border border-border-subtle rounded opacity-50 cursor-not-allowed">
-            <span class="material-symbols-outlined text-[18px]" data-icon="chevron_left">chevron_left</span>
-        </button>
-        {% endif %}
-        
-        {% for num in page_obj.paginator.page_range %}
-            {% if page_obj.number == num %}
-            <button disabled class="p-xs px-sm bg-primary text-white rounded active:scale-95 transition-all text-caption-xs font-bold">{{ num }}</button>
-            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-            <a href="?page={{ num }}{% if pagination_query %}&{{ pagination_query }}{% endif %}" class="p-xs px-sm border border-border-subtle rounded hover:bg-slate-50 active:scale-95 transition-all text-caption-xs">{{ num }}</a>
-            {% endif %}
-        {% endfor %}
-        
-        {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}{% if pagination_query %}&{{ pagination_query }}{% endif %}" class="p-xs px-sm border border-border-subtle rounded hover:bg-slate-50 active:scale-95 transition-all">
-            <span class="material-symbols-outlined text-[18px]" data-icon="chevron_right">chevron_right</span>
-        </a>
-        <a href="?page={{ page_obj.paginator.num_pages }}{% if pagination_query %}&{{ pagination_query }}{% endif %}" class="p-xs px-sm border border-border-subtle rounded hover:bg-slate-50 active:scale-95 transition-all">
-            <span class="material-symbols-outlined text-[18px]" data-icon="last_page">last_page</span>
-        </a>
-        {% else %}
-        <button disabled class="p-xs px-sm border border-border-subtle rounded opacity-50 cursor-not-allowed">
-            <span class="material-symbols-outlined text-[18px]" data-icon="chevron_right">chevron_right</span>
-        </button>
-        {% endif %}
-    </div>
+{# Pagination Component #}
+{# Usage: {% include "components/pagination.html" with page_obj=page_obj %} #}
+{% if page_obj.paginator.num_pages > 1 %}
+<div class="px-lg py-md border-t border-border-subtle dark:border-white/10 flex items-center justify-between flex-wrap gap-sm">
+  <span class="text-caption-xs text-text-secondary dark:text-slate-400">
+    Mostrando {{ page_obj.start_index }}–{{ page_obj.end_index }} de {{ page_obj.paginator.count }}
+  </span>
+  <div class="flex gap-xs">
+    {% if page_obj.has_previous %}
+    <a href="?page=1{% if pagination_query %}&{{ pagination_query }}{% endif %}"
+       class="p-xs px-sm border border-border-subtle dark:border-white/10 rounded hover:bg-slate-50 dark:hover:bg-white/5 active:scale-95 transition-all">
+      <span class="material-symbols-outlined text-[18px]">first_page</span>
+    </a>
+    <a href="?page={{ page_obj.previous_page_number }}{% if pagination_query %}&{{ pagination_query }}{% endif %}"
+       class="p-xs px-sm border border-border-subtle dark:border-white/10 rounded hover:bg-slate-50 dark:hover:bg-white/5 active:scale-95 transition-all">
+      <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+    </a>
+    {% else %}
+    <button disabled class="p-xs px-sm border border-border-subtle dark:border-white/10 rounded opacity-40 cursor-not-allowed">
+      <span class="material-symbols-outlined text-[18px]">first_page</span>
+    </button>
+    <button disabled class="p-xs px-sm border border-border-subtle dark:border-white/10 rounded opacity-40 cursor-not-allowed">
+      <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+    </button>
+    {% endif %}
+
+    {% for num in page_obj.paginator.page_range %}
+      {% if page_obj.number == num %}
+      <button disabled class="p-xs px-sm bg-primary text-white rounded font-bold text-xs">{{ num }}</button>
+      {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+      <a href="?page={{ num }}{% if pagination_query %}&{{ pagination_query }}{% endif %}"
+         class="p-xs px-sm border border-border-subtle dark:border-white/10 rounded hover:bg-slate-50 dark:hover:bg-white/5 active:scale-95 transition-all text-xs">{{ num }}</a>
+      {% endif %}
+    {% endfor %}
+
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}{% if pagination_query %}&{{ pagination_query }}{% endif %}"
+       class="p-xs px-sm border border-border-subtle dark:border-white/10 rounded hover:bg-slate-50 dark:hover:bg-white/5 active:scale-95 transition-all">
+      <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+    </a>
+    <a href="?page={{ page_obj.paginator.num_pages }}{% if pagination_query %}&{{ pagination_query }}{% endif %}"
+       class="p-xs px-sm border border-border-subtle dark:border-white/10 rounded hover:bg-slate-50 dark:hover:bg-white/5 active:scale-95 transition-all">
+      <span class="material-symbols-outlined text-[18px]">last_page</span>
+    </a>
+    {% else %}
+    <button disabled class="p-xs px-sm border border-border-subtle dark:border-white/10 rounded opacity-40 cursor-not-allowed">
+      <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+    </button>
+    <button disabled class="p-xs px-sm border border-border-subtle dark:border-white/10 rounded opacity-40 cursor-not-allowed">
+      <span class="material-symbols-outlined text-[18px]">last_page</span>
+    </button>
+    {% endif %}
+  </div>
 </div>
+{% endif %}

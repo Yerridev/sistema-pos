@@ -12,7 +12,7 @@ class ProveedorService:
     """Servicio de dominio para operaciones de proveedores."""
 
     @classmethod
-    def crear(cls, nombre, ruc, contacto=""):
+    def crear(cls, nombre, ruc, contacto="", usuario=None):
         if not nombre.strip():
             raise ReglaNegocioViolada("El nombre del proveedor es obligatorio.")
         if not ruc or len(ruc) != 11:
@@ -23,6 +23,7 @@ class ProveedorService:
             nombre=nombre.strip(),
             ruc=ruc,
             contacto=contacto,
+            creado_por=usuario,
         )
 
 
@@ -35,13 +36,14 @@ class CompraService:
 
     @classmethod
     @transaction.atomic
-    def registrar(cls, proveedor, detalles):
+    def registrar(cls, proveedor, detalles, usuario=None):
         """Registra una compra, incrementa stock y actualiza costo de productos.
 
         Args:
             proveedor: instancia de ``Proveedor`` asociada a la compra.
             detalles: lista de diccionarios con ``producto`` (instancia o pk),
                 ``cantidad`` (int > 0) y ``costo_unitario`` (Decimal >= 0).
+            usuario: instancia de ``Usuario`` que registra la compra (opcional).
 
         Raises:
             ReglaNegocioViolada: si no hay detalles, la cantidad no es mayor
@@ -51,7 +53,7 @@ class CompraService:
         if not detalles:
             raise ReglaNegocioViolada("Debe enviar al menos un detalle.")
 
-        compra = Compra.objects.create(proveedor=proveedor)
+        compra = Compra.objects.create(proveedor=proveedor, creado_por=usuario)
         productos_actualizar = []
 
         for item in detalles:

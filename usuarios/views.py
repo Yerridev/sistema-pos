@@ -2,6 +2,7 @@ import json
 
 from django.contrib.auth import authenticate, get_user_model, login
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.decorators import method_decorator
@@ -90,9 +91,13 @@ def dashboard_view(request):
 class UsuarioListView(View):
     def get(self, request):
         roles = getattr(User, "ROL_CHOICES", [])
-        users = User.objects.all().order_by("-date_joined")
+        users_qs = User.objects.all().order_by("-date_joined")
+        paginator = Paginator(users_qs, 15)
+        page_obj = paginator.get_page(request.GET.get("page", 1))
+
         context = {
-            "users": users,
+            "users": page_obj.object_list,
+            "page_obj": page_obj,
             "roles": roles,
             "current_user_id": request.user.id,
             "page_title": "Usuarios",

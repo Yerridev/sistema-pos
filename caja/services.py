@@ -35,6 +35,7 @@ class CajaService:
             saldo_inicial=saldo_inicial,
             cajero=usuario,
             estado='ABIERTA',
+            creado_por=usuario,
         )
 
     @classmethod

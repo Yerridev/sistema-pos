@@ -20,7 +20,7 @@ class ProductoService:
         return Decimal(str(value))
 
     @classmethod
-    def crear(cls, data):
+    def crear(cls, data, usuario=None):
         """Crea un producto validando que el margen sea positivo."""
         categoria = data.get("categoria")
         if isinstance(categoria, Categoria):
@@ -42,6 +42,7 @@ class ProductoService:
             unidad=data.get("unidad", "unidad"),
             codigo_barra=(data.get("codigo_barra", "") or "").strip() or None,
             descripcion=(data.get("descripcion", "") or "").strip() or None,
+            creado_por=usuario,
         )
         invalidate_productos_cache()
         return producto
@@ -116,12 +117,13 @@ class CategoriaService:
             raise ReglaNegocioViolada("Ya existe una categoria con ese nombre.")
 
     @classmethod
-    def crear(cls, nombre, descripcion=None):
+    def crear(cls, nombre, descripcion=None, usuario=None):
         """Crea una categoría validando que el nombre sea único."""
         cls._validar_nombre_unico(nombre)
         return Categoria.objects.create(
             nombre=nombre.strip(),
             descripcion=(descripcion or "").strip() or None,
+            creado_por=usuario,
         )
 
     @classmethod

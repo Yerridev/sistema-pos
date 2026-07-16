@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 
 
@@ -15,6 +16,7 @@ class ModeloBase(models.Model):
     - ``activo``: flag de soft delete (default=True).
     - ``creado_en``: timestamp de creación (auto_now_add).
     - ``actualizado_en``: timestamp de última modificación (auto_now).
+    - ``creado_por``: FK al usuario que creó el registro.
     - ``eliminar()``: soft delete que desactiva el registro.
     - ``ManagerActivos`` como manager por defecto.
     - ``all_objects``: manager que incluye inactivos.
@@ -23,6 +25,13 @@ class ModeloBase(models.Model):
     activo = models.BooleanField(default=True)
     creado_en = models.DateTimeField(auto_now_add=True)
     actualizado_en = models.DateTimeField(auto_now=True)
+    creado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='+',
+    )
 
     objects = ManagerActivos()
     all_objects = models.Manager()
@@ -31,10 +40,12 @@ class ModeloBase(models.Model):
         abstract = True
         ordering = ['-creado_en']
 
-    def eliminar(self):
+    def eliminar(self, usuario=None):
         """Soft delete: desactiva el registro sin borrarlo."""
         self.activo = False
-        self.save(update_fields=['activo', 'actualizado_en'])
+        if usuario:
+            self.creado_por = usuario
+        self.save(update_fields=['activo', 'actualizado_en', 'creado_por'])
 
     def delete(self, *args, **kwargs):
         """Override para aplicar soft delete ante llamadas directas a delete()."""

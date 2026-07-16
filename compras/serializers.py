@@ -27,9 +27,11 @@ class CompraSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         detalles = validated_data.pop("detalles")
+        usuario = self.context.get("request").user if self.context.get("request") else None
         return CompraService.registrar(
             proveedor=validated_data["proveedor"],
             detalles=detalles,
+            usuario=usuario,
         )
 
 

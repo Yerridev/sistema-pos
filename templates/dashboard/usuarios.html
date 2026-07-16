@@ -22,7 +22,7 @@
     <div class="px-lg py-md border-b border-border-subtle dark:border-white/10 flex items-center justify-between">
       <div>
         <h3 class="font-semibold text-text-primary dark:text-[#E8E9EC]">Usuarios registrados</h3>
-        <p class="text-caption-xs text-text-secondary dark:text-slate-400">{{ users|length }} usuarios</p>
+        <p class="text-caption-xs text-text-secondary dark:text-slate-400">{{ page_obj.paginator.count }} usuarios</p>
       </div>
     </div>
 
@@ -88,6 +88,7 @@
         </tbody>
       </table>
     </div>
+    {% include "components/pagination.html" with page_obj=page_obj %}
   </section>
 </div>
 

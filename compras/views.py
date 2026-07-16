@@ -1,3 +1,4 @@
+from django.core.paginator import Paginator
 from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -52,10 +53,15 @@ def _is_admin(user):
 @login_required
 @user_passes_test(_is_admin)
 def compras_dashboard(request):
+    compras_qs = Compra.objects.select_related("proveedor").prefetch_related("detalles__producto").order_by("-fecha")
+    paginator = Paginator(compras_qs, 10)
+    page_obj = paginator.get_page(request.GET.get("page", 1))
+
     context = {
         "proveedores": Proveedor.objects.filter(activo=True).order_by("nombre"),
         "productos": Producto.objects.select_related("categoria").filter(activo=True).order_by("nombre"),
-        "compras": Compra.objects.select_related("proveedor").prefetch_related("detalles__producto")[:10],
+        "compras": page_obj.object_list,
+        "page_obj": page_obj,
         "page_title": "Compras",
         "active_nav": "compras:dashboard",
     }
@@ -73,7 +79,7 @@ def registrar_compra(request):
             "cantidad": int(request.POST.get("cantidad")),
             "costo_unitario": Decimal(request.POST.get("costo_unitario", "").strip()),
         }]
-        compra = CompraService.registrar(proveedor=proveedor, detalles=detalles)
+        compra = CompraService.registrar(proveedor=proveedor, detalles=detalles, usuario=request.user)
         messages.success(request, f"Compra #{compra.id} registrada correctamente.")
     except (Proveedor.DoesNotExist, ValueError, InvalidOperation, AppError) as exc:
         messages.error(request, str(exc))
@@ -89,7 +95,7 @@ def crear_proveedor(request):
     contacto = request.POST.get("contacto", "").strip()
 
     try:
-        ProveedorService.crear(nombre=nombre, ruc=ruc, contacto=contacto)
+        ProveedorService.crear(nombre=nombre, ruc=ruc, contacto=contacto, usuario=request.user)
     except ReglaNegocioViolada as exc:
         messages.error(request, str(exc))
         return redirect("compras:dashboard")

@@ -78,10 +78,18 @@ class VentaDashboardView(View):
         paginator = Paginator(queryset, 12)
         page_obj = paginator.get_page(request.GET.get("page", 1))
 
+        pagination_parts = []
+        if filters_ctx.get("fecha"):
+            pagination_parts.append(f"fecha={filters_ctx['fecha']}")
+        if filters_ctx.get("estado"):
+            pagination_parts.append(f"estado={filters_ctx['estado']}")
+        pagination_query = "&".join(pagination_parts)
+
         context = {
             "ventas": page_obj.object_list,
             "page_obj": page_obj,
             "filters": filters_ctx,
+            "pagination_query": pagination_query,
             "stats": _venta_resumen(queryset),
             "top_productos": _top_productos(queryset),
             "estados": Venta.ESTADO_CHOICES,
@@ -260,12 +268,15 @@ class CajaDashboardView(View):
             cajas = cajas.filter(cajero=request.user)
 
         caja_actual = cajas.filter(estado="ABIERTA").order_by("-fecha_apertura").first()
-        movimientos = caja_actual.movimientos.all()[:10] if caja_actual else []
+        movimientos_qs = caja_actual.movimientos.all() if caja_actual else MovimientoCaja.objects.none()
+        paginator = Paginator(movimientos_qs, 10)
+        movimientos_page = paginator.get_page(request.GET.get("page", 1))
         historial = cajas.order_by("-fecha_apertura")[:5]
 
         context = {
             "caja_actual": caja_actual,
-            "movimientos": movimientos,
+            "movimientos": movimientos_page.object_list,
+            "page_obj": movimientos_page,
             "historial": historial,
             "page_title": "Caja",
             "active_nav": "ventas:caja_dashboard",

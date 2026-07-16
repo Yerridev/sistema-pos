@@ -396,8 +396,14 @@
     clearCartButton.disabled = items.length === 0;
   }
 
-  searchButton.addEventListener("click", () => searchProducts(false));
-  searchInput.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); searchProducts(true); } });
+  let searchDebounce = null;
+  function debouncedSearch() {
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(() => searchProducts(false), 300);
+  }
+  searchButton.addEventListener("click", () => { clearTimeout(searchDebounce); searchProducts(false); });
+  searchInput.addEventListener("input", debouncedSearch);
+  searchInput.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); clearTimeout(searchDebounce); searchProducts(true); } });
   searchResults.addEventListener("click", e => { const b = e.target.closest(".add-product"); if (!b) return; const p = lastResults.get(String(b.dataset.id)); if (p) addToCart(p); });
   cartLines.addEventListener("input", e => { if (!e.target.classList.contains("cart-qty")) return; const item = cart.get(String(e.target.dataset.id)); if (!item) return; item.cantidad = Math.max(1, Math.min(Number(e.target.value || 1), item.stock_actual)); e.target.value = item.cantidad; renderCart(); });
   cartLines.addEventListener("click", e => {
@@ -419,7 +425,7 @@
   document.addEventListener("keydown", e => {
     if (e.key === "F2") { e.preventDefault(); searchInput.focus(); searchInput.select(); return; }
     if (e.key === "F9") { e.preventDefault(); if (!confirmButton.disabled) saleForm.requestSubmit(confirmButton); return; }
-    if (e.key === "Escape") { if (document.activeElement === searchInput || searchInput.value) { e.preventDefault(); searchInput.value = ""; searchProducts(false); searchInput.focus(); } }
+    if (e.key === "Escape") { if (document.activeElement === searchInput || searchInput.value) { e.preventDefault(); clearTimeout(searchDebounce); searchInput.value = ""; searchProducts(false); searchInput.focus(); } }
   });
   searchInput.focus();
   renderCart();

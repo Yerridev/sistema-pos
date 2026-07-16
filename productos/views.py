@@ -193,7 +193,7 @@ class ProductoCreateView(View):
             data = request.POST.dict()
 
         try:
-            producto = ProductoService.crear(data)
+            producto = ProductoService.crear(data, usuario=request.user)
         except AppError as exc:
             return JsonResponse({'error': str(exc)}, status=400)
 
@@ -286,7 +286,7 @@ class CategoriaCreateView(View):
         nombre = data.get('nombre', '').strip()
         descripcion = data.get('descripcion', '').strip()
         try:
-            categoria = CategoriaService.crear(nombre, descripcion)
+            categoria = CategoriaService.crear(nombre, descripcion, usuario=request.user)
         except AppError as exc:
             return JsonResponse({'error': str(exc)}, status=400)
 

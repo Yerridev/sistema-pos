@@ -140,6 +140,7 @@ class VentaService:
             caja=caja,
             metodo_pago=metodo_pago,
             descuento=descuento,
+            creado_por=usuario,
         )
 
         productos_actualizar = []
