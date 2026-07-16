@@ -19,6 +19,7 @@
         {% url 'ventas:nueva_venta' as url_nueva_venta %}
         {% url 'usuarios:list' as url_usuarios %}
         {% url 'reportes:dashboard' as url_reportes %}
+        {% url 'reportes:admin_dashboard' as url_admin_dashboard %}
         {% url 'compras:dashboard' as url_compras %}
 
         <a class="flex items-center gap-md p-md rounded-lg transition-transform hover:translate-x-1 font-inter text-sm font-semibold
@@ -53,6 +54,12 @@
         {% endif %}
 
         {% if user.rol == 'admin' %}
+        <a class="flex items-center gap-md p-md rounded-lg transition-transform hover:translate-x-1 font-inter text-sm font-semibold
+                  {% if active_nav|default:'' == 'reportes:admin_dashboard' %}bg-success text-white shadow-[0_0_10px_rgba(37,211,102,0.4)]{% else %}text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5{% endif %}"
+           href="{{ url_admin_dashboard }}">
+            <span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+            Dashboard
+        </a>
         <a class="flex items-center gap-md p-md rounded-lg transition-transform hover:translate-x-1 font-inter text-sm font-semibold
                   {% if active_nav|default:'' == 'reportes:dashboard' %}bg-success text-white shadow-[0_0_10px_rgba(37,211,102,0.4)]{% else %}text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5{% endif %}"
            href="{{ url_reportes }}">
