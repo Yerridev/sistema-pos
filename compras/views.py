@@ -1,5 +1,6 @@
-from rest_framework import viewsets
+from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from decimal import Decimal, InvalidOperation
@@ -12,7 +13,7 @@ from productos.permissions import IsAdmin
 from productos.models import Producto
 from .models import Compra, Proveedor
 from .serializers import CompraReadSerializer, CompraSerializer, ProveedorSerializer
-from .services import CompraService
+from .services import CompraService, ProveedorService
 
 
 class ProveedorViewSet(viewsets.ModelViewSet):
@@ -29,6 +30,19 @@ class CompraViewSet(viewsets.ModelViewSet):
         if self.action == "create":
             return CompraSerializer
         return CompraReadSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            compra = serializer.save()
+        except ReglaNegocioViolada as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        except RecursoNoEncontrado as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_404_NOT_FOUND)
+        except AppError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(self.get_serializer(compra).data, status=status.HTTP_201_CREATED)
 
 
 def _is_admin(user):
@@ -74,13 +88,11 @@ def crear_proveedor(request):
     ruc = request.POST.get("ruc", "").strip()
     contacto = request.POST.get("contacto", "").strip()
 
-    if not nombre or not ruc:
-        messages.error(request, "Nombre y RUC son obligatorios.")
-        return redirect("compras:dashboard")
-    if Proveedor.objects.filter(ruc=ruc).exists():
-        messages.error(request, "Ya existe un proveedor con ese RUC.")
+    try:
+        ProveedorService.crear(nombre=nombre, ruc=ruc, contacto=contacto)
+    except ReglaNegocioViolada as exc:
+        messages.error(request, str(exc))
         return redirect("compras:dashboard")
 
-    Proveedor.objects.create(nombre=nombre, ruc=ruc, contacto=contacto)
     messages.success(request, "Proveedor registrado correctamente.")
     return redirect("compras:dashboard")
