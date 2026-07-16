@@ -63,8 +63,13 @@ class VentaViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=["get"], url_path="politicas-descuento")
     def politicas_descuento(self, request):
         """Lista las políticas de descuento disponibles (Strategy Pattern)."""
-        from core.descuentos import POLITICAS
-        return Response({"politicas": list(POLITICAS.keys())})
+        from core.descuentos import POLITICAS, POLITICAS_LABELS
+        return Response({
+            "politicas": [
+                {"key": key, "label": POLITICAS_LABELS.get(key, key)}
+                for key in POLITICAS
+            ]
+        })
 
     @action(detail=True, methods=["post"])
     def anular(self, request, pk=None):

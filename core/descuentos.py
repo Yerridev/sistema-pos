@@ -93,6 +93,18 @@ POLITICAS = {
     "precio_especial": PrecioEspecial,
 }
 
+# Etiquetas legibles para exponer las politicas en la UI (dashboard) y en el
+# endpoint GET /api/ventas/politicas-descuento/. Unico punto de verdad para
+# los nombres visibles: agregar una politica nueva aqui basta para que
+# aparezca en ambos lugares sin tocar el frontend.
+POLITICAS_LABELS = {
+    "fijo": "Descuento en soles (monto fijo)",
+    "porcentaje": "Descuento por porcentaje",
+    "cliente_frecuente": "Cliente frecuente (5% automatico)",
+    "volumen": "Descuento por cantidad comprada (automatico)",
+    "precio_especial": "Precio especial acordado con el cliente",
+}
+
 
 def obtener_politica(nombre: str) -> PoliticaDescuento:
     """Retorna una instancia de la política solicitada.

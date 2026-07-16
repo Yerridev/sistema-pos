@@ -15,6 +15,7 @@ from django.views.decorators.http import require_POST
 
 from caja.models import Caja, MovimientoCaja
 from caja.services import CajaService
+from core.descuentos import POLITICAS, POLITICAS_LABELS
 from core.exceptions import AppError
 from productos.cache import get_cached_productos, set_cached_productos
 from productos.models import Producto
@@ -151,6 +152,12 @@ class NuevaVentaView(View):
         context = {
             "cajas_abiertas": cajas,
             "metodos_pago": Venta.METODO_PAGO_CHOICES,
+            # Strategy Pattern: las opciones vienen de core.descuentos.POLITICAS,
+            # nunca hardcodeadas en el template. Agregar una politica nueva ahi
+            # basta para que aparezca aqui sin tocar esta vista.
+            "politicas_descuento": [
+                (key, POLITICAS_LABELS.get(key, key)) for key in POLITICAS
+            ],
             "page_title": "Nueva Venta",
             "active_nav": "ventas:nueva_venta",
         }
@@ -167,10 +174,20 @@ class NuevaVentaView(View):
             messages.error(request, "Agrega productos al carrito antes de confirmar la venta.")
             return redirect("ventas:nueva_venta")
 
+        # Si el cajero eligio una politica del Strategy Pattern, el descuento
+        # se calcula en VentaService via core.descuentos.obtener_politica();
+        # esta vista solo arma el contexto crudo que esa politica necesita.
+        politica_descuento = request.POST.get("politica_descuento", "").strip() or None
+        descuento = Decimal("0.00")
+        contexto_descuento = None
+
         try:
-            descuento = Decimal(request.POST.get("descuento", "0").strip() or "0")
-        except Exception:
-            messages.error(request, "El descuento debe ser un numero valido.")
+            if politica_descuento:
+                contexto_descuento = self._build_contexto_descuento(request, politica_descuento, detalles_raw)
+            else:
+                descuento = Decimal(request.POST.get("descuento", "0").strip() or "0")
+        except (InvalidOperation, ValueError, TypeError):
+            messages.error(request, "Revisa el valor ingresado para el descuento.")
             return redirect("ventas:nueva_venta")
 
         detalles = [{"producto": pid, "cantidad": qty} for pid, qty in detalles_raw]
@@ -181,6 +198,8 @@ class NuevaVentaView(View):
                 metodo_pago=metodo_pago,
                 descuento=descuento,
                 detalles=detalles,
+                politica_descuento=politica_descuento,
+                contexto_descuento=contexto_descuento,
             )
         except AppError as exc:
             messages.error(request, str(exc))
@@ -188,6 +207,26 @@ class NuevaVentaView(View):
 
         messages.success(request, f"Venta #{venta.id} registrada correctamente por S/. {venta.total}.")
         return redirect("ventas:detalle_venta", pk=venta.pk)
+
+    def _build_contexto_descuento(self, request, politica, detalles_raw):
+        """Arma el ``contexto`` que consume la politica elegida.
+
+        Cada politica de ``core.descuentos`` espera claves distintas en su
+        contexto (ver Strategy Pattern); esta vista solo traduce el POST del
+        formulario web a ese diccionario, sin decidir el calculo del
+        descuento en si.
+        """
+        if politica == "fijo":
+            return {"descuento_fijo": Decimal(request.POST.get("descuento_fijo", "0").strip() or "0")}
+        if politica == "porcentaje":
+            return {"porcentaje": Decimal(request.POST.get("descuento_porcentaje", "0").strip() or "0")}
+        if politica == "cliente_frecuente":
+            return {"es_cliente_frecuente": True}
+        if politica == "volumen":
+            return {"cantidad_total": sum(qty for _, qty in detalles_raw)}
+        if politica == "precio_especial":
+            return {"precio_especial_total": Decimal(request.POST.get("precio_especial_total", "0").strip() or "0")}
+        return {}
 
     def _parse_cart_items(self, request):
         cart_items = request.POST.get("cart_items", "").strip()

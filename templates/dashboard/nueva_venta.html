@@ -142,14 +142,56 @@
           </div>
         </div>
 
-        <div>
-          <label class="text-caption-xs font-medium text-text-secondary" for="descuento">Descuento general</label>
-          <div class="relative mt-xs">
-            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-text-secondary">S/.</span>
-            <input id="descuento" name="descuento" type="number" min="0" step="0.01" value="0.00"
-                   class="w-full rounded-lg border border-border-subtle dark:border-white/10 dark:bg-[#15171C] pl-10 pr-md py-sm text-sm font-mono text-text-primary dark:text-[#E8E9EC] focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+        <fieldset>
+          <legend class="text-caption-xs font-medium text-text-secondary">Descuento</legend>
+          <div class="mt-xs">
+            <select id="politica-descuento" name="politica_descuento"
+                    class="w-full rounded-lg border border-border-subtle dark:border-white/10 dark:bg-[#15171C] px-md py-sm text-sm text-text-primary dark:text-[#E8E9EC] focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+              <option value="">Descuento manual (lo escribe el cajero)</option>
+              {% for key, label in politicas_descuento %}
+              <option value="{{ key }}">{{ label }}</option>
+              {% endfor %}
+            </select>
           </div>
-        </div>
+
+          <div id="descuento-manual-wrapper" class="mt-sm">
+            <label class="text-caption-xs font-medium text-text-secondary" for="descuento">Monto a descontar</label>
+            <div class="relative mt-xs">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-text-secondary">S/.</span>
+              <input id="descuento" name="descuento" type="number" min="0" step="0.01" value="0.00"
+                     class="w-full rounded-lg border border-border-subtle dark:border-white/10 dark:bg-[#15171C] pl-10 pr-md py-sm text-sm font-mono text-text-primary dark:text-[#E8E9EC] focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+            </div>
+          </div>
+
+          <div id="descuento-fijo-wrapper" class="mt-sm hidden">
+            <label class="text-caption-xs font-medium text-text-secondary" for="descuento_fijo">Monto del descuento</label>
+            <div class="relative mt-xs">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-text-secondary">S/.</span>
+              <input id="descuento_fijo" name="descuento_fijo" type="number" min="0" step="0.01" value="0.00"
+                     class="w-full rounded-lg border border-border-subtle dark:border-white/10 dark:bg-[#15171C] pl-10 pr-md py-sm text-sm font-mono text-text-primary dark:text-[#E8E9EC] focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+            </div>
+          </div>
+
+          <div id="descuento-porcentaje-wrapper" class="mt-sm hidden">
+            <label class="text-caption-xs font-medium text-text-secondary" for="descuento_porcentaje">Porcentaje de descuento</label>
+            <div class="relative mt-xs">
+              <input id="descuento_porcentaje" name="descuento_porcentaje" type="number" min="0" max="100" step="0.01" value="0"
+                     class="w-full rounded-lg border border-border-subtle dark:border-white/10 dark:bg-[#15171C] pl-md pr-10 py-sm text-sm font-mono text-text-primary dark:text-[#E8E9EC] focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-text-secondary">%</span>
+            </div>
+          </div>
+
+          <div id="precio-especial-wrapper" class="mt-sm hidden">
+            <label class="text-caption-xs font-medium text-text-secondary" for="precio_especial_total">Precio acordado con el cliente</label>
+            <div class="relative mt-xs">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-text-secondary">S/.</span>
+              <input id="precio_especial_total" name="precio_especial_total" type="number" min="0" step="0.01" value="0.00"
+                     class="w-full rounded-lg border border-border-subtle dark:border-white/10 dark:bg-[#15171C] pl-10 pr-md py-sm text-sm font-mono text-text-primary dark:text-[#E8E9EC] focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none">
+            </div>
+          </div>
+
+          <p id="descuento-auto-hint" class="mt-sm text-caption-xs text-text-secondary hidden"></p>
+        </fieldset>
 
         <div class="border border-border-subtle dark:border-white/10 rounded-lg overflow-hidden">
           <div id="cart-lines" class="divide-y divide-border-subtle dark:divide-white/10 max-h-[340px] overflow-y-auto" aria-live="polite">
@@ -204,6 +246,15 @@
   const cartItemsInput = document.getElementById("cart-items");
   const discountInput = document.getElementById("descuento");
   const discountLabel = document.getElementById("discount-label");
+  const politicaSelect = document.getElementById("politica-descuento");
+  const wrapperManual = document.getElementById("descuento-manual-wrapper");
+  const wrapperFijo = document.getElementById("descuento-fijo-wrapper");
+  const wrapperPorcentaje = document.getElementById("descuento-porcentaje-wrapper");
+  const wrapperPrecioEspecial = document.getElementById("precio-especial-wrapper");
+  const descuentoFijoInput = document.getElementById("descuento_fijo");
+  const descuentoPorcentajeInput = document.getElementById("descuento_porcentaje");
+  const precioEspecialInput = document.getElementById("precio_especial_total");
+  const descuentoAutoHint = document.getElementById("descuento-auto-hint");
   const confirmButton = document.getElementById("confirm-button");
   const confirmIcon = document.getElementById("confirm-icon");
   const confirmLabel = document.getElementById("confirm-label");
@@ -228,6 +279,61 @@
   }
 
   function money(value) { return `S/. ${Number(value).toFixed(2)}`; }
+
+  // Espejo en JS de core/descuentos.py, solo para previsualizar el total en
+  // vivo mientras se arma el carrito. La fuente de verdad es el backend:
+  // VentaService.registrar() llama a core.descuentos.obtener_politica() y
+  // jamas confia en este calculo del navegador.
+  function calcularDescuentoPreview(politica, importe) {
+    if (importe <= 0) return 0;
+    switch (politica) {
+      case "fijo": {
+        const monto = Math.max(Number(descuentoFijoInput.value || 0), 0);
+        return Math.min(monto, importe);
+      }
+      case "porcentaje": {
+        const pct = Number(descuentoPorcentajeInput.value || 0);
+        return pct > 0 && pct <= 100 ? importe * pct / 100 : 0;
+      }
+      case "cliente_frecuente":
+        return importe * 0.05;
+      case "volumen": {
+        const totalUnidades = Array.from(cart.values()).reduce((s, i) => s + i.cantidad, 0);
+        if (totalUnidades >= 100) return importe * 0.15;
+        if (totalUnidades >= 50) return importe * 0.10;
+        if (totalUnidades >= 20) return importe * 0.05;
+        return 0;
+      }
+      case "precio_especial": {
+        const especial = Number(precioEspecialInput.value || 0);
+        return especial > 0 && especial < importe ? importe - especial : 0;
+      }
+      default:
+        return Math.max(Number(discountInput.value || 0), 0);
+    }
+  }
+
+  // Alterna que campo contextual se muestra segun la politica elegida en el
+  // <select>. Cada politica del Strategy Pattern espera datos distintos.
+  function updatePoliticaUI() {
+    const politica = politicaSelect.value;
+    wrapperManual.classList.toggle("hidden", politica !== "");
+    wrapperFijo.classList.toggle("hidden", politica !== "fijo");
+    wrapperPorcentaje.classList.toggle("hidden", politica !== "porcentaje");
+    wrapperPrecioEspecial.classList.toggle("hidden", politica !== "precio_especial");
+
+    const hints = {
+      cliente_frecuente: "Se aplicara automaticamente un 5% de descuento sobre el total de la venta.",
+      volumen: "El descuento se calcula solo, segun la cantidad de productos en el carrito: 5% desde 20 unidades, 10% desde 50 y 15% desde 100.",
+    };
+    if (hints[politica]) {
+      descuentoAutoHint.textContent = hints[politica];
+      descuentoAutoHint.classList.remove("hidden");
+    } else {
+      descuentoAutoHint.classList.add("hidden");
+    }
+    renderCart();
+  }
 
   function isEfectivoSelected() {
     const checked = document.querySelector('input[name="metodo_pago"]:checked');
@@ -382,7 +488,7 @@
         </div>`).join("");
     }
     const importe = items.reduce((s, i) => s + Number(i.precio_venta) * i.cantidad, 0);
-    const discount = Math.max(Number(discountInput.value || 0), 0);
+    const discount = Math.min(calcularDescuentoPreview(politicaSelect.value, importe), importe);
     const total = Math.max(importe - discount, 0);
     const subtotal = total / 1.18; const igv = total - subtotal;
     const totalUnits = items.reduce((s, i) => s + i.cantidad, 0);
@@ -414,6 +520,10 @@
   });
   clearCartButton.addEventListener("click", () => { cart.clear(); renderCart(); searchInput.focus(); });
   discountInput.addEventListener("input", renderCart);
+  politicaSelect.addEventListener("change", updatePoliticaUI);
+  descuentoFijoInput.addEventListener("input", renderCart);
+  descuentoPorcentajeInput.addEventListener("input", renderCart);
+  precioEspecialInput.addEventListener("input", renderCart);
   efectivoInput.addEventListener("input", () => { updateEfectivoUI(); confirmButton.disabled = !canConfirm(cart.size); });
   document.querySelectorAll('input[name="caja"]').forEach(i => i.addEventListener("change", renderCart));
   document.querySelectorAll('.metodo-pago-input').forEach(i => i.addEventListener("change", renderCart));
