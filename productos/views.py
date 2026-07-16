@@ -36,7 +36,7 @@ class CategoriaViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminOrReadOnly]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['nombre', 'descripcion']
-    ordering_fields = ['nombre', 'created_at']
+    ordering_fields = ['nombre', 'creado_en']
     ordering = ['nombre']
 
     @extend_schema(
@@ -59,7 +59,7 @@ class ProductoViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['categoria', 'activo']
     search_fields = ['codigo_barra', 'nombre', 'categoria__nombre']
-    ordering_fields = ['nombre', 'precio_venta', 'stock_actual', 'created_at']
+    ordering_fields = ['nombre', 'precio_venta', 'stock_actual', 'creado_en']
     ordering = ['nombre']
 
     def get_serializer_class(self):

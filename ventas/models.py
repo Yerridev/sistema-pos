@@ -2,6 +2,8 @@ from django.db import models
 from django.conf import settings
 from django.db.models import Sum
 from decimal import Decimal, ROUND_HALF_UP
+
+from core.models import ModeloBase
 from productos.models import Producto
 from caja.models import Caja
 
@@ -14,7 +16,7 @@ def money(value):
     return Decimal(value).quantize(MONEY, rounding=ROUND_HALF_UP)
 
 
-class Venta(models.Model):
+class Venta(ModeloBase):
     METODO_PAGO_CHOICES = [
         ('EFECTIVO', 'Efectivo'),
         ('TARJETA', 'Tarjeta'),
@@ -38,7 +40,7 @@ class Venta(models.Model):
     anulado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='ventas_anuladas')
     fecha_anulacion = models.DateTimeField(null=True, blank=True)
 
-    class Meta:
+    class Meta(ModeloBase.Meta):
         ordering = ['-fecha']
 
     def __str__(self):

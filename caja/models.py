@@ -2,8 +2,10 @@ from django.db import models
 from django.conf import settings
 from django.db.models import Sum, Q
 
+from core.models import ModeloBase
 
-class Caja(models.Model):
+
+class Caja(ModeloBase):
     ESTADO_CHOICES = [
         ('ABIERTA', 'Abierta'),
         ('CERRADA', 'Cerrada'),
@@ -17,7 +19,7 @@ class Caja(models.Model):
     cajero = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='cajas')
     estado = models.CharField(max_length=10, choices=ESTADO_CHOICES, default='ABIERTA')
 
-    class Meta:
+    class Meta(ModeloBase.Meta):
         ordering = ['-fecha_apertura']
         verbose_name_plural = 'Cajas'
 

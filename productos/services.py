@@ -95,7 +95,7 @@ class ProductoService:
     def eliminar(producto):
         """Desactiva un producto (soft delete) conservando su historial."""
         producto.activo = False
-        producto.save(update_fields=["activo", "updated_at"])
+        producto.save(update_fields=["activo", "actualizado_en"])
         return producto
 
 
@@ -125,7 +125,7 @@ class CategoriaService:
         cls._validar_nombre_unico(nombre, exclude=categoria)
         categoria.nombre = nombre.strip()
         categoria.descripcion = (descripcion or "").strip() or None
-        categoria.save(update_fields=["nombre", "descripcion", "updated_at"])
+        categoria.save(update_fields=["nombre", "descripcion", "actualizado_en"])
         return categoria
 
     @staticmethod
@@ -136,5 +136,5 @@ class CategoriaService:
                 "No se puede eliminar una categoria con productos activos."
             )
         categoria.activo = False
-        categoria.save(update_fields=["activo", "updated_at"])
+        categoria.save(update_fields=["activo", "actualizado_en"])
         return categoria

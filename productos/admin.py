@@ -4,8 +4,8 @@ from .models import Categoria, Producto
 
 @admin.register(Categoria)
 class CategoriaAdmin(admin.ModelAdmin):
-    list_display = ['nombre', 'activo', 'created_at']
-    list_filter = ['activo', 'created_at']
+    list_display = ['nombre', 'activo', 'creado_en']
+    list_filter = ['activo', 'creado_en']
     search_fields = ['nombre']
     ordering = ['nombre']
 
@@ -13,10 +13,10 @@ class CategoriaAdmin(admin.ModelAdmin):
 @admin.register(Producto)
 class ProductoAdmin(admin.ModelAdmin):
     list_display = ['nombre', 'categoria', 'precio_venta', 'costo', 'stock_actual', 'stock_minimo', 'stock_critico', 'activo']
-    list_filter = ['activo', 'categoria', 'created_at']
+    list_filter = ['activo', 'categoria', 'creado_en']
     search_fields = ['nombre', 'codigo_barra']
     ordering = ['nombre']
-    readonly_fields = ['created_at', 'updated_at', 'ganancia_unitaria']
+    readonly_fields = ['creado_en', 'actualizado_en', 'ganancia_unitaria']
     fieldsets = (
         ('Información Básica', {
             'fields': ('codigo_barra', 'nombre', 'categoria', 'descripcion')
@@ -28,6 +28,6 @@ class ProductoAdmin(admin.ModelAdmin):
             'fields': ('stock_actual', 'stock_minimo', 'unidad')
         }),
         ('Estado', {
-            'fields': ('activo', 'created_at', 'updated_at')
+            'fields': ('activo', 'creado_en', 'actualizado_en')
         }),
     )

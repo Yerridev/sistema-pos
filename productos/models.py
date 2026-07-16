@@ -1,16 +1,15 @@
-from django.db import models
 from django.core.validators import MinValueValidator
+from django.db import models
+
+from core.models import ModeloBase
 
 
-class Categoria(models.Model):
+class Categoria(ModeloBase):
     """Categoría de productos."""
     nombre = models.CharField(max_length=100, unique=True)
     descripcion = models.TextField(blank=True, null=True)
-    activo = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
-    class Meta:
+    class Meta(ModeloBase.Meta):
         ordering = ['nombre']
         verbose_name_plural = 'Categorías'
 
@@ -18,7 +17,7 @@ class Categoria(models.Model):
         return self.nombre
 
 
-class Producto(models.Model):
+class Producto(ModeloBase):
     """Producto del inventario."""
     UNIDAD_CHOICES = [
         ('unidad', 'Unidad'),
@@ -37,16 +36,23 @@ class Producto(models.Model):
     stock_actual = models.IntegerField(default=0, validators=[MinValueValidator(0)])
     stock_minimo = models.IntegerField(default=10, validators=[MinValueValidator(0)])
     unidad = models.CharField(max_length=20, choices=UNIDAD_CHOICES, default='unidad')
-    activo = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
-    class Meta:
+    class Meta(ModeloBase.Meta):
         ordering = ['nombre']
         indexes = [
             models.Index(fields=['codigo_barra']),
             models.Index(fields=['categoria']),
             models.Index(fields=['activo']),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(stock_actual__gte=0),
+                name='stock_no_negativo',
+            ),
+            models.CheckConstraint(
+                check=models.Q(precio_venta__gte=models.F('costo')),
+                name='precio_venta_mayor_igual_costo',
+            ),
         ]
 
     def __str__(self):

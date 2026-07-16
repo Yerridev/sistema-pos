@@ -1,16 +1,16 @@
 from django.core.validators import MinValueValidator
 from django.db import models
 
+from core.models import ModeloBase
 from productos.models import Producto
 
 
-class Proveedor(models.Model):
+class Proveedor(ModeloBase):
     nombre = models.CharField(max_length=150)
     ruc = models.CharField(max_length=11, unique=True)
     contacto = models.CharField(max_length=150, blank=True)
-    activo = models.BooleanField(default=True)
 
-    class Meta:
+    class Meta(ModeloBase.Meta):
         ordering = ["nombre"]
         indexes = [models.Index(fields=["ruc"])]
 
@@ -18,7 +18,7 @@ class Proveedor(models.Model):
         return f"{self.nombre} ({self.ruc})"
 
 
-class Compra(models.Model):
+class Compra(ModeloBase):
     ESTADO_CHOICES = [
         ("REGISTRADA", "Registrada"),
         ("ANULADA", "Anulada"),
@@ -29,7 +29,7 @@ class Compra(models.Model):
     total = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default="REGISTRADA")
 
-    class Meta:
+    class Meta(ModeloBase.Meta):
         ordering = ["-fecha"]
 
     def __str__(self):

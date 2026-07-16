@@ -8,7 +8,7 @@ class CategoriaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Categoria
-        fields = ['id', 'nombre', 'descripcion', 'activo', 'productos_count', 'created_at']
+        fields = ['id', 'nombre', 'descripcion', 'activo', 'productos_count', 'creado_en']
 
     def get_productos_count(self, obj):
         return obj.productos.count()
@@ -26,7 +26,7 @@ class ProductoSerializer(serializers.ModelSerializer):
             'id', 'codigo_barra', 'nombre', 'categoria', 'categoria_nombre',
             'descripcion', 'precio_venta', 'costo', 'ganancia_unitaria',
             'stock_actual', 'stock_minimo', 'stock_critico', 'unidad',
-            'activo', 'created_at', 'updated_at'
+            'activo', 'creado_en', 'actualizado_en'
         ]
 
     def validate(self, data):
