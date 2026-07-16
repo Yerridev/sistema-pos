@@ -3,6 +3,7 @@ from decimal import Decimal
 from django.db import transaction
 
 from caja.models import Caja, MovimientoCaja
+from core.descuentos import obtener_politica
 from core.exceptions import CajaAjena, CajaNoAbierta, ProductoSinStock, ReglaNegocioViolada, RecursoNoEncontrado, VentaYaAnulada
 from productos.models import Producto
 from ventas.models import DetalleVenta, Venta
@@ -17,16 +18,23 @@ class VentaService:
 
     @classmethod
     @transaction.atomic
-    def registrar(cls, usuario, caja_id, metodo_pago, descuento, detalles):
+    def registrar(cls, usuario, caja_id, metodo_pago, descuento=None, detalles=None,
+                  politica_descuento=None, contexto_descuento=None):
         """Registra una venta, decrementa stock y crea el movimiento de caja.
 
         Args:
             usuario: instancia de ``Usuario`` que realiza la venta.
             caja_id: identificador de la caja donde se registra la venta.
             metodo_pago: método de pago (EFECTIVO/TARJETA/TRANSFERENCIA).
-            descuento: descuento global aplicado a la venta.
+            descuento: descuento global fijo aplicado a la venta. Se ignora si
+                se indica ``politica_descuento``.
             detalles: lista de diccionarios con ``producto``, ``cantidad``,
                 ``precio_unitario`` y ``descuento_linea``.
+            politica_descuento: nombre de la política de descuento a aplicar
+                (Strategy Pattern). Si se indica, el descuento se calcula con
+                ``core.descuentos.obtener_politica`` sobre el importe total.
+            contexto_descuento: diccionario con datos para la política
+                (porcentaje, cantidad_total, es_cliente_frecuente, etc.).
 
         Raises:
             RecursoNoEncontrado: si la caja no existe.
@@ -35,14 +43,19 @@ class VentaService:
             ReglaNegocioViolada: si los detalles están vacíos, el descuento es
                 negativo o supera el importe total.
             ProductoSinStock: si algún producto no tiene stock suficiente.
+            ValueError: si ``politica_descuento`` no corresponde a una política
+                registrada.
         """
-        if descuento is None:
-            descuento = Decimal("0.00")
-        else:
-            descuento = Decimal(str(descuento))
+        # Con Strategy Pattern el descuento se calcula tras conocer el importe
+        # total; sin política se usa el descuento fijo recibido.
+        if politica_descuento is None:
+            if descuento is None:
+                descuento = Decimal("0.00")
+            else:
+                descuento = Decimal(str(descuento))
+            if descuento < 0:
+                raise ReglaNegocioViolada("El descuento no puede ser negativo.")
 
-        if descuento < 0:
-            raise ReglaNegocioViolada("El descuento no puede ser negativo.")
         if not detalles:
             raise ReglaNegocioViolada("Debe enviar al menos un detalle.")
 
@@ -110,6 +123,12 @@ class VentaService:
                 "precio_unitario": precio_efectivo,
                 "descuento_linea": descuento_linea,
             })
+
+        # Strategy Pattern: la política calcula el descuento sobre el importe
+        # total ya validado. Las políticas nunca retornan valores negativos.
+        if politica_descuento is not None:
+            politica = obtener_politica(politica_descuento)
+            descuento = politica.calcular(importe_total, contexto_descuento or {})
 
         if descuento > importe_total:
             raise ReglaNegocioViolada(

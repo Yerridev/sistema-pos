@@ -148,6 +148,31 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'usuarios.Usuario'
 
+# Cache
+# https://docs.djangoproject.com/en/5.2/topics/cache/
+# En producción/docker se usa Redis (django.core.cache.backends.redis.RedisCache,
+# integrado en Django 4.0+). Si REDIS_URL no está definido (dev local, tests) se
+# cae a un cache en memoria para no requerir un servidor Redis.
+REDIS_URL = config('REDIS_URL', default='')
+PRODUCTOS_CACHE_TIMEOUT = config('PRODUCTOS_CACHE_TIMEOUT', default=300, cast=int)
+
+if REDIS_URL:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': REDIS_URL,
+            'TIMEOUT': PRODUCTOS_CACHE_TIMEOUT,
+        }
+    }
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'sistema-pos-locmem',
+            'TIMEOUT': PRODUCTOS_CACHE_TIMEOUT,
+        }
+    }
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',

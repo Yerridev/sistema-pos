@@ -338,6 +338,84 @@ class VentaServiceTests(TestCase):
         self.assertEqual(venta.estado, 'ANULADA')
 
 
+class VentaServiceStrategyDescuentoTests(TestCase):
+    """Integración del Strategy Pattern de descuentos en VentaService.registrar."""
+
+    def setUp(self):
+        User = get_user_model()
+        self.cajero = User.objects.create_user(
+            username='cajero_strategy', password='test123', rol='cajero',
+        )
+        self.caja = Caja.objects.create(
+            nombre='Caja Strategy', cajero=self.cajero, saldo_inicial=Decimal('0.00'),
+            estado='ABIERTA',
+        )
+        self.categoria = Categoria.objects.create(nombre='Strategy Cat')
+        self.producto = Producto.objects.create(
+            nombre='Producto Strategy', categoria=self.categoria,
+            precio_venta=Decimal('11.80'), costo=Decimal('5.00'), stock_actual=100,
+        )
+
+    def _detalle(self, cantidad):
+        return {
+            'producto': self.producto,
+            'cantidad': cantidad,
+            'precio_unitario': self.producto.precio_venta,
+        }
+
+    def test_politica_porcentaje_calcula_descuento(self):
+        from ventas.services import VentaService
+
+        # importe_total = 11.80 * 10 = 118.00 ; 10% => 11.80
+        venta = VentaService.registrar(
+            usuario=self.cajero,
+            caja_id=self.caja.id,
+            metodo_pago='EFECTIVO',
+            detalles=[self._detalle(10)],
+            politica_descuento='porcentaje',
+            contexto_descuento={'porcentaje': Decimal('10')},
+        )
+        self.assertEqual(venta.descuento, Decimal('11.80'))
+
+    def test_politica_volumen_por_cantidad_total(self):
+        from ventas.services import VentaService
+
+        # 100 unidades => 15% de 1180.00 = 177.00
+        venta = VentaService.registrar(
+            usuario=self.cajero,
+            caja_id=self.caja.id,
+            metodo_pago='EFECTIVO',
+            detalles=[self._detalle(100)],
+            politica_descuento='volumen',
+            contexto_descuento={'cantidad_total': 100},
+        )
+        self.assertEqual(venta.descuento, Decimal('177.00'))
+
+    def test_sin_politica_usa_descuento_fijo(self):
+        from ventas.services import VentaService
+
+        venta = VentaService.registrar(
+            usuario=self.cajero,
+            caja_id=self.caja.id,
+            metodo_pago='EFECTIVO',
+            descuento=Decimal('5.00'),
+            detalles=[self._detalle(10)],
+        )
+        self.assertEqual(venta.descuento, Decimal('5.00'))
+
+    def test_politica_desconocida_lanza_value_error(self):
+        from ventas.services import VentaService
+
+        with self.assertRaises(ValueError):
+            VentaService.registrar(
+                usuario=self.cajero,
+                caja_id=self.caja.id,
+                metodo_pago='EFECTIVO',
+                detalles=[self._detalle(1)],
+                politica_descuento='inexistente',
+            )
+
+
 class VentaTotalesPeruTests(TestCase):
     def test_calcular_totales_desglosa_igv_incluido_en_precio(self):
         user = get_user_model().objects.create_user(username='cajero', password='test123', rol='cajero')

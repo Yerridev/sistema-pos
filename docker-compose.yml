@@ -12,6 +12,15 @@ services:
     ports:
       - "5432:5432"
 
+  redis:
+    image: redis:7-alpine
+    container_name: pos_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
   web:
     build: .
     container_name: pos_web
@@ -30,8 +39,11 @@ services:
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_HOST=db
       - DB_PORT=5432
+      - REDIS_URL=redis://redis:6379/0
     depends_on:
       - db
+      - redis
 
 volumes:
   postgres_data:
+  redis_data:

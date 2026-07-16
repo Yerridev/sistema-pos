@@ -16,6 +16,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 from core.exceptions import AppError
+from .cache import get_cached_productos, set_cached_productos
 from .models import Categoria, Producto
 from .permissions import IsAdminOrReadOnly
 from .serializers import CategoriaSerializer, ProductoListSerializer, ProductoSerializer
@@ -82,13 +83,23 @@ class ProductoViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def buscar(self, request):
         q = request.GET.get('q', '').strip()
+
+        if q:
+            cached = get_cached_productos(q, scope='api')
+            if cached is not None:
+                return Response(cached)
+
         queryset = self.get_queryset().filter(activo=True)
         if q:
             queryset = queryset.filter(
                 models.Q(nombre__icontains=q) | models.Q(codigo_barra__icontains=q)
             )
         serializer = ProductoListSerializer(queryset[:20], many=True, context=self.get_serializer_context())
-        return Response(serializer.data)
+        data = serializer.data
+
+        if q:
+            set_cached_productos(q, data, scope='api')
+        return Response(data)
 
 
 # ─── Dashboard Template Views ─────────────────────────────────────────────────
