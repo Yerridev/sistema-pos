@@ -1,10 +1,12 @@
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.core.cache import cache
+from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 
 from core.exceptions import MargenInvalidoError, ReglaNegocioViolada
+from .cache import get_cached_productos, invalidate_productos_cache, set_cached_productos
 from .models import Categoria, Producto
 from .services import CategoriaService, ProductoService
 from .utils import calculate_stats
@@ -379,6 +381,40 @@ class ProductoServiceTests(TestCase):
         producto.refresh_from_db()
 
         self.assertFalse(producto.activo)
+
+
+class ProductosCacheTests(SimpleTestCase):
+    """Tests del cache de búsqueda de productos (get/set/invalidate)."""
+
+    def setUp(self):
+        cache.clear()
+
+    def tearDown(self):
+        cache.clear()
+
+    def test_miss_retorna_none(self):
+        self.assertIsNone(get_cached_productos('gaseosa', scope='venta'))
+
+    def test_set_y_get_devuelve_lo_guardado(self):
+        payload = {'results': [{'id': 1, 'nombre': 'Gaseosa'}]}
+        set_cached_productos('gaseosa', payload, scope='venta')
+        self.assertEqual(get_cached_productos('gaseosa', scope='venta'), payload)
+
+    def test_key_normaliza_mayusculas_y_espacios(self):
+        payload = {'results': []}
+        set_cached_productos('  Gaseosa  ', payload, scope='venta')
+        self.assertEqual(get_cached_productos('gaseosa', scope='venta'), payload)
+
+    def test_scopes_no_colisionan(self):
+        set_cached_productos('agua', {'origen': 'venta'}, scope='venta')
+        set_cached_productos('agua', {'origen': 'api'}, scope='api')
+        self.assertEqual(get_cached_productos('agua', scope='venta'), {'origen': 'venta'})
+        self.assertEqual(get_cached_productos('agua', scope='api'), {'origen': 'api'})
+
+    def test_invalidate_limpia_el_cache(self):
+        set_cached_productos('gaseosa', {'results': []}, scope='venta')
+        invalidate_productos_cache()
+        self.assertIsNone(get_cached_productos('gaseosa', scope='venta'))
 
 
 class CategoriaServiceTests(TestCase):
