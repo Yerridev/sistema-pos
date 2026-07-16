@@ -7,6 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import serializers
 
+from caja.models import Caja
 from reportes.services import ReporteService
 
 
@@ -101,4 +102,34 @@ def reportes_dashboard(request):
         "filters": {"fecha": fecha, "desde": desde, "hasta": hasta},
         "page_title": "Reportes",
         "active_nav": "reportes:dashboard",
+    })
+
+
+@login_required
+@user_passes_test(_is_admin)
+def admin_dashboard(request):
+    """Dashboard principal del admin con metricas clave."""
+    fecha = timezone.localdate()
+
+    ventas_data = ReporteService.ventas_del_dia(fecha)
+
+    cajas_abiertas = Caja.objects.filter(estado="ABIERTA").select_related("cajero")
+    cajas_info = []
+    for caja in cajas_abiertas:
+        cajas_info.append({
+            "id": caja.id,
+            "nombre": caja.nombre,
+            "cajero": caja.cajero.get_full_name() or caja.cajero.username,
+            "saldo_actual": caja.saldo_actual,
+            "fecha_apertura": caja.fecha_apertura,
+        })
+
+    stock_critico = ReporteService.stock_critico()
+
+    return render(request, "dashboard/admin_dashboard.html", {
+        "ventas_dia": ventas_data,
+        "cajas_abiertas": cajas_info,
+        "stock_critico": stock_critico,
+        "page_title": "Dashboard Admin",
+        "active_nav": "reportes:admin_dashboard",
     })
