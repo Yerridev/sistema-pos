@@ -48,21 +48,16 @@
       </div>
 
       <div class="mt-lg">
+        <h3 class="text-sm font-semibold text-text-primary dark:text-[#E8E9EC]">Ventas por metodo de pago</h3>
+        <div class="mt-sm" style="max-width: 300px;">
+          <canvas id="chartMetodoPago"></canvas>
+        </div>
+      </div>
+
+      <div class="mt-lg">
         <h3 class="text-sm font-semibold text-text-primary dark:text-[#E8E9EC]">Top 5 productos</h3>
-        <div class="mt-sm flex flex-col gap-sm">
-          {% for item in ventas_dia.top_productos %}
-          <div class="grid grid-cols-[1fr,80px] gap-sm items-center">
-            <div>
-              <p class="text-sm font-medium text-text-primary dark:text-[#E8E9EC]">{{ item.nombre }}</p>
-              <div class="mt-xs h-2 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
-                <div class="h-full bg-primary" style="width: {% widthratio item.cantidad 20 100 %}%"></div>
-              </div>
-            </div>
-            <p class="text-right font-mono text-sm">{{ item.cantidad }}</p>
-          </div>
-          {% empty %}
-          <p class="text-sm text-text-secondary dark:text-slate-400">Sin productos vendidos.</p>
-          {% endfor %}
+        <div class="mt-sm" style="height: 250px;">
+          <canvas id="chartTopProductos"></canvas>
         </div>
       </div>
     </article>
@@ -74,6 +69,9 @@
         <input name="hasta" type="date" value="{{ filters.hasta|date:'Y-m-d' }}" class="rounded-lg border border-border-subtle dark:border-white/10 px-md py-sm text-sm" />
         <button class="rounded-lg bg-primary px-md py-sm text-sm text-white">Filtrar</button>
       </form>
+      <div class="mt-lg" style="height: 200px;">
+        <canvas id="chartUtilidad"></canvas>
+      </div>
       <div class="mt-lg overflow-x-auto">
         <table class="w-full text-left text-sm">
           <thead class="bg-slate-50 dark:bg-white/5">
@@ -132,4 +130,79 @@
     </div>
   </section>
 </div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Gráfico de torta: Métodos de pago
+  const ctx1 = document.getElementById('chartMetodoPago');
+  if (ctx1) {
+    new Chart(ctx1, {
+      type: 'doughnut',
+      data: {
+        labels: [{% for metodo, total in ventas_dia.por_metodo.items %}'{{ metodo }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+          data: [{% for metodo, total in ventas_dia.por_metodo.items %}{{ total }}{% if not forloop.last %},{% endif %}{% endfor %}],
+          backgroundColor: ['#22c55e', '#3b82f6', '#f59e0b'],
+          borderWidth: 0,
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: 'bottom' } }
+      }
+    });
+  }
+
+  // Gráfico de barras: Top productos
+  const ctx2 = document.getElementById('chartTopProductos');
+  if (ctx2) {
+    new Chart(ctx2, {
+      type: 'bar',
+      data: {
+        labels: [{% for item in ventas_dia.top_productos %}'{{ item.nombre|truncatechars:20 }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+          label: 'Unidades',
+          data: [{% for item in ventas_dia.top_productos %}{{ item.cantidad }}{% if not forloop.last %},{% endif %}{% endfor %}],
+          backgroundColor: '#6366f1',
+          borderRadius: 4,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        plugins: { legend: { display: false } },
+        scales: { x: { beginAtZero: true } }
+      }
+    });
+  }
+
+  // Gráfico de líneas: Utilidad por día
+  const ctx3 = document.getElementById('chartUtilidad');
+  if (ctx3) {
+    new Chart(ctx3, {
+      type: 'line',
+      data: {
+        labels: [{% for dia in utilidad.por_dia %}'{{ dia.dia|date:"d/m" }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+          label: 'Utilidad (S/.)',
+          data: [{% for dia in utilidad.por_dia %}{{ dia.total }}{% if not forloop.last %},{% endif %}{% endfor %}],
+          borderColor: '#22c55e',
+          backgroundColor: 'rgba(34,197,94,0.1)',
+          fill: true,
+          tension: 0.3,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } }
+      }
+    });
+  }
+});
+</script>
+{% endblock %}
 {% endblock %}
