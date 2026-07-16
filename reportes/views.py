@@ -82,10 +82,8 @@ def stock_critico_api(request):
     ),
 )
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, IsAdminUser])
 def utilidad_api(request):
-    if not _is_admin(request.user):
-        return Response({"detail": "Solo admin puede ver utilidad."}, status=403)
     data = ReporteService.utilidad(_parse_date(request, "desde"), _parse_date(request, "hasta"))
     return Response(data)
 
