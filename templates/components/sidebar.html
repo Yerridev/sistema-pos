@@ -29,6 +29,7 @@
             <span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
             Dashboard
         </a>
+        {% endif %}
 
         <a class="flex items-center gap-md p-md rounded-lg transition-transform hover:translate-x-1 font-inter text-sm font-semibold
                   {% if active_nav|default:'' == 'ventas:dashboard' %}bg-success text-white shadow-[0_0_10px_rgba(37,211,102,0.4)]{% else %}text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5{% endif %}"
@@ -59,18 +60,14 @@
             <span class="material-symbols-outlined" data-icon="local_shipping">local_shipping</span>
             Compras
         </a>
-        {% endif %}
 
-        
         <a class="flex items-center gap-md p-md rounded-lg transition-transform hover:translate-x-1 font-inter text-sm font-semibold
                   {% if active_nav|default:'' == 'reportes:dashboard' %}bg-success text-white shadow-[0_0_10px_rgba(37,211,102,0.4)]{% else %}text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5{% endif %}"
            href="{{ url_reportes }}">
             <span class="material-symbols-outlined" data-icon="bar_chart">bar_chart</span>
             Reportes
         </a>
-        {% endif %}
 
-        {% if user.rol == 'admin' %}
         <a class="flex items-center gap-md p-md rounded-lg transition-transform hover:translate-x-1 font-inter text-sm font-semibold
                   {% if active_nav|default:'' == 'usuarios:list' %}bg-success text-white shadow-[0_0_10px_rgba(37,211,102,0.4)]{% else %}text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5{% endif %}"
            href="{{ url_usuarios }}">
